@@ -1,0 +1,37 @@
+{
+  "name": "mobit-sdk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/mobit.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "npx webpack --config webpack.config.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "node-polyfill-webpack-plugin": "^4.0.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.5.2",
+    "webpack": "^5.92.1",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@ckb-ccc/core": "0.0.5-alpha.2",
+    "@ckb-lumos/base": "0.0.0-canary-d279b87-20240624101315",
+    "@ckb-lumos/codec": "0.0.0-canary-d279b87-20240624101315",
+    "@ckb-lumos/common-scripts": "0.0.0-canary-d279b87-20240624101315",
+    "@ckb-lumos/helpers": "0.0.0-canary-d279b87-20240624101315",
+    "@ckb-lumos/lumos": "0.0.0-canary-d279b87-20240624101315",
+    "@nervosnetwork/ckb-sdk-utils": "^0.109.1",
+    "@rgbpp-sdk/btc": "^0.4.0",
+    "@rgbpp-sdk/ckb": "^0.4.0",
+    "@rgbpp-sdk/service": "^0.4.0",
+    "rgbpp": "^0.4.0"
+  }
+}
