@@ -14,6 +14,9 @@ module.exports = {
       },
     ],
   },
+  externals: {
+    'bitcore-lib': 'bitcore-lib'
+  },
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
     fallback: {

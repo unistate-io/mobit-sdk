@@ -21,6 +21,9 @@
     "webpack": "^5.92.1",
     "webpack-cli": "^5.1.4"
   },
+  "resolutions": {
+    "bitcore-lib": "10.1.0"
+  },
   "dependencies": {
     "@ckb-ccc/core": "0.0.5-alpha.2",
     "@ckb-lumos/base": "0.0.0-canary-d279b87-20240624101315",
