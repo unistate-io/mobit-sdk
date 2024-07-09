@@ -11,4 +11,4 @@ export interface LeapToBtcParams {
     btcTestnetType?: BTCTestnetType;
     cccSigner: Signer;
 }
-export declare const leapFromCkbToBtc: ({ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType, cccSigner, }: LeapToBtcParams) => Promise<void>;
+export declare const leapFromCkbToBtc: ({ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType, cccSigner, }: LeapToBtcParams) => Promise<string>;

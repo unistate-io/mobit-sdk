@@ -40,7 +40,7 @@ export const leapFromBtcToCKB = async (
     btcService,
     unisat
   }: LeapToCkbParams,
-) => {
+): Promise<{ btcTxId: string; error?: any }> => {
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
     args: xudtTypeArgs,
@@ -101,6 +101,8 @@ export const leapFromBtcToCKB = async (
     }, 30 * 1000);
   } catch (error) {
     console.error(error);
-    throw error;
+    return { error, btcTxId }
   }
+
+  return { btcTxId };
 };

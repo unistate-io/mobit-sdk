@@ -15,5 +15,8 @@ interface LeapToCkbParams {
     btcService: BtcAssetsApi;
     unisat: AbstractWallet;
 }
-export declare const leapFromBtcToCKB: ({ rgbppLockArgsList, toCkbAddress, xudtTypeArgs, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccountPubkey, fromBtcAccount, btcDataSource, btcService, unisat }: LeapToCkbParams) => Promise<void>;
+export declare const leapFromBtcToCKB: ({ rgbppLockArgsList, toCkbAddress, xudtTypeArgs, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccountPubkey, fromBtcAccount, btcDataSource, btcService, unisat }: LeapToCkbParams) => Promise<{
+    btcTxId: string;
+    error?: any;
+}>;
 export {};

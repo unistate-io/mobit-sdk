@@ -12,5 +12,5 @@
 
 // export async function crateSporesTransaction({ ckbAddress, receivers, collector, isMainnet }: SporeCreateParams)
 //     : Promise<CKBComponents.RawTransactionToSign> {
-
+    
 // }

@@ -34,7 +34,7 @@ export const leapFromCkbToBtc = async (
     btcTestnetType,
     cccSigner,
   }: LeapToBtcParams,
-) => {
+): Promise<string> => {
   const toRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
 
   const xudtType: CKBComponents.Script = {
@@ -63,4 +63,6 @@ export const leapFromCkbToBtc = async (
   console.info(
     `Rgbpp asset has been jumped from CKB to BTC and CKB tx hash is ${txHash}`,
   );
+
+  return txHash
 };

@@ -15,5 +15,8 @@ interface RgbppTransferCombinedParams {
     unisat: AbstractWallet;
     btcService: BtcAssetsApi;
 }
-export declare const transferCombined: ({ toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, unisat, btcService, }: RgbppTransferCombinedParams) => Promise<void>;
+export declare const transferCombined: ({ toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, unisat, btcService, }: RgbppTransferCombinedParams) => Promise<{
+    btcTxId: string;
+    error?: any;
+}>;
 export {};

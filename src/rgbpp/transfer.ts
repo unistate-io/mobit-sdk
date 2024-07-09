@@ -71,7 +71,7 @@ const transfer = async ({
   fromBtcAccountPubkey,
   unisat,
   btcService,
-}: RgbppTransferParams) => {
+}: RgbppTransferParams): Promise<{ btcTxId: string; error?: any }> => {
   const { ckbVirtualTxResult, btcPsbtHex } = await buildRgbppTransferTx({
     ckb: {
       collector,
@@ -105,7 +105,6 @@ const transfer = async ({
     ckb_virtual_result: ckbVirtualTxResult,
   });
 
-  // TODO： 错误处理，不清楚前端怎么处理会更好一些
   try {
     const interval = setInterval(async () => {
       const { state, failedReason } = await btcService.getRgbppTransactionState(
@@ -130,7 +129,10 @@ const transfer = async ({
     }, 30 * 1000);
   } catch (error) {
     console.error(error);
+    return { error, btcTxId };
   }
+
+  return { btcTxId };
 };
 
 interface RgbppTransferCombinedParams {
@@ -159,7 +161,7 @@ export const transferCombined = async ({
   fromBtcAccountPubkey,
   unisat,
   btcService,
-}: RgbppTransferCombinedParams) => {
+}: RgbppTransferCombinedParams): Promise<{ btcTxId: string; error?: any }> => {
   const lockArgsListResponse = await getRgbppLockArgsList({
     xudtTypeArgs,
     fromBtcAccount,
@@ -167,7 +169,7 @@ export const transferCombined = async ({
     btcService,
   });
 
-  await transfer({
+  const res = await transfer({
     rgbppLockArgsList: lockArgsListResponse.rgbppLockArgsList,
     toBtcAddress,
     xudtTypeArgs,
@@ -181,4 +183,6 @@ export const transferCombined = async ({
     unisat,
     btcService,
   });
+
+  return res;
 };

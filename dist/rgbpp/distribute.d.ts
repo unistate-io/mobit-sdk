@@ -15,5 +15,8 @@ interface RgbppDistributeCombinedParams {
     filterRgbppArgslist: (argsList: string[]) => Promise<string[]>;
     btcService: BtcAssetsApi;
 }
-export declare const distributeCombined: ({ xudtTypeArgs, receivers, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, unisat, filterRgbppArgslist, btcService, }: RgbppDistributeCombinedParams) => Promise<void>;
+export declare const distributeCombined: ({ xudtTypeArgs, receivers, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, unisat, filterRgbppArgslist, btcService, }: RgbppDistributeCombinedParams) => Promise<{
+    btcTxId: string;
+    error?: any;
+}>;
 export {};

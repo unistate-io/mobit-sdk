@@ -77,7 +77,7 @@ const distribute = async ({
   fromBtcAccountPubkey,
   unisat,
   btcService,
-}: RgbppDistributeParams) => {
+}: RgbppDistributeParams): Promise<{ btcTxId: string; error?: any }> => {
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
     args: xudtTypeArgs,
@@ -146,7 +146,10 @@ const distribute = async ({
     }, 30 * 1000);
   } catch (error) {
     console.error(error);
+    return { error, btcTxId };
   }
+
+  return { btcTxId };
 };
 
 interface RgbppDistributeCombinedParams {
@@ -175,7 +178,7 @@ export const distributeCombined = async ({
   unisat,
   filterRgbppArgslist,
   btcService,
-}: RgbppDistributeCombinedParams) => {
+}: RgbppDistributeCombinedParams): Promise<{ btcTxId: string; error?: any }> => {
   const lockArgsListResponse = await getRgbppLockArgsList({
     xudtTypeArgs,
     fromBtcAccount,
@@ -185,17 +188,21 @@ export const distributeCombined = async ({
   const filteredLockArgsList = await filterRgbppArgslist(
     lockArgsListResponse.rgbppLockArgsList,
   );
-  await distribute({
-    rgbppLockArgsList: filteredLockArgsList,
-    receivers,
-    xudtTypeArgs,
-    collector,
-    btcDataSource,
-    btcTestnetType,
-    isMainnet,
-    fromBtcAccount,
-    fromBtcAccountPubkey,
-    unisat,
-    btcService,
-  });
+
+  const res =
+    await distribute({
+      rgbppLockArgsList: filteredLockArgsList,
+      receivers,
+      xudtTypeArgs,
+      collector,
+      btcDataSource,
+      btcTestnetType,
+      isMainnet,
+      fromBtcAccount,
+      fromBtcAccountPubkey,
+      unisat,
+      btcService,
+    });
+
+  return res;
 };

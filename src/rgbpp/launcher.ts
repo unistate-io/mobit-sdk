@@ -139,7 +139,7 @@ const launchRgbppAsset = async ({
   launchAmount,
   btcService,
   unisat,
-}: RgbppLauncerParams) => {
+}: RgbppLauncerParams): Promise<{ btcTxId: string; error?: any }> => {
   const ckbVirtualTxResult = await genRgbppLaunchCkbVirtualTx({
     collector: collector,
     ownerRgbppLockArgs,
@@ -198,11 +198,12 @@ const launchRgbppAsset = async ({
         `RGB++ Asset has been launched and CKB tx hash is ${txHash}`,
       );
     } catch (error) {
-      if (!(error instanceof BtcAssetsApiError)) {
-        console.error(error);
-      }
+      console.error(error);
+      return { error, btcTxId };
     }
   }, 30 * 1000);
+
+  return { btcTxId };
 };
 
 interface RgbppLauncerCombinedParams {
@@ -223,6 +224,8 @@ interface RgbppLauncerCombinedParams {
   unisat: AbstractWallet;
 }
 
+
+
 export const launchCombined = async ({
   rgbppTokenInfo,
   collector,
@@ -237,7 +240,11 @@ export const launchCombined = async ({
   btcService,
   unisat,
   cccSigner
-}: RgbppLauncerCombinedParams) => {
+}: RgbppLauncerCombinedParams): Promise<{
+  btcTxid: string;
+  ckbTxhash: string;
+  error?: any;
+}> => {
   const utxos = await btcService.getBtcUtxos(btcAccount, {
     only_non_rgbpp_utxos: true,
     only_confirmed: true,
@@ -261,7 +268,7 @@ export const launchCombined = async ({
 
   const ownerRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
 
-  await launchRgbppAsset({
+  const { btcTxId: TxId, error } = await launchRgbppAsset({
     ownerRgbppLockArgs,
     rgbppTokenInfo,
     collector,
@@ -274,4 +281,10 @@ export const launchCombined = async ({
     btcService,
     unisat,
   });
+
+  return {
+    btcTxid: TxId,
+    error,
+    ckbTxhash: txHash
+  }
 };
