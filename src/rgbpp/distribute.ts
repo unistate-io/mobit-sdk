@@ -8,7 +8,7 @@ import {
   serializeScript,
 } from "@rgbpp-sdk/ckb";
 import { DataSource, sendRgbppUtxos } from "@rgbpp-sdk/btc";
-import { AbstractWallet } from "../helper";
+import { AbstractWallet, TxResult } from "../helper";
 import { signAndSendPsbt } from "../unisat";
 
 interface RgbppLockArgsListParams {
@@ -77,7 +77,7 @@ const distribute = async ({
   fromBtcAccountPubkey,
   unisat,
   btcService,
-}: RgbppDistributeParams): Promise<{ btcTxId: string; error?: any }> => {
+}: RgbppDistributeParams): Promise<TxResult> => {
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
     args: xudtTypeArgs,
@@ -178,7 +178,7 @@ export const distributeCombined = async ({
   unisat,
   filterRgbppArgslist,
   btcService,
-}: RgbppDistributeCombinedParams): Promise<{ btcTxId: string; error?: any }> => {
+}: RgbppDistributeCombinedParams): Promise<TxResult> => {
   const lockArgsListResponse = await getRgbppLockArgsList({
     xudtTypeArgs,
     fromBtcAccount,

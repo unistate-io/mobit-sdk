@@ -9,7 +9,7 @@ This project provides a set of utilities for interacting with the CKB (Nervos Ne
 To install the necessary dependencies, run:
 
 ```bash
-npm install
+npm install mobit-sdk
 ```
 
 ## Usage
@@ -37,12 +37,20 @@ The project provides several functions to create different types of transactions
 
 - `leapFromCkbToBtc`: Handles the leap from CKB to BTC.
 - `leapFromBtcToCKB`: Handles the leap from BTC to CKB.
+- `leapSporeFromCkbToBtc`: Handles the leap of spores from CKB to BTC.
+- `leapSporeFromBtcToCkbCombined`: Handles the leap of spores from BTC to CKB.
 
 ### RGBPP Functions
 
 - `distributeCombined`: Distributes RGBPP assets.
 - `launchCombined`: Launches RGBPP assets.
 - `transferCombined`: Transfers RGBPP assets.
+
+### Spore Functions
+
+- `createClusterCombined`: Creates a new cluster.
+- `createSporesCombined`: Creates new spores.
+- `transferSporeCombined`: Transfers spores.
 
 ## Contributing
 

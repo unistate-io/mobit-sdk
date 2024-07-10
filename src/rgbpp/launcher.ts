@@ -24,7 +24,7 @@ import {
 import { DataSource, sendRgbppUtxos } from "@rgbpp-sdk/btc";
 import { BtcAssetsApi } from "rgbpp";
 import { BtcApiUtxo, BtcAssetsApiError } from "@rgbpp-sdk/service";
-import { AbstractWallet, signAndSendTransaction } from "../helper";
+import { AbstractWallet, signAndSendTransaction, TxResult } from "../helper";
 import { signAndSendPsbt } from "../unisat";
 import * as ccc from "@ckb-ccc/core";
 
@@ -139,7 +139,7 @@ const launchRgbppAsset = async ({
   launchAmount,
   btcService,
   unisat,
-}: RgbppLauncerParams): Promise<{ btcTxId: string; error?: any }> => {
+}: RgbppLauncerParams): Promise<TxResult> => {
   const ckbVirtualTxResult = await genRgbppLaunchCkbVirtualTx({
     collector: collector,
     ownerRgbppLockArgs,
@@ -217,7 +217,7 @@ interface RgbppLauncerCombinedParams {
   launchAmount: bigint;
   btcService: BtcAssetsApi;
   ckbAddress: string;
-  cccSigner: ccc.Signer,
+  cccSigner: ccc.Signer;
   filterUtxo: (
     utxos: BtcApiUtxo[],
   ) => Promise<{ outIndex: number; btcTxId: string }>;
@@ -240,14 +240,11 @@ export const launchCombined = async ({
   btcService,
   unisat,
   cccSigner
-}: RgbppLauncerCombinedParams): Promise<{
-  btcTxid: string;
-  ckbTxhash: string;
-  error?: any;
-}> => {
+}: RgbppLauncerCombinedParams): Promise<TxResult> => {
   const utxos = await btcService.getBtcUtxos(btcAccount, {
     only_non_rgbpp_utxos: true,
     only_confirmed: true,
+    min_satoshi: 10000
   });
 
   const { outIndex, btcTxId } = await filterUtxo(utxos);
@@ -283,8 +280,8 @@ export const launchCombined = async ({
   });
 
   return {
-    btcTxid: TxId,
+    btcTxId: TxId,
     error,
-    ckbTxhash: txHash
+    ckbTxHash: txHash
   }
 };

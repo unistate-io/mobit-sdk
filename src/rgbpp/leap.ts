@@ -8,7 +8,7 @@ import {
 } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi, DataSource, sendRgbppUtxos } from "rgbpp";
 import { signAndSendPsbt } from "../unisat";
-import { AbstractWallet } from "../helper";
+import { AbstractWallet, TxResult } from "../helper";
 
 interface LeapToCkbParams {
   rgbppLockArgsList: string[];
@@ -40,7 +40,7 @@ export const leapFromBtcToCKB = async (
     btcService,
     unisat
   }: LeapToCkbParams,
-): Promise<{ btcTxId: string; error?: any }> => {
+): Promise<TxResult> => {
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
     args: xudtTypeArgs,

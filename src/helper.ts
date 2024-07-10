@@ -10,7 +10,9 @@ export const signAndSendTransaction = async (
   cccSigner: ccc.Signer
 ): Promise<{ txHash: string }> => {
   const txSkeleton = await convertToTxSkeleton(transaction, collector);
-  const txHash = await cccSigner.sendTransaction(ccc.Transaction.fromLumosSkeleton(txSkeleton));
+  const txHash = await cccSigner.sendTransaction(
+    ccc.Transaction.fromLumosSkeleton(txSkeleton)
+  );
   return { txHash };
 };
 
@@ -69,7 +71,7 @@ export class BtcHelper {
   constructor(
     unisat: AbstractWallet,
     networkType: NetworkType,
-    btcTestnetType?: BTCTestnetType,
+    btcTestnetType?: BTCTestnetType
   ) {
     this.btcTestnetType = btcTestnetType;
     this.networkType = networkType;
@@ -91,10 +93,16 @@ export class BtcHelper {
     this.btcService = BtcAssetsApi.fromToken(
       btcServiceUrl,
       btcServiceToken,
-      btcServiceOrigin,
+      btcServiceOrigin
     );
 
     this.btcDataSource = new DataSource(this.btcService, networkType);
     this.unisat = unisat;
   }
+}
+
+export interface TxResult {
+  btcTxId: string;
+  ckbTxHash?: string;
+  error?: any;
 }

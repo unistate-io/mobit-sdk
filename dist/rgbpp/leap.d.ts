@@ -1,6 +1,6 @@
 import { BTCTestnetType, Collector } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi, DataSource } from "rgbpp";
-import { AbstractWallet } from "../helper";
+import { AbstractWallet, TxResult } from "../helper";
 interface LeapToCkbParams {
     rgbppLockArgsList: string[];
     toCkbAddress: string;
@@ -15,8 +15,5 @@ interface LeapToCkbParams {
     btcService: BtcAssetsApi;
     unisat: AbstractWallet;
 }
-export declare const leapFromBtcToCKB: ({ rgbppLockArgsList, toCkbAddress, xudtTypeArgs, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccountPubkey, fromBtcAccount, btcDataSource, btcService, unisat }: LeapToCkbParams) => Promise<{
-    btcTxId: string;
-    error?: any;
-}>;
+export declare const leapFromBtcToCKB: ({ rgbppLockArgsList, toCkbAddress, xudtTypeArgs, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccountPubkey, fromBtcAccount, btcDataSource, btcService, unisat }: LeapToCkbParams) => Promise<TxResult>;
 export {};

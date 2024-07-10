@@ -2,7 +2,7 @@ import { BTCTestnetType, Collector, RgbppTokenInfo } from "@rgbpp-sdk/ckb";
 import { DataSource } from "@rgbpp-sdk/btc";
 import { BtcAssetsApi } from "rgbpp";
 import { BtcApiUtxo } from "@rgbpp-sdk/service";
-import { AbstractWallet } from "../helper";
+import { AbstractWallet, TxResult } from "../helper";
 import * as ccc from "@ckb-ccc/core";
 interface RgbppLauncerCombinedParams {
     rgbppTokenInfo: RgbppTokenInfo;
@@ -22,9 +22,5 @@ interface RgbppLauncerCombinedParams {
     }>;
     unisat: AbstractWallet;
 }
-export declare const launchCombined: ({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, ckbAddress, filterUtxo, btcService, unisat, cccSigner }: RgbppLauncerCombinedParams) => Promise<{
-    btcTxid: string;
-    ckbTxhash: string;
-    error?: any;
-}>;
+export declare const launchCombined: ({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, ckbAddress, filterUtxo, btcService, unisat, cccSigner }: RgbppLauncerCombinedParams) => Promise<TxResult>;
 export {};

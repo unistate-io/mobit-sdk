@@ -37,4 +37,9 @@ export declare class BtcHelper {
     networkType: NetworkType;
     constructor(unisat: AbstractWallet, networkType: NetworkType, btcTestnetType?: BTCTestnetType);
 }
+export interface TxResult {
+    btcTxId: string;
+    ckbTxHash?: string;
+    error?: any;
+}
 export {};

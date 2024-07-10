@@ -2,7 +2,7 @@ import { BtcAssetsApi, buildRgbppTransferTx } from "rgbpp";
 import { BTCTestnetType, Collector, getXudtTypeScript } from "@rgbpp-sdk/ckb";
 import { bitcoin, DataSource } from "@rgbpp-sdk/btc";
 import { signAndSendPsbt } from "../unisat";
-import { AbstractWallet } from "../helper";
+import { AbstractWallet, TxResult } from "../helper";
 
 interface RgbppLockArgsListParams {
   xudtTypeArgs: string;
@@ -71,7 +71,7 @@ const transfer = async ({
   fromBtcAccountPubkey,
   unisat,
   btcService,
-}: RgbppTransferParams): Promise<{ btcTxId: string; error?: any }> => {
+}: RgbppTransferParams): Promise<TxResult> => {
   const { ckbVirtualTxResult, btcPsbtHex } = await buildRgbppTransferTx({
     ckb: {
       collector,
@@ -161,7 +161,7 @@ export const transferCombined = async ({
   fromBtcAccountPubkey,
   unisat,
   btcService,
-}: RgbppTransferCombinedParams): Promise<{ btcTxId: string; error?: any }> => {
+}: RgbppTransferCombinedParams): Promise<TxResult> => {
   const lockArgsListResponse = await getRgbppLockArgsList({
     xudtTypeArgs,
     fromBtcAccount,
