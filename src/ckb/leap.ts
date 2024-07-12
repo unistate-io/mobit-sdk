@@ -4,11 +4,10 @@ import {
   buildRgbppLockArgs,
   Collector,
   genCkbJumpBtcVirtualTx,
-  getSecp256k1CellDep,
   getXudtTypeScript,
   serializeScript,
 } from "@rgbpp-sdk/ckb";
-import { signAndSendTransaction } from "../helper";
+import { getAddressCellDeps, signAndSendTransaction } from "../helper";
 
 export interface LeapToBtcParams {
   outIndex: number;
@@ -19,7 +18,7 @@ export interface LeapToBtcParams {
   collector: Collector;
   ckbAddress: string;
   btcTestnetType?: BTCTestnetType;
-  cccSigner: Signer
+  cccSigner: Signer;
 }
 
 export const leapFromCkbToBtc = async (
@@ -54,15 +53,22 @@ export const leapFromCkbToBtc = async (
   const emptyWitness = { lock: "", inputType: "", outputType: "" };
   const unsignedTx: CKBComponents.RawTransactionToSign = {
     ...ckbRawTx,
-    cellDeps: [...ckbRawTx.cellDeps, getSecp256k1CellDep(isMainnet)],
+    cellDeps: [
+      ...ckbRawTx.cellDeps,
+      ...(await getAddressCellDeps(isMainnet, [ckbAddress])),
+    ],
     witnesses: [emptyWitness, ...ckbRawTx.witnesses.slice(1)],
   };
 
-  const { txHash } = await signAndSendTransaction(unsignedTx, collector, cccSigner);
+  const { txHash } = await signAndSendTransaction(
+    unsignedTx,
+    collector,
+    cccSigner,
+  );
 
   console.info(
     `Rgbpp asset has been jumped from CKB to BTC and CKB tx hash is ${txHash}`,
   );
 
-  return txHash
+  return txHash;
 };

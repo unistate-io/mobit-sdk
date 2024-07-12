@@ -8,7 +8,6 @@ import {
     calculateUdtCellCapacity,
     Collector,
     fetchTypeIdCellDeps,
-    getSecp256k1CellDep,
     getXudtTypeScript,
     MAX_FEE,
     MIN_CAPACITY,
@@ -17,8 +16,15 @@ import {
     SECP256K1_WITNESS_LOCK_SIZE,
     u128ToLe,
 } from "@rgbpp-sdk/ckb";
+import { getAddressCellDeps } from "../helper";
 
-interface CreateBurnXudtTransactionParams { xudtArgs: string; burnAmount: bigint; ckbAddress: string; collector: Collector; isMainnet: boolean; }
+interface CreateBurnXudtTransactionParams {
+    xudtArgs: string;
+    burnAmount: bigint;
+    ckbAddress: string;
+    collector: Collector;
+    isMainnet: boolean;
+}
 /**
  * Creates an unsigned transaction for burning xUDT assets.
  * @param xudtArgs The xUDT type script args
@@ -29,11 +35,12 @@ interface CreateBurnXudtTransactionParams { xudtArgs: string; burnAmount: bigint
  * @returns An unsigned transaction object
  */
 export async function createBurnXudtTransaction(
-    { xudtArgs, burnAmount, ckbAddress, collector, isMainnet }: CreateBurnXudtTransactionParams,
+    { xudtArgs, burnAmount, ckbAddress, collector, isMainnet }:
+        CreateBurnXudtTransactionParams,
 ): Promise<CKBComponents.RawTransactionToSign> {
     const xudtType: CKBComponents.Script = {
         ...getXudtTypeScript(isMainnet),
-        args: xudtArgs
+        args: xudtArgs,
     };
 
     const fromLock = addressToScript(ckbAddress);
@@ -48,10 +55,11 @@ export async function createBurnXudtTransaction(
         throw new NoXudtLiveCellError("The address has no xudt cells");
     }
 
-    const { inputs: udtInputs, sumInputsCapacity, sumAmount } = collector.collectUdtInputs({
-        liveCells: xudtCells,
-        needAmount: burnAmount,
-    });
+    const { inputs: udtInputs, sumInputsCapacity, sumAmount } = collector
+        .collectUdtInputs({
+            liveCells: xudtCells,
+            needAmount: burnAmount,
+        });
 
     let actualInputsCapacity = sumInputsCapacity;
     let inputs = udtInputs;
@@ -114,8 +122,6 @@ export async function createBurnXudtTransaction(
         console.debug("Sum Empty Capacity:", sumEmptyCapacity);
     }
 
-
-
     let changeCapacity = actualInputsCapacity - sumXudtOutputCapacity;
     outputs.push({
         lock: fromLock,
@@ -128,10 +134,13 @@ export async function createBurnXudtTransaction(
     console.debug("Updated Outputs Data:", outputsData);
 
     const emptyWitness = { lock: "", inputType: "", outputType: "" };
-    const witnesses = inputs.map((_, index) => (index === 0 ? emptyWitness : "0x"));
+    const witnesses = inputs.map((
+        _,
+        index,
+    ) => (index === 0 ? emptyWitness : "0x"));
 
     const cellDeps = [
-        getSecp256k1CellDep(isMainnet),
+        ...(await getAddressCellDeps(isMainnet, [ckbAddress])),
         ...(await fetchTypeIdCellDeps(isMainnet, { xudt: true })),
     ];
 
@@ -148,10 +157,13 @@ export async function createBurnXudtTransaction(
     console.debug("Unsigned transaction:", unsignedTx);
 
     if (txFee === MAX_FEE) {
-        const txSize = getTransactionSize(unsignedTx) + SECP256K1_WITNESS_LOCK_SIZE;
+        const txSize = getTransactionSize(unsignedTx) +
+            SECP256K1_WITNESS_LOCK_SIZE;
         const estimatedTxFee = calculateTransactionFee(txSize);
         changeCapacity -= estimatedTxFee;
-        unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(actualInputsCapacity.toString(16));
+        unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
+            actualInputsCapacity.toString(16),
+        );
 
         console.debug("Transaction size:", txSize);
         console.debug("Estimated transaction fee:", estimatedTxFee);

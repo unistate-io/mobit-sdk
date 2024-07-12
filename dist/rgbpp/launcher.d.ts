@@ -22,5 +22,5 @@ interface RgbppLauncerCombinedParams {
     }>;
     unisat: AbstractWallet;
 }
-export declare const launchCombined: ({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, ckbAddress, filterUtxo, btcService, unisat, cccSigner }: RgbppLauncerCombinedParams) => Promise<TxResult>;
+export declare const launchCombined: ({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, ckbAddress, filterUtxo, btcService, unisat, cccSigner, }: RgbppLauncerCombinedParams) => Promise<TxResult>;
 export {};

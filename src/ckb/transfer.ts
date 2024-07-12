@@ -8,7 +8,6 @@ import {
   calculateUdtCellCapacity,
   Collector,
   fetchTypeIdCellDeps,
-  getSecp256k1CellDep,
   getXudtTypeScript,
   MAX_FEE,
   MIN_CAPACITY,
@@ -17,8 +16,15 @@ import {
   SECP256K1_WITNESS_LOCK_SIZE,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
+import { getAddressCellDeps } from "../helper";
 
-interface CreateTransferXudtTransactionParams { xudtArgs: string; receivers: { toAddress: string; transferAmount: bigint; }[]; ckbAddress: string; collector: Collector; isMainnet: boolean; }
+interface CreateTransferXudtTransactionParams {
+  xudtArgs: string;
+  receivers: { toAddress: string; transferAmount: bigint }[];
+  ckbAddress: string;
+  collector: Collector;
+  isMainnet: boolean;
+}
 
 /**
  * transferXudt can be used to mint xUDT assets or transfer xUDT assets.
@@ -30,11 +36,12 @@ interface CreateTransferXudtTransactionParams { xudtArgs: string; receivers: { t
  * @returns An unsigned transaction object
  */
 export async function createTransferXudtTransaction(
-  { xudtArgs, receivers, ckbAddress, collector, isMainnet }: CreateTransferXudtTransactionParams,
+  { xudtArgs, receivers, ckbAddress, collector, isMainnet }:
+    CreateTransferXudtTransactionParams,
 ): Promise<CKBComponents.RawTransactionToSign> {
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
-    args: xudtArgs
+    args: xudtArgs,
   };
   const fromLock = addressToScript(ckbAddress);
   const xudtCells = await collector.getCells({
@@ -160,7 +167,7 @@ export async function createTransferXudtTransaction(
   console.debug("Witnesses:", witnesses);
 
   const cellDeps = [
-    getSecp256k1CellDep(isMainnet),
+    ...(await getAddressCellDeps(isMainnet, [ckbAddress])),
     ...(await fetchTypeIdCellDeps(isMainnet, { xudt: true })),
   ];
 

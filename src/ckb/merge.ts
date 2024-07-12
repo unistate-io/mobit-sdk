@@ -1,5 +1,3 @@
-import { isOmnilockAddress } from "@ckb-lumos/common-scripts/lib/helper";
-import { createOmnilockScript } from "@ckb-lumos/common-scripts/lib/omnilock";
 import {
   addressToScript,
   getTransactionSize,
@@ -10,7 +8,6 @@ import {
   calculateUdtCellCapacity,
   Collector,
   fetchTypeIdCellDeps,
-  getSecp256k1CellDep,
   getXudtTypeScript,
   IndexerCell,
   leToU128,
@@ -20,20 +17,24 @@ import {
   SECP256K1_WITNESS_LOCK_SIZE,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
+import { getAddressCellDeps, getIndexerCells } from "../helper";
 
 interface CreateMergeXudtTransactionParams {
   xudtArgs: string;
   ckbAddresses: string[];
   collector: Collector;
   isMainnet: boolean;
+  // This parameter is used to specify the address for the output cell, defaulting to the first address in the input address set.
+  ckbAddress: string;
 }
 
 /**
  * Merges multiple xUDT cells into a single xUDT cell and returns the remaining capacity as a separate cell.
  * @param xudtArgs The xUDT type script args
- * @param ckbAddresses The CKB addresses for the transaction
+ * @param ckbAddresses The CKB addresses involved in the transaction
  * @param collector The collector instance used to fetch cells and collect inputs
- * @param isMainnet A boolean indicating whether the network is mainnet or testnet
+ * @param isMainnet A boolean indicating whether the transaction is for the mainnet or testnet
+ * @param ckbAddress The address for the output cell, defaulting to the first address in the input address set
  * @returns An unsigned transaction object
  */
 export async function createMergeXudtTransaction({
@@ -41,22 +42,21 @@ export async function createMergeXudtTransaction({
   ckbAddresses,
   collector,
   isMainnet,
-}: CreateMergeXudtTransactionParams): Promise<CKBComponents.RawTransactionToSign> {
+  ckbAddress = ckbAddresses[0],
+}: CreateMergeXudtTransactionParams): Promise<
+  CKBComponents.RawTransactionToSign
+> {
+  const fromLock = addressToScript(ckbAddress);
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
     args: xudtArgs,
   };
 
-  const fromLocks = ckbAddresses.map(addressToScript);
-  let xudtCells: IndexerCell[] = [];
-
-  for (const lock of fromLocks) {
-    const cells = await collector.getCells({
-      lock: lock,
-      type: xudtType,
-    });
-    xudtCells = xudtCells.concat(cells);
-  }
+  const xudtCells = await getIndexerCells({
+    ckbAddresses,
+    type: xudtType,
+    collector,
+  });
 
   console.debug("Fetched xudt cells:", xudtCells);
 
@@ -81,10 +81,10 @@ export async function createMergeXudtTransaction({
   console.debug("Sum of inputs capacity:", sumInputsCapacity);
   console.debug("Sum of amount:", sumAmount);
 
-  const mergedXudtCapacity = calculateUdtCellCapacity(fromLocks[0]);
+  const mergedXudtCapacity = calculateUdtCellCapacity(fromLock);
   const outputs: CKBComponents.CellOutput[] = [
     {
-      lock: fromLocks[0],
+      lock: fromLock,
       type: xudtType,
       capacity: append0x(mergedXudtCapacity.toString(16)),
     },
@@ -100,13 +100,13 @@ export async function createMergeXudtTransaction({
   const txFee = MAX_FEE;
   if (sumInputsCapacity <= sumXudtOutputCapacity) {
     throw new Error(
-      "Thetotal input capacity is less than or equal to the total output capacity, which is not possible in a merge function."
+      "Thetotal input capacity is less than or equal to the total output capacity, which is not possible in a merge function.",
     );
   }
 
   let changeCapacity = actualInputsCapacity - sumXudtOutputCapacity;
   outputs.push({
-    lock: fromLocks[0],
+    lock: fromLock,
     capacity: append0x(changeCapacity.toString(16)),
   });
   outputsData.push("0x");
@@ -116,12 +116,10 @@ export async function createMergeXudtTransaction({
   console.debug("Updated Outputs Data:", outputsData);
 
   const emptyWitness = { lock: "", inputType: "", outputType: "" };
-  const witnesses = inputs.map((_, index) =>
-    index === 0 ? emptyWitness : "0x"
-  );
+  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
 
   const cellDeps = [
-    getSecp256k1CellDep(isMainnet),
+    ...(await getAddressCellDeps(isMainnet, ckbAddresses)),
     ...(await fetchTypeIdCellDeps(isMainnet, { xudt: true })),
   ];
 
@@ -142,7 +140,7 @@ export async function createMergeXudtTransaction({
     const estimatedTxFee = calculateTransactionFee(txSize);
     changeCapacity -= estimatedTxFee;
     unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
-      changeCapacity.toString(16)
+      changeCapacity.toString(16),
     );
 
     console.debug("Transaction size:", txSize);

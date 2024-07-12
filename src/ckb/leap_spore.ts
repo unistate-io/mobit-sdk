@@ -4,11 +4,10 @@ import {
   buildRgbppLockArgs,
   Collector,
   genLeapSporeFromCkbToBtcRawTx,
-  getSecp256k1CellDep,
   getSporeTypeScript,
   serializeScript,
 } from "@rgbpp-sdk/ckb";
-import { signAndSendTransaction } from "../helper";
+import { getAddressCellDeps, signAndSendTransaction } from "../helper";
 
 export interface LeapSporeToBtcParams {
   outIndex: number;
@@ -52,11 +51,18 @@ export const leapSporeFromCkbToBtc = async (
   const emptyWitness = { lock: "", inputType: "", outputType: "" };
   const unsignedTx: CKBComponents.RawTransactionToSign = {
     ...ckbRawTx,
-    cellDeps: [...ckbRawTx.cellDeps, getSecp256k1CellDep(isMainnet)],
+    cellDeps: [
+      ...ckbRawTx.cellDeps,
+      ...(await getAddressCellDeps(isMainnet, [ckbAddress])),
+    ],
     witnesses: [emptyWitness, ...ckbRawTx.witnesses.slice(1)],
   };
 
-  const { txHash } = await signAndSendTransaction(unsignedTx, collector, cccSigner);
+  const { txHash } = await signAndSendTransaction(
+    unsignedTx,
+    collector,
+    cccSigner,
+  );
 
   console.info(
     `Rgbpp spore has been jumped from CKB to BTC and CKB tx hash is ${txHash}`,

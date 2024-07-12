@@ -1,7 +1,7 @@
 import { NetworkType } from "rgbpp";
 import { BtcAssetsApi, DataSource } from "rgbpp";
 import * as ccc from "@ckb-ccc/core";
-import { BTCTestnetType, Collector } from "@rgbpp-sdk/ckb";
+import { BTCTestnetType, Collector, IndexerCell } from "@rgbpp-sdk/ckb";
 export declare const signAndSendTransaction: (transaction: CKBComponents.RawTransactionToSign, collector: Collector, cccSigner: ccc.Signer) => Promise<{
     txHash: string;
 }>;
@@ -42,4 +42,10 @@ export interface TxResult {
     ckbTxHash?: string;
     error?: any;
 }
+export declare function getIndexerCells({ ckbAddresses, type, collector }: {
+    ckbAddresses: string[];
+    collector: Collector;
+    type?: CKBComponents.Script;
+}): Promise<IndexerCell[]>;
+export declare function getAddressCellDeps(isMainnet: boolean, ckbAddresses: string[]): Promise<CKBComponents.CellDep[]>;
 export {};
