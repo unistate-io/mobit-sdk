@@ -13,7 +13,6 @@ import {
   Collector,
   genRgbppLaunchCkbVirtualTx,
   genRgbppLockScript,
-  getSecp256k1CellDep,
   MAX_FEE,
   NoLiveCellError,
   RgbppTokenInfo,
@@ -24,7 +23,12 @@ import {
 import { DataSource, sendRgbppUtxos } from "@rgbpp-sdk/btc";
 import { BtcAssetsApi } from "rgbpp";
 import { BtcApiUtxo, BtcAssetsApiError } from "@rgbpp-sdk/service";
-import { AbstractWallet, signAndSendTransaction, TxResult } from "../helper";
+import {
+  AbstractWallet,
+  getAddressCellDeps,
+  signAndSendTransaction,
+  TxResult,
+} from "../helper";
 import { signAndSendPsbt } from "../unisat";
 import * as ccc from "@ckb-ccc/core";
 
@@ -92,7 +96,7 @@ const prepareLaunchCell = async ({
     index,
   ) => (index === 0 ? emptyWitness : "0x"));
 
-  const cellDeps = [getSecp256k1CellDep(isMainnet)];
+  const cellDeps = [...(await getAddressCellDeps(isMainnet, [ckbAddress]))];
 
   const unsignedTx = {
     version: "0x0",
@@ -171,7 +175,7 @@ const launchRgbppAsset = async ({
   const { txId: btcTxId, rawTxHex: btcTxBytes } = await signAndSendPsbt(
     psbt,
     unisat,
-    btcService
+    btcService,
   );
 
   console.log(`BTC ${btcTestnetType} TxId: ${btcTxId}`);
@@ -224,8 +228,6 @@ interface RgbppLauncerCombinedParams {
   unisat: AbstractWallet;
 }
 
-
-
 export const launchCombined = async ({
   rgbppTokenInfo,
   collector,
@@ -239,12 +241,12 @@ export const launchCombined = async ({
   filterUtxo,
   btcService,
   unisat,
-  cccSigner
+  cccSigner,
 }: RgbppLauncerCombinedParams): Promise<TxResult> => {
   const utxos = await btcService.getBtcUtxos(btcAccount, {
     only_non_rgbpp_utxos: true,
     only_confirmed: true,
-    min_satoshi: 10000
+    min_satoshi: 10000,
   });
 
   const { outIndex, btcTxId } = await filterUtxo(utxos);
@@ -259,7 +261,11 @@ export const launchCombined = async ({
     btcTestnetType,
   });
 
-  const { txHash } = await signAndSendTransaction(prepareLaunchCellTx, collector, cccSigner);
+  const { txHash } = await signAndSendTransaction(
+    prepareLaunchCellTx,
+    collector,
+    cccSigner,
+  );
 
   console.info(`Launch cell has been created and the CKB tx hash ${txHash}`);
 
@@ -282,6 +288,6 @@ export const launchCombined = async ({
   return {
     btcTxId: TxId,
     error,
-    ckbTxHash: txHash
-  }
+    ckbTxHash: txHash,
+  };
 };

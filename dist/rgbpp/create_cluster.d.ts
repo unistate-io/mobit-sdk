@@ -20,5 +20,5 @@ interface createClusterCombinedParams {
     }>;
     cccSigner: ccc.Signer;
 }
-export declare const createClusterCombined: ({ clusterData, fromBtcAccount, fromBtcAccountPubkey, collector, isMainnet, btcTestnetType, btcDataSource, ckbAddress, filterUtxo, btcService, unisat, cccSigner }: createClusterCombinedParams) => Promise<TxResult>;
+export declare const createClusterCombined: ({ clusterData, fromBtcAccount, fromBtcAccountPubkey, collector, isMainnet, btcTestnetType, btcDataSource, ckbAddress, filterUtxo, btcService, unisat, cccSigner, }: createClusterCombinedParams) => Promise<TxResult>;
 export {};

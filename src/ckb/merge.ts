@@ -8,7 +8,6 @@ import {
   calculateUdtCellCapacity,
   Collector,
   fetchTypeIdCellDeps,
-  getSecp256k1CellDep,
   getXudtTypeScript,
   IndexerCell,
   leToU128,
@@ -18,44 +17,62 @@ import {
   SECP256K1_WITNESS_LOCK_SIZE,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
+import { getAddressCellDeps, getIndexerCells } from "../helper";
 
-interface CreateMergeXudtTransactionParams { xudtArgs: string; ckbAddress: string; collector: Collector; isMainnet: boolean; }
+interface CreateMergeXudtTransactionParams {
+  xudtArgs: string;
+  ckbAddresses: string[];
+  collector: Collector;
+  isMainnet: boolean;
+  // This parameter is used to specify the address for the output cell, defaulting to the first address in the input address set.
+  ckbAddress: string;
+}
 
 /**
  * Merges multiple xUDT cells into a single xUDT cell and returns the remaining capacity as a separate cell.
  * @param xudtArgs The xUDT type script args
- * @param ckbAddress The CKB address for the transaction
+ * @param ckbAddresses The CKB addresses involved in the transaction
  * @param collector The collector instance used to fetch cells and collect inputs
- * @param isMainnet A boolean indicating whether the network is mainnet or testnet
+ * @param isMainnet A boolean indicating whether the transaction is for the mainnet or testnet
+ * @param ckbAddress The address for the output cell, defaulting to the first address in the input address set
  * @returns An unsigned transaction object
  */
-export async function createMergeXudtTransaction(
-  { xudtArgs, ckbAddress, collector, isMainnet }: CreateMergeXudtTransactionParams,
-): Promise<CKBComponents.RawTransactionToSign> {
+export async function createMergeXudtTransaction({
+  xudtArgs,
+  ckbAddresses,
+  collector,
+  isMainnet,
+  ckbAddress = ckbAddresses[0],
+}: CreateMergeXudtTransactionParams): Promise<
+  CKBComponents.RawTransactionToSign
+> {
+  const fromLock = addressToScript(ckbAddress);
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
-    args: xudtArgs
+    args: xudtArgs,
   };
-  const fromLock = addressToScript(ckbAddress);
-  const xudtCells = await collector.getCells({
-    lock: fromLock,
+
+  const xudtCells = await getIndexerCells({
+    ckbAddresses,
     type: xudtType,
+    collector,
   });
 
   console.debug("Fetched xudt cells:", xudtCells);
 
   if (!xudtCells || xudtCells.length === 0) {
-    throw new NoXudtLiveCellError("The address has no xudt cells");
+    throw new NoXudtLiveCellError("The addresses have no xudt cells");
   }
 
   if (xudtCells.length === 1) {
     throw new Error("Only one xudt cell found, no need to merge");
   }
 
-  const { inputs: udtInputs, sumInputsCapacity, sumAmount } =
-    collectAllUdtInputs(
-      xudtCells,
-    );
+  const {
+    inputs: udtInputs,
+    sumInputsCapacity,
+    sumAmount,
+  } = collectAllUdtInputs(xudtCells);
 
   let actualInputsCapacity = sumInputsCapacity;
   let inputs = udtInputs;
@@ -72,9 +89,7 @@ export async function createMergeXudtTransaction(
       capacity: append0x(mergedXudtCapacity.toString(16)),
     },
   ];
-  const outputsData: string[] = [
-    append0x(u128ToLe(sumAmount)),
-  ];
+  const outputsData: string[] = [append0x(u128ToLe(sumAmount))];
 
   let sumXudtOutputCapacity = mergedXudtCapacity;
 
@@ -85,7 +100,7 @@ export async function createMergeXudtTransaction(
   const txFee = MAX_FEE;
   if (sumInputsCapacity <= sumXudtOutputCapacity) {
     throw new Error(
-      "The total input capacity is less than or equal to the total output capacity, which is not possible in a merge function.",
+      "Thetotal input capacity is less than or equal to the total output capacity, which is not possible in a merge function.",
     );
   }
 
@@ -101,13 +116,10 @@ export async function createMergeXudtTransaction(
   console.debug("Updated Outputs Data:", outputsData);
 
   const emptyWitness = { lock: "", inputType: "", outputType: "" };
-  const witnesses = inputs.map((
-    _,
-    index,
-  ) => (index === 0 ? emptyWitness : "0x"));
+  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
 
   const cellDeps = [
-    getSecp256k1CellDep(isMainnet),
+    ...(await getAddressCellDeps(isMainnet, ckbAddresses)),
     ...(await fetchTypeIdCellDeps(isMainnet, { xudt: true })),
   ];
 

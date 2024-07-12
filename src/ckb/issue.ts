@@ -12,7 +12,6 @@ import {
     encodeRgbppTokenInfo,
     fetchTypeIdCellDeps,
     generateUniqueTypeArgs,
-    getSecp256k1CellDep,
     getUniqueTypeScript,
     getXudtTypeScript,
     MAX_FEE,
@@ -22,6 +21,7 @@ import {
     SECP256K1_WITNESS_LOCK_SIZE,
     u128ToLe,
 } from "@rgbpp-sdk/ckb";
+import { getAddressCellDeps } from "../helper";
 
 interface CreateIssueXudtTransactionParams {
     xudtTotalAmount: bigint;
@@ -41,7 +41,8 @@ interface CreateIssueXudtTransactionParams {
  * @returns An unsigned transaction object
  */
 export async function createIssueXudtTransaction(
-    { xudtTotalAmount, tokenInfo, ckbAddress, collector, isMainnet }: CreateIssueXudtTransactionParams,
+    { xudtTotalAmount, tokenInfo, ckbAddress, collector, isMainnet }:
+        CreateIssueXudtTransactionParams,
 ): Promise<CKBComponents.RawTransactionToSign> {
     const issueLock = addressToScript(ckbAddress);
 
@@ -69,7 +70,10 @@ export async function createIssueXudtTransaction(
         tokenInfo,
         issueLock,
     );
-    console.debug("Calculated xUDT token info cell capacity:", xudtInfoCapacity);
+    console.debug(
+        "Calculated xUDT token info cell capacity:",
+        xudtInfoCapacity,
+    );
 
     // Set the transaction fee to the maximum fee and add debug information
     const txFee = MAX_FEE;
@@ -146,7 +150,7 @@ export async function createIssueXudtTransaction(
 
     // Define the cell dependencies and add debug information
     const cellDeps = [
-        getSecp256k1CellDep(isMainnet),
+        ...(await getAddressCellDeps(isMainnet, [ckbAddress])),
         ...(await fetchTypeIdCellDeps(isMainnet, { xudt: true, unique: true })),
     ];
     console.debug("Defined cell dependencies:", cellDeps);
@@ -165,7 +169,8 @@ export async function createIssueXudtTransaction(
 
     // Adjust the transaction fee if necessary and add debug information
     if (txFee === MAX_FEE) {
-        const txSize = getTransactionSize(unsignedTx) + SECP256K1_WITNESS_LOCK_SIZE;
+        const txSize = getTransactionSize(unsignedTx) +
+            SECP256K1_WITNESS_LOCK_SIZE;
         const estimatedTxFee = calculateTransactionFee(txSize);
         changeCapacity -= estimatedTxFee;
         unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
