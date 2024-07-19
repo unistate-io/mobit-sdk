@@ -52,12 +52,9 @@ function convertLiveCell(
   liveCell: CKBComponents.LiveCell,
   outPoint: BaseComponents.OutPoint,
 ): BaseComponents.Cell {
-  if (!liveCell.data) {
-    throw new Error("LiveCell data is required but was not provided.");
-  }
   return {
     cellOutput: convertCellOutput(liveCell.output),
-    data: liveCell.data?.content,
+    data: liveCell.data ? liveCell.data.content : "",
     outPoint,
   };
 }
@@ -169,6 +166,7 @@ export async function convertToTxSkeleton(
   console.debug("Fetching input cells");
   const inputCells = (await collector.getLiveCells(
     transaction.inputs.map((input) => input.previousOutput),
+    true
   )).map((cell, idx) => {
     return convertLiveCell(cell, transaction.inputs[idx].previousOutput);
   });

@@ -24,12 +24,12 @@ export interface SignPsbtOptions {
 export interface AbstractWallet {
     signPsbt(psbtHex: string): Promise<string>;
 }
-declare class CkbHelper {
+export declare class CkbHelper {
     collector: Collector;
     isMainnet: boolean;
     constructor(isMainnet: boolean);
 }
-declare class BtcHelper {
+export declare class BtcHelper {
     btcDataSource: DataSource;
     btcTestnetType?: BTCTestnetType;
     btcService: BtcAssetsApi;
@@ -48,4 +48,4 @@ export declare function getIndexerCells({ ckbAddresses, type, collector, }: {
     type?: CKBComponents.Script;
 }): Promise<IndexerCell[]>;
 export declare function getAddressCellDeps(isMainnet: boolean, ckbAddresses: string[]): Promise<CKBComponents.CellDep[]>;
-export { CkbHelper, BtcHelper };
+export {};

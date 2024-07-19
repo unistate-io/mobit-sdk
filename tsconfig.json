@@ -6,17 +6,12 @@
     "module": "ESNext",
     "moduleResolution": "Node",
     "target": "ESNext",
-    "lib": ["dom", "ESNext"],
     "declaration": true,
     "declarationDir": "./dist/types/",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true
   },
   "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
+    "src"
   ]
 }

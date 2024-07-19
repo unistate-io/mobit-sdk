@@ -10,7 +10,7 @@ module.exports = (env, argv) => {
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: 'sdk.js',
-      library: 'Mobit',
+      library: 'MobitSdk',
       libraryTarget: 'umd',
       globalObject: 'this',
       clean: true,
