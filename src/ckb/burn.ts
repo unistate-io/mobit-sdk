@@ -1,29 +1,29 @@
 import {
-    addressToScript,
-    getTransactionSize,
+  addressToScript,
+  getTransactionSize,
 } from "@nervosnetwork/ckb-sdk-utils";
 import {
-    append0x,
-    calculateTransactionFee,
-    calculateUdtCellCapacity,
-    Collector,
-    fetchTypeIdCellDeps,
-    getXudtTypeScript,
-    MAX_FEE,
-    MIN_CAPACITY,
-    NoLiveCellError,
-    NoXudtLiveCellError,
-    SECP256K1_WITNESS_LOCK_SIZE,
-    u128ToLe,
+  append0x,
+  calculateTransactionFee,
+  calculateUdtCellCapacity,
+  Collector,
+  fetchTypeIdCellDeps,
+  getXudtTypeScript,
+  MAX_FEE,
+  MIN_CAPACITY,
+  NoLiveCellError,
+  NoXudtLiveCellError,
+  SECP256K1_WITNESS_LOCK_SIZE,
+  u128ToLe,
 } from "@rgbpp-sdk/ckb";
 import { getAddressCellDeps } from "../helper";
 
 interface CreateBurnXudtTransactionParams {
-    xudtArgs: string;
-    burnAmount: bigint;
-    ckbAddress: string;
-    collector: Collector;
-    isMainnet: boolean;
+  xudtArgs: string;
+  burnAmount: bigint;
+  ckbAddress: string;
+  collector: Collector;
+  isMainnet: boolean;
 }
 /**
  * Creates an unsigned transaction for burning xUDT assets.
@@ -34,142 +34,143 @@ interface CreateBurnXudtTransactionParams {
  * @param isMainnet A boolean indicating whether the network is mainnet or testnet
  * @returns An unsigned transaction object
  */
-export async function createBurnXudtTransaction(
-    { xudtArgs, burnAmount, ckbAddress, collector, isMainnet }:
-        CreateBurnXudtTransactionParams,
-): Promise<CKBComponents.RawTransactionToSign> {
-    const xudtType: CKBComponents.Script = {
-        ...getXudtTypeScript(isMainnet),
-        args: xudtArgs,
-    };
+export async function createBurnXudtTransaction({
+  xudtArgs,
+  burnAmount,
+  ckbAddress,
+  collector,
+  isMainnet,
+}: CreateBurnXudtTransactionParams): Promise<
+  CKBComponents.RawTransactionToSign
+> {
+  const xudtType: CKBComponents.Script = {
+    ...getXudtTypeScript(isMainnet),
+    args: xudtArgs,
+  };
 
-    const fromLock = addressToScript(ckbAddress);
-    const xudtCells = await collector.getCells({
-        lock: fromLock,
-        type: xudtType,
-    });
+  const fromLock = addressToScript(ckbAddress);
+  const xudtCells = await collector.getCells({
+    lock: fromLock,
+    type: xudtType,
+  });
 
-    console.debug("Fetched xudt cells:", xudtCells);
+  console.debug("Fetched xudt cells:", xudtCells);
 
-    if (!xudtCells || xudtCells.length === 0) {
-        throw new NoXudtLiveCellError("The address has no xudt cells");
-    }
+  if (!xudtCells || xudtCells.length === 0) {
+    throw new NoXudtLiveCellError("The address has no xudt cells");
+  }
 
-    const { inputs: udtInputs, sumInputsCapacity, sumAmount } = collector
-        .collectUdtInputs({
-            liveCells: xudtCells,
-            needAmount: burnAmount,
-        });
+  const {
+    inputs: udtInputs,
+    sumInputsCapacity,
+    sumAmount,
+  } = collector.collectUdtInputs({
+    liveCells: xudtCells,
+    needAmount: burnAmount,
+  });
 
-    let actualInputsCapacity = sumInputsCapacity;
-    let inputs = udtInputs;
+  let actualInputsCapacity = sumInputsCapacity;
+  let inputs = udtInputs;
 
-    console.debug("Collected inputs:", inputs);
-    console.debug("Sum of inputs capacity:", sumInputsCapacity);
-    console.debug("Sum of amount:", sumAmount);
+  console.debug("Collected inputs:", inputs);
+  console.debug("Sum of inputs capacity:", sumInputsCapacity);
+  console.debug("Sum of amount:", sumAmount);
 
-    if (sumAmount < burnAmount) {
-        throw new Error("Not enough xUDT tokens to burn");
-    }
+  if (sumAmount < burnAmount) {
+    throw new Error("Not enough xUDT tokens to burn");
+  }
 
-    const outputs: CKBComponents.CellOutput[] = [];
-    const outputsData: string[] = [];
+  const outputs: CKBComponents.CellOutput[] = [];
+  const outputsData: string[] = [];
 
-    let sumXudtOutputCapacity = BigInt(0);
+  let sumXudtOutputCapacity = BigInt(0);
 
-    if (sumAmount > burnAmount) {
-        const xudtChangeCapacity = calculateUdtCellCapacity(fromLock);
-        outputs.push({
-            lock: fromLock,
-            type: xudtType,
-            capacity: append0x(xudtChangeCapacity.toString(16)),
-        });
-        outputsData.push(append0x(u128ToLe(sumAmount - burnAmount)));
-        sumXudtOutputCapacity += xudtChangeCapacity;
-
-        console.debug("XUDT change capacity:", xudtChangeCapacity);
-        console.debug("Updated outputs:", outputs);
-        console.debug("Updated outputs data:", outputsData);
-    }
-
-    const txFee = MAX_FEE;
-    if (sumInputsCapacity <= sumXudtOutputCapacity) {
-        let emptyCells = await collector.getCells({
-            lock: fromLock,
-        });
-
-        console.debug("Fetched Empty Cells:", emptyCells);
-
-        emptyCells = emptyCells.filter((cell) => !cell.output.type);
-
-        if (!emptyCells || emptyCells.length === 0) {
-            throw new NoLiveCellError("The address has no empty cells");
-        }
-
-        const needCapacity = sumXudtOutputCapacity - sumInputsCapacity;
-        const { inputs: emptyInputs, sumInputsCapacity: sumEmptyCapacity } =
-            collector.collectInputs(
-                emptyCells,
-                needCapacity,
-                txFee,
-                { minCapacity: MIN_CAPACITY },
-            );
-        inputs = [...inputs, ...emptyInputs];
-        actualInputsCapacity += sumEmptyCapacity;
-
-        console.debug("Need Capacity:", needCapacity);
-        console.debug("Empty Inputs:", emptyInputs);
-        console.debug("Sum Empty Capacity:", sumEmptyCapacity);
-    }
-
-    let changeCapacity = actualInputsCapacity - sumXudtOutputCapacity;
+  if (sumAmount > burnAmount) {
+    const xudtChangeCapacity = calculateUdtCellCapacity(fromLock);
     outputs.push({
-        lock: fromLock,
-        capacity: append0x(changeCapacity.toString(16)),
+      lock: fromLock,
+      type: xudtType,
+      capacity: append0x(xudtChangeCapacity.toString(16)),
     });
-    outputsData.push("0x");
+    outputsData.push(append0x(u128ToLe(sumAmount - burnAmount)));
+    sumXudtOutputCapacity += xudtChangeCapacity;
 
-    console.debug("Change Capacity:", changeCapacity);
-    console.debug("Updated Outputs:", outputs);
-    console.debug("Updated Outputs Data:", outputsData);
+    console.debug("XUDT change capacity:", xudtChangeCapacity);
+    console.debug("Updated outputs:", outputs);
+    console.debug("Updated outputs data:", outputsData);
+  }
 
-    const emptyWitness = { lock: "", inputType: "", outputType: "" };
-    const witnesses = inputs.map((
-        _,
-        index,
-    ) => (index === 0 ? emptyWitness : "0x"));
+  const txFee = MAX_FEE;
+  if (sumInputsCapacity <= sumXudtOutputCapacity) {
+    let emptyCells = await collector.getCells({
+      lock: fromLock,
+    });
 
-    const cellDeps = [
-        ...(await getAddressCellDeps(isMainnet, [ckbAddress])),
-        ...(await fetchTypeIdCellDeps(isMainnet, { xudt: true })),
-    ];
+    console.debug("Fetched Empty Cells:", emptyCells);
 
-    const unsignedTx: CKBComponents.RawTransactionToSign = {
-        version: "0x0",
-        cellDeps,
-        headerDeps: [],
-        inputs,
-        outputs,
-        outputsData,
-        witnesses,
-    };
+    emptyCells = emptyCells.filter((cell) => !cell.output.type);
 
-    console.debug("Unsigned transaction:", unsignedTx);
-
-    if (txFee === MAX_FEE) {
-        const txSize = getTransactionSize(unsignedTx) +
-            SECP256K1_WITNESS_LOCK_SIZE;
-        const estimatedTxFee = calculateTransactionFee(txSize);
-        changeCapacity -= estimatedTxFee;
-        unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
-            actualInputsCapacity.toString(16),
-        );
-
-        console.debug("Transaction size:", txSize);
-        console.debug("Estimated transaction fee:", estimatedTxFee);
-        console.debug("Updated change capacity:", changeCapacity);
-        console.debug("Updated unsigned transaction:", unsignedTx);
+    if (!emptyCells || emptyCells.length === 0) {
+      throw new NoLiveCellError("The address has no empty cells");
     }
 
-    return unsignedTx;
+    const needCapacity = sumXudtOutputCapacity - sumInputsCapacity;
+    const { inputs: emptyInputs, sumInputsCapacity: sumEmptyCapacity } =
+      collector.collectInputs(emptyCells, needCapacity, txFee, {
+        minCapacity: MIN_CAPACITY,
+      });
+    inputs = [...inputs, ...emptyInputs];
+    actualInputsCapacity += sumEmptyCapacity;
+
+    console.debug("Need Capacity:", needCapacity);
+    console.debug("Empty Inputs:", emptyInputs);
+    console.debug("Sum Empty Capacity:", sumEmptyCapacity);
+  }
+
+  let changeCapacity = actualInputsCapacity - sumXudtOutputCapacity;
+  outputs.push({
+    lock: fromLock,
+    capacity: append0x(changeCapacity.toString(16)),
+  });
+  outputsData.push("0x");
+
+  console.debug("Change Capacity:", changeCapacity);
+  console.debug("Updated Outputs:", outputs);
+  console.debug("Updated Outputs Data:", outputsData);
+
+  const emptyWitness = { lock: "", inputType: "", outputType: "" };
+  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
+
+  const cellDeps = [
+    ...(await getAddressCellDeps(isMainnet, [ckbAddress])),
+    ...(await fetchTypeIdCellDeps(isMainnet, { xudt: true })),
+  ];
+
+  const unsignedTx: CKBComponents.RawTransactionToSign = {
+    version: "0x0",
+    cellDeps,
+    headerDeps: [],
+    inputs,
+    outputs,
+    outputsData,
+    witnesses,
+  };
+
+  console.debug("Unsigned transaction:", unsignedTx);
+
+  if (txFee === MAX_FEE) {
+    const txSize = getTransactionSize(unsignedTx) + SECP256K1_WITNESS_LOCK_SIZE;
+    const estimatedTxFee = calculateTransactionFee(txSize);
+    changeCapacity -= estimatedTxFee;
+    unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
+      actualInputsCapacity.toString(16),
+    );
+
+    console.debug("Transaction size:", txSize);
+    console.debug("Estimated transaction fee:", estimatedTxFee);
+    console.debug("Updated change capacity:", changeCapacity);
+    console.debug("Updated unsigned transaction:", unsignedTx);
+  }
+
+  return unsignedTx;
 }

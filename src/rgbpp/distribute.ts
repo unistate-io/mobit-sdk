@@ -1,4 +1,4 @@
-import { BtcAssetsApi } from "rgbpp";
+import { DataSource, sendRgbppUtxos } from "@rgbpp-sdk/btc";
 import {
   BTCTestnetType,
   Collector,
@@ -7,7 +7,7 @@ import {
   RgbppBtcAddressReceiver,
   serializeScript,
 } from "@rgbpp-sdk/ckb";
-import { DataSource, sendRgbppUtxos } from "@rgbpp-sdk/btc";
+import { BtcAssetsApi } from "rgbpp";
 import { AbstractWallet, TxResult } from "../helper";
 import { signAndSendPsbt } from "../unisat";
 
@@ -30,9 +30,9 @@ const getRgbppLockArgsList = async ({
 }: RgbppLockArgsListParams): Promise<RgbppLockArgsListResponse> => {
   const type_script = encodeURIComponent(
     JSON.stringify({
-      "codeHash": getXudtTypeScript(isMainnet).codeHash,
-      "args": xudtTypeArgs,
-      "hashType": "type",
+      codeHash: getXudtTypeScript(isMainnet).codeHash,
+      args: xudtTypeArgs,
+      hashType: "type",
     }),
   );
 
@@ -92,11 +92,7 @@ const distribute = async ({
     btcTestnetType,
   });
 
-  const {
-    commitment,
-    ckbRawTx,
-    needPaymasterCell,
-  } = ckbVirtualTxResult;
+  const { commitment, ckbRawTx, needPaymasterCell } = ckbVirtualTxResult;
 
   // Send BTC tx
   const psbt = await sendRgbppUtxos({
@@ -111,7 +107,9 @@ const distribute = async ({
   });
 
   const { txId: btcTxId, rawTxHex: btcTxBytes } = await signAndSendPsbt(
-    psbt, unisat, btcService
+    psbt,
+    unisat,
+    btcService,
   );
 
   console.log(`BTC ${btcTestnetType} TxId: ${btcTxId}`);
@@ -145,8 +143,15 @@ const distribute = async ({
       }
     }, 30 * 1000);
   } catch (error) {
-    console.error(error);
-    return { error, btcTxId };
+    let processedError: Error;
+    if (error instanceof Error) {
+      processedError = error;
+    } else {
+      processedError = new Error(String(error));
+    }
+    console.error(processedError);
+
+    return { error: processedError, btcTxId };
   }
 
   return { btcTxId };
@@ -189,20 +194,19 @@ export const distributeCombined = async ({
     lockArgsListResponse.rgbppLockArgsList,
   );
 
-  const res =
-    await distribute({
-      rgbppLockArgsList: filteredLockArgsList,
-      receivers,
-      xudtTypeArgs,
-      collector,
-      btcDataSource,
-      btcTestnetType,
-      isMainnet,
-      fromBtcAccount,
-      fromBtcAccountPubkey,
-      unisat,
-      btcService,
-    });
+  const res = await distribute({
+    rgbppLockArgsList: filteredLockArgsList,
+    receivers,
+    xudtTypeArgs,
+    collector,
+    btcDataSource,
+    btcTestnetType,
+    isMainnet,
+    fromBtcAccount,
+    fromBtcAccountPubkey,
+    unisat,
+    btcService,
+  });
 
   return res;
 };

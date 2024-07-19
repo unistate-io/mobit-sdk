@@ -76,29 +76,35 @@ const transferSpore = async ({
   try {
     const interval = setInterval(async () => {
       const { state, failedReason } = await btcService.getRgbppTransactionState(
-        btcTxId
+        btcTxId,
       );
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
           const { txhash: txHash } = await btcService.getRgbppTransactionHash(
-            btcTxId
+            btcTxId,
           );
           console.info(
-            `Rgbpp spore has been transferred on BTC and the related CKB tx hash is ${txHash}`
+            `Rgbpp spore has been transferred on BTC and the related CKB tx hash is ${txHash}`,
           );
         } else {
           console.warn(
-            `Rgbpp CKB transaction failed and the reason is ${failedReason} `
+            `Rgbpp CKB transaction failed and the reason is ${failedReason} `,
           );
         }
       }
     }, 30 * 1000);
   } catch (error) {
-    console.error(error);
+    let processedError: Error;
+    if (error instanceof Error) {
+      processedError = error;
+    } else {
+      processedError = new Error(String(error));
+    }
+    console.error(processedError);
     return {
-      error,
+      error: processedError,
       btcTxId,
     };
   }
@@ -187,7 +193,7 @@ const getSporeRgbppLockArgs = async ({
 
     if (data.length === 0) {
       throw new Error(
-        "No assets found for the given BTC address and type script."
+        "No assets found for the given BTC address and type script.",
       );
     }
     // Assuming you want to return the sporeRgbppLockArgs based on the response

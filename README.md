@@ -2,7 +2,9 @@
 
 ## Overview
 
-This project provides a set of utilities for interacting with the CKB (Nervos Network) and Bitcoin networks, specifically for handling XUDT tokens and RGBPP assets.
+This project provides a set of utilities for interacting with the CKB (Nervos
+Network) and Bitcoin networks, specifically for handling XUDT tokens and RGBPP
+assets.
 
 ## Installation
 
@@ -16,7 +18,8 @@ npm install mobit-sdk
 
 ### CKB Helper
 
-The `CkbHelper` class provides a way to interact with the CKB network, depending on whether you're on the mainnet or testnet.
+The `CkbHelper` class provides a way to interact with the CKB network, depending
+on whether you're on the mainnet or testnet.
 
 ```typescript
 import { CkbHelper } from "./helper";
@@ -26,7 +29,8 @@ const ckbHelper = new CkbHelper(true); // true for mainnet, false for testnet
 
 ### Transactions
 
-The project provides several functions to create different types of transactions:
+The project provides several functions to create different types of
+transactions:
 
 - `createBurnXudtTransaction`: Burns XUDT tokens.
 - `createIssueXudtTransaction`: Issues new XUDT tokens.
@@ -54,8 +58,10 @@ The project provides several functions to create different types of transactions
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request for any changes.
+Contributions are welcome! Please open an issue or submit a pull request for any
+changes.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file
+for details.

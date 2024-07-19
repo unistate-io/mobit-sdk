@@ -1,4 +1,4 @@
-import { addressToScriptPublicKeyHex, AddressType, bitcoin, transactionToHex, tweakSigner } from "@rgbpp-sdk/btc";
+import { bitcoin, transactionToHex } from "@rgbpp-sdk/btc";
 import { BtcAssetsApi } from "rgbpp";
 import { AbstractWallet } from "./helper";
 

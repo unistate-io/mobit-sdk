@@ -1,7 +1,9 @@
+import * as ccc from "@ckb-ccc/core";
 import {
   addressToScript,
   getTransactionSize,
 } from "@nervosnetwork/ckb-sdk-utils";
+import { DataSource, sendRgbppUtxos } from "@rgbpp-sdk/btc";
 import {
   append0x,
   appendCkbTxWitnesses,
@@ -20,9 +22,8 @@ import {
   sendCkbTx,
   updateCkbTxWithRealBtcTxId,
 } from "@rgbpp-sdk/ckb";
-import { DataSource, sendRgbppUtxos } from "@rgbpp-sdk/btc";
+import { BtcApiUtxo } from "@rgbpp-sdk/service";
 import { BtcAssetsApi } from "rgbpp";
-import { BtcApiUtxo, BtcAssetsApiError } from "@rgbpp-sdk/service";
 import {
   AbstractWallet,
   getAddressCellDeps,
@@ -30,7 +31,6 @@ import {
   TxResult,
 } from "../helper";
 import { signAndSendPsbt } from "../unisat";
-import * as ccc from "@ckb-ccc/core";
 
 interface RgbppPrepareLauncerParams {
   outIndex: number;
@@ -91,10 +91,7 @@ const prepareLaunchCell = async ({
   });
   const outputsData = ["0x", "0x"];
   const emptyWitness = { lock: "", inputType: "", outputType: "" };
-  const witnesses = inputs.map((
-    _,
-    index,
-  ) => (index === 0 ? emptyWitness : "0x"));
+  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
 
   const cellDeps = [...(await getAddressCellDeps(isMainnet, [ckbAddress]))];
 
@@ -155,10 +152,7 @@ const launchRgbppAsset = async ({
 
   const { commitment, ckbRawTx, needPaymasterCell } = ckbVirtualTxResult;
 
-  console.log(
-    "RGB++ Asset type script args: ",
-    ckbRawTx.outputs[0].type?.args,
-  );
+  console.log("RGB++ Asset type script args: ", ckbRawTx.outputs[0].type?.args);
 
   // Send BTC tx
   const psbt = await sendRgbppUtxos({
@@ -202,8 +196,14 @@ const launchRgbppAsset = async ({
         `RGB++ Asset has been launched and CKB tx hash is ${txHash}`,
       );
     } catch (error) {
-      console.error(error);
-      return { error, btcTxId };
+      let processedError: Error;
+      if (error instanceof Error) {
+        processedError = error;
+      } else {
+        processedError = new Error(String(error));
+      }
+      console.error(processedError);
+      return { error: processedError, btcTxId };
     }
   }, 30 * 1000);
 

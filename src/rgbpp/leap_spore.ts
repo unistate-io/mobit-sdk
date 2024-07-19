@@ -72,31 +72,34 @@ const leapSporeFromBtcToCkb = async ({
   try {
     const interval = setInterval(async () => {
       const { state, failedReason } = await btcService.getRgbppTransactionState(
-        btcTxId
+        btcTxId,
       );
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
           const { txhash: txHash } = await btcService.getRgbppTransactionHash(
-            btcTxId
+            btcTxId,
           );
           console.info(
-            `Rgbpp spore has been leaped from BTC to CKB and the related CKB tx hash is ${txHash}`
+            `Rgbpp spore has been leaped from BTC to CKB and the related CKB tx hash is ${txHash}`,
           );
         } else {
           console.warn(
-            `Rgbpp CKB transaction failed and the reason is ${failedReason} `
+            `Rgbpp CKB transaction failed and the reason is ${failedReason} `,
           );
         }
       }
     }, 30 * 1000);
   } catch (error) {
-    console.error(error);
-    return {
-      error,
-      btcTxId,
-    };
+    let processedError: Error;
+    if (error instanceof Error) {
+      processedError = error;
+    } else {
+      processedError = new Error(String(error));
+    }
+    console.error(processedError);
+    return { error: processedError, btcTxId };
   }
 
   return {
@@ -183,7 +186,7 @@ const getSporeRgbppLockArgs = async ({
 
     if (!data || data.length === 0) {
       throw new Error(
-        "No assets found for the given BTC address and type script."
+        "No assets found for the given BTC address and type script.",
       );
     }
     // Assuming you want to return the sporeRgbppLockArgs based on the response

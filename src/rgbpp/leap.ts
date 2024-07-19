@@ -1,4 +1,3 @@
-import { bitcoin } from "@rgbpp-sdk/btc";
 import {
   BTCTestnetType,
   Collector,
@@ -7,8 +6,8 @@ import {
   serializeScript,
 } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi, DataSource, sendRgbppUtxos } from "rgbpp";
-import { signAndSendPsbt } from "../unisat";
 import { AbstractWallet, TxResult } from "../helper";
+import { signAndSendPsbt } from "../unisat";
 
 interface LeapToCkbParams {
   rgbppLockArgsList: string[];
@@ -22,25 +21,23 @@ interface LeapToCkbParams {
   fromBtcAccountPubkey?: string;
   btcDataSource: DataSource;
   btcService: BtcAssetsApi;
-  unisat: AbstractWallet
+  unisat: AbstractWallet;
 }
 
-export const leapFromBtcToCKB = async (
-  {
-    rgbppLockArgsList,
-    toCkbAddress,
-    xudtTypeArgs,
-    transferAmount,
-    isMainnet,
-    collector,
-    btcTestnetType,
-    fromBtcAccountPubkey,
-    fromBtcAccount,
-    btcDataSource,
-    btcService,
-    unisat
-  }: LeapToCkbParams,
-): Promise<TxResult> => {
+export const leapFromBtcToCKB = async ({
+  rgbppLockArgsList,
+  toCkbAddress,
+  xudtTypeArgs,
+  transferAmount,
+  isMainnet,
+  collector,
+  btcTestnetType,
+  fromBtcAccountPubkey,
+  fromBtcAccount,
+  btcDataSource,
+  btcService,
+  unisat,
+}: LeapToCkbParams): Promise<TxResult> => {
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
     args: xudtTypeArgs,
@@ -100,8 +97,14 @@ export const leapFromBtcToCKB = async (
       }
     }, 30 * 1000);
   } catch (error) {
-    console.error(error);
-    return { error, btcTxId }
+    let processedError: Error;
+    if (error instanceof Error) {
+      processedError = error;
+    } else {
+      processedError = new Error(String(error));
+    }
+    console.error(processedError);
+    return { error: processedError, btcTxId };
   }
 
   return { btcTxId };

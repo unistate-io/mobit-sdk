@@ -1,8 +1,8 @@
-import { BtcAssetsApi, buildRgbppTransferTx } from "rgbpp";
-import { BTCTestnetType, Collector, getXudtTypeScript } from "@rgbpp-sdk/ckb";
 import { bitcoin, DataSource } from "@rgbpp-sdk/btc";
-import { signAndSendPsbt } from "../unisat";
+import { BTCTestnetType, Collector, getXudtTypeScript } from "@rgbpp-sdk/ckb";
+import { BtcAssetsApi, buildRgbppTransferTx } from "rgbpp";
 import { AbstractWallet, TxResult } from "../helper";
+import { signAndSendPsbt } from "../unisat";
 
 interface RgbppLockArgsListParams {
   xudtTypeArgs: string;
@@ -23,15 +23,13 @@ const getRgbppLockArgsList = async ({
 }: RgbppLockArgsListParams): Promise<RgbppLockArgsListResponse> => {
   const type_script = JSON.stringify({
     ...getXudtTypeScript(isMainnet),
-    "args": xudtTypeArgs,
+    args: xudtTypeArgs,
   });
 
   console.log(type_script);
 
   const data = await btcService.getRgbppAssetsByBtcAddress(fromBtcAccount, {
-    type_script: encodeURIComponent(
-      type_script
-    ),
+    type_script: encodeURIComponent(type_script),
     no_cache: false,
   });
 
@@ -92,11 +90,7 @@ const transfer = async ({
 
   // Send BTC tx
   const psbt = bitcoin.Psbt.fromHex(btcPsbtHex);
-  const { txId: btcTxId } = await signAndSendPsbt(
-    psbt,
-    unisat,
-    btcService,
-  );
+  const { txId: btcTxId } = await signAndSendPsbt(psbt, unisat, btcService);
 
   console.log(`BTC ${btcTestnetType} TxId: ${btcTxId}`);
 
@@ -128,8 +122,14 @@ const transfer = async ({
       }
     }, 30 * 1000);
   } catch (error) {
-    console.error(error);
-    return { error, btcTxId };
+    let processedError: Error;
+    if (error instanceof Error) {
+      processedError = error;
+    } else {
+      processedError = new Error(String(error));
+    }
+    console.error(processedError);
+    return { error: processedError, btcTxId };
   }
 
   return { btcTxId };

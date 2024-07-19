@@ -21,19 +21,17 @@ export interface LeapToBtcParams {
   cccSigner: Signer;
 }
 
-export const leapFromCkbToBtc = async (
-  {
-    outIndex,
-    btcTxId,
-    xudtTypeArgs,
-    transferAmount,
-    isMainnet,
-    collector,
-    ckbAddress,
-    btcTestnetType,
-    cccSigner,
-  }: LeapToBtcParams,
-): Promise<string> => {
+export const leapFromCkbToBtc = async ({
+  outIndex,
+  btcTxId,
+  xudtTypeArgs,
+  transferAmount,
+  isMainnet,
+  collector,
+  ckbAddress,
+  btcTestnetType,
+  cccSigner,
+}: LeapToBtcParams): Promise<string> => {
   const toRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
 
   const xudtType: CKBComponents.Script = {
