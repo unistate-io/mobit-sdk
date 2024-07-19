@@ -4,7 +4,6 @@ interface CreateMergeXudtTransactionParams {
     ckbAddresses: string[];
     collector: Collector;
     isMainnet: boolean;
-    ckbAddress: string;
 }
 /**
  * Merges multiple xUDT cells into a single xUDT cell and returns the remaining capacity as a separate cell.
@@ -15,5 +14,5 @@ interface CreateMergeXudtTransactionParams {
  * @param ckbAddress The address for the output cell, defaulting to the first address in the input address set
  * @returns An unsigned transaction object
  */
-export declare function createMergeXudtTransaction({ xudtArgs, ckbAddresses, collector, isMainnet, ckbAddress, }: CreateMergeXudtTransactionParams): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createMergeXudtTransaction({ xudtArgs, ckbAddresses, collector, isMainnet, }: CreateMergeXudtTransactionParams, ckbAddress?: string): Promise<CKBComponents.RawTransactionToSign>;
 export {};

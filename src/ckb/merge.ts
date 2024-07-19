@@ -24,8 +24,6 @@ interface CreateMergeXudtTransactionParams {
   ckbAddresses: string[];
   collector: Collector;
   isMainnet: boolean;
-  // This parameter is used to specify the address for the output cell, defaulting to the first address in the input address set.
-  ckbAddress: string;
 }
 
 /**
@@ -42,8 +40,7 @@ export async function createMergeXudtTransaction({
   ckbAddresses,
   collector,
   isMainnet,
-  ckbAddress = ckbAddresses[0],
-}: CreateMergeXudtTransactionParams): Promise<
+}: CreateMergeXudtTransactionParams,ckbAddress = ckbAddresses[0]): Promise<
   CKBComponents.RawTransactionToSign
 > {
   const fromLock = addressToScript(ckbAddress);
