@@ -35,10 +35,15 @@ interface CreateTransferXudtTransactionParams {
  * @param isMainnet A boolean indicating whether the network is mainnet or testnet
  * @returns An unsigned transaction object
  */
-export async function createTransferXudtTransaction(
-  { xudtArgs, receivers, ckbAddress, collector, isMainnet }:
-    CreateTransferXudtTransactionParams,
-): Promise<CKBComponents.RawTransactionToSign> {
+export async function createTransferXudtTransaction({
+  xudtArgs,
+  receivers,
+  ckbAddress,
+  collector,
+  isMainnet,
+}: CreateTransferXudtTransactionParams): Promise<
+  CKBComponents.RawTransactionToSign
+> {
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
     args: xudtArgs,
@@ -84,15 +89,15 @@ export async function createTransferXudtTransaction(
   let actualInputsCapacity = sumXudtInputsCapacity;
   let inputs = udtInputs;
 
-  const outputs: CKBComponents.CellOutput[] = receivers.map((
-    { toAddress },
-  ) => ({
-    lock: addressToScript(toAddress),
-    type: xudtType,
-    capacity: append0x(
-      calculateUdtCellCapacity(addressToScript(toAddress)).toString(16),
-    ),
-  }));
+  const outputs: CKBComponents.CellOutput[] = receivers.map(
+    ({ toAddress }) => ({
+      lock: addressToScript(toAddress),
+      type: xudtType,
+      capacity: append0x(
+        calculateUdtCellCapacity(addressToScript(toAddress)).toString(16),
+      ),
+    }),
+  );
 
   const outputsData = receivers.map(({ transferAmount }) =>
     append0x(u128ToLe(transferAmount))
@@ -133,12 +138,9 @@ export async function createTransferXudtTransaction(
 
     const needCapacity = sumXudtOutputCapacity - sumXudtInputsCapacity;
     const { inputs: emptyInputs, sumInputsCapacity: sumEmptyCapacity } =
-      collector.collectInputs(
-        emptyCells,
-        needCapacity,
-        txFee,
-        { minCapacity: MIN_CAPACITY },
-      );
+      collector.collectInputs(emptyCells, needCapacity, txFee, {
+        minCapacity: MIN_CAPACITY,
+      });
     inputs = [...inputs, ...emptyInputs];
     actualInputsCapacity += sumEmptyCapacity;
 
@@ -159,10 +161,7 @@ export async function createTransferXudtTransaction(
   console.debug("Updated Outputs Data:", outputsData);
 
   const emptyWitness = { lock: "", inputType: "", outputType: "" };
-  const witnesses = inputs.map((
-    _,
-    index,
-  ) => (index === 0 ? emptyWitness : "0x"));
+  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
 
   console.debug("Witnesses:", witnesses);
 

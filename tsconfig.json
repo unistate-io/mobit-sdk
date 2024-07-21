@@ -1,13 +1,17 @@
 {
   "compilerOptions": {
-    "target": "ES5",
-    "declaration": true,
-    "module": "commonjs",
+    "outDir": "./dist/",
+    "sourceMap": true,
     "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist"
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "target": "ESNext",
+    "declaration": true,
+    "declarationDir": "./dist/types/",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

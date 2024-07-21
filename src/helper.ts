@@ -1,23 +1,16 @@
-import { NetworkType } from "rgbpp";
-import { BtcAssetsApi, DataSource } from "rgbpp";
 import * as ccc from "@ckb-ccc/core";
-import { convertToTxSkeleton } from "./convert";
-import { BTCTestnetType, Collector, IndexerCell } from "@rgbpp-sdk/ckb";
-import { addressToScript } from "@nervosnetwork/ckb-sdk-utils";
 import {
   isAcpAddress,
   isOmnilockAddress,
   isSecp256k1Blake160Address,
   isSecp256k1Blake160MultisigAddress,
 } from "@ckb-lumos/common-scripts/lib/helper";
-import {
-  Config,
-  getConfig,
-  MAINNET,
-  predefined,
-  TESTNET,
-} from "@ckb-lumos/lumos/config";
-import { config } from "@ckb-lumos/lumos";
+import { Config, MAINNET, TESTNET } from "@ckb-lumos/lumos/config";
+import { addressToScript } from "@nervosnetwork/ckb-sdk-utils";
+import { BTCTestnetType, Collector, IndexerCell } from "@rgbpp-sdk/ckb";
+import { NetworkType } from "rgbpp";
+import { BtcAssetsApi, DataSource } from "rgbpp";
+import { convertToTxSkeleton } from "./convert";
 
 export const signAndSendTransaction = async (
   transaction: CKBComponents.RawTransactionToSign,
@@ -115,31 +108,41 @@ export class BtcHelper {
     this.unisat = unisat;
   }
 }
-
 export interface TxResult {
   btcTxId: string;
   ckbTxHash?: string;
-  error?: any;
+  error?: Error;
 }
-
-export async function getIndexerCells(
-  { ckbAddresses, type, collector }: {
-    ckbAddresses: string[];
-    collector: Collector;
-    type?: CKBComponents.Script;
-  },
-): Promise<IndexerCell[]> {
+export async function getIndexerCells({
+  ckbAddresses,
+  type,
+  collector,
+}: {
+  ckbAddresses: string[];
+  collector: Collector;
+  type?: CKBComponents.Script;
+}): Promise<IndexerCell[]> {
   const fromLocks = ckbAddresses.map(addressToScript);
   let indexerCells: IndexerCell[] = [];
 
+  console.debug("Starting to fetch indexer cells for addresses:", ckbAddresses);
+  console.debug("Converted addresses to locks:", fromLocks);
   for (const lock of fromLocks) {
-    const cells = await collector.getCells({
-      lock: lock,
-      type,
-    });
-    indexerCells = indexerCells.concat(cells);
+    console.debug("Fetching cells for lock:", lock);
+    try {
+      const cells = await collector.getCells({
+        lock,
+        type,
+      });
+      console.debug("Fetched cells for lock:", lock, "Cells:", cells);
+      indexerCells = indexerCells.concat(cells);
+    } catch (error) {
+      console.error("Error fetching cells for lock:", lock, "Error:", error);
+      throw error;
+    }
   }
 
+  console.debug("Total indexer cells fetched:", indexerCells);
   return indexerCells;
 }
 
@@ -147,14 +150,15 @@ export async function getAddressCellDeps(
   isMainnet: boolean,
   ckbAddresses: string[],
 ): Promise<CKBComponents.CellDep[]> {
-  let config;
+  let config: Config;
   if (isMainnet) {
     config = MAINNET;
   } else {
     config = TESTNET;
   }
 
-  let cellDeps: CKBComponents.CellDep[] = [];
+  const scripts = config.SCRIPTS;
+  const cellDeps: CKBComponents.CellDep[] = [];
 
   const isOmnilock = ckbAddresses.some((address) =>
     isOmnilockAddress(address, config)
@@ -168,52 +172,63 @@ export async function getAddressCellDeps(
   );
 
   if (isOmnilock) {
-    cellDeps.push(
-      {
-        outPoint: {
-          txHash: config.SCRIPTS.OMNILOCK.TX_HASH,
-          index: config.SCRIPTS.OMNILOCK.INDEX,
-        },
-        depType: config.SCRIPTS.OMNILOCK.DEP_TYPE,
+    const omnilock = scripts.OMNILOCK;
+    if (!omnilock) {
+      throw new Error("OMNILOCK script configuration is missing.");
+    }
+    cellDeps.push({
+      outPoint: {
+        txHash: omnilock.TX_HASH,
+        index: omnilock.INDEX,
       },
-    );
+      depType: omnilock.DEP_TYPE,
+    });
   }
 
   if (isAcp) {
-    cellDeps.push(
-      {
-        outPoint: {
-          txHash: config.SCRIPTS.ANYONE_CAN_PAY.TX_HASH,
-          index: config.SCRIPTS.ANYONE_CAN_PAY.INDEX,
-        },
-        depType: config.SCRIPTS.ANYONE_CAN_PAY.DEP_TYPE,
+    const acp = scripts.ANYONE_CAN_PAY;
+    if (!acp) {
+      throw new Error("ANYONE_CAN_PAY script configuration is missing.");
+    }
+    cellDeps.push({
+      outPoint: {
+        txHash: acp.TX_HASH,
+        index: acp.INDEX,
       },
-    );
+      depType: acp.DEP_TYPE,
+    });
   }
 
   if (isSecp) {
-    cellDeps.push(
-      {
-        outPoint: {
-          txHash: config.SCRIPTS.SECP256K1_BLAKE160.TX_HASH,
-          index: config.SCRIPTS.SECP256K1_BLAKE160.INDEX,
-        },
-        depType: config.SCRIPTS.SECP256K1_BLAKE160.DEP_TYPE,
+    const secp = scripts.SECP256K1_BLAKE160;
+    if (!secp) {
+      throw new Error("SECP256K1_BLAKE160 script configuration is missing.");
+    }
+    cellDeps.push({
+      outPoint: {
+        txHash: secp.TX_HASH,
+        index: secp.INDEX,
       },
-    );
+      depType: secp.DEP_TYPE,
+    });
   }
 
   if (isSecpMult) {
-    cellDeps.push(
-      {
-        outPoint: {
-          txHash: config.SCRIPTS.SECP256K1_BLAKE160_MULTISIG.TX_HASH,
-          index: config.SCRIPTS.SECP256K1_BLAKE160_MULTISIG.INDEX,
-        },
-        depType: config.SCRIPTS.SECP256K1_BLAKE160_MULTISIG.DEP_TYPE,
+    const secpMult = scripts.SECP256K1_BLAKE160_MULTISIG;
+    if (!secpMult) {
+      throw new Error(
+        "SECP256K1_BLAKE160_MULTISIG script configuration is missing.",
+      );
+    }
+    cellDeps.push({
+      outPoint: {
+        txHash: secpMult.TX_HASH,
+        index: secpMult.INDEX,
       },
-    );
+      depType: secpMult.DEP_TYPE,
+    });
   }
 
   return cellDeps;
 }
+

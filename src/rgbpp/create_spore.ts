@@ -1,3 +1,4 @@
+import * as ccc from "@ckb-ccc/core";
 import {
   appendCkbTxWitnesses,
   BTCTestnetType,
@@ -11,9 +12,8 @@ import {
   updateCkbTxWithRealBtcTxId,
 } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi, DataSource, sendRgbppUtxos } from "rgbpp";
-import { signAndSendPsbt } from "../unisat";
 import { AbstractWallet, signAndSendTransaction, TxResult } from "../helper";
-import * as ccc from "@ckb-ccc/core";
+import { signAndSendPsbt } from "../unisat";
 
 interface SporeCreateParams {
   clusterRgbppLockArgs: Hex;
@@ -86,7 +86,7 @@ const createSpores = async ({
   const { txId: btcTxId, rawTxHex: btcTxBytes } = await signAndSendPsbt(
     psbt,
     unisat,
-    btcService
+    btcService,
   );
   console.log("BTC TxId: ", btcTxId);
 
@@ -108,7 +108,7 @@ const createSpores = async ({
       });
       console.log(
         "The new cluster rgbpp lock args: ",
-        newCkbRawTx.outputs[0].lock.args
+        newCkbRawTx.outputs[0].lock.args,
       );
 
       const ckbTx = await appendCkbTxWitnesses({
@@ -121,7 +121,7 @@ const createSpores = async ({
       // and the spore type scripts will be used to transfer and leap spores
       console.log(
         "Spore type scripts: ",
-        JSON.stringify(ckbTx.outputs.slice(1).map((output) => output.type))
+        JSON.stringify(ckbTx.outputs.slice(1).map((output) => output.type)),
       );
 
       // Replace cobuild witness with the final rgbpp lock script
@@ -145,16 +145,19 @@ const createSpores = async ({
       const txHash = await signAndSendTransaction(
         unsignedTx,
         collector,
-        cccSigner
+        cccSigner,
       );
 
       console.info(`RGB++ Spore has been created and tx hash is ${txHash}`);
     } catch (error) {
-      console.error(error);
-      return {
-        error,
-        btcTxId,
-      };
+      let processedError: Error;
+      if (error instanceof Error) {
+        processedError = error;
+      } else {
+        processedError = new Error(String(error));
+      }
+      console.error(processedError);
+      return { error: processedError, btcTxId };
     }
   }, 30 * 1000);
 
@@ -200,14 +203,14 @@ export const createSporesCombined = async ({
       JSON.stringify({
         ...getClusterTypeScript(isMainnet),
         args: clusterTypeScriptArgs,
-      })
+      }),
     ),
   });
 
   // 判断一下assets是否不为空，为空则报错
   if (assets.length === 0) {
     throw new Error(
-      "No assets found for the given BTC address and type script args."
+      "No assets found for the given BTC address and type script args.",
     );
   }
 

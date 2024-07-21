@@ -40,7 +40,7 @@ export async function createMergeXudtTransaction({
   ckbAddresses,
   collector,
   isMainnet,
-}: CreateMergeXudtTransactionParams,ckbAddress = ckbAddresses[0]): Promise<
+}: CreateMergeXudtTransactionParams, ckbAddress = ckbAddresses[0]): Promise<
   CKBComponents.RawTransactionToSign
 > {
   const fromLock = addressToScript(ckbAddress);
@@ -71,8 +71,8 @@ export async function createMergeXudtTransaction({
     sumAmount,
   } = collectAllUdtInputs(xudtCells);
 
-  let actualInputsCapacity = sumInputsCapacity;
-  let inputs = udtInputs;
+  const actualInputsCapacity = sumInputsCapacity;
+  const inputs = udtInputs;
 
   console.debug("Collected inputs:", inputs);
   console.debug("Sum of inputs capacity:", sumInputsCapacity);
@@ -88,7 +88,7 @@ export async function createMergeXudtTransaction({
   ];
   const outputsData: string[] = [append0x(u128ToLe(sumAmount))];
 
-  let sumXudtOutputCapacity = mergedXudtCapacity;
+  const sumXudtOutputCapacity = mergedXudtCapacity;
 
   console.debug("Merged XUDT capacity:", mergedXudtCapacity);
   console.debug("Updated outputs:", outputs);

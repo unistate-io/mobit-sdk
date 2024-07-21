@@ -20,18 +20,16 @@ export interface LeapSporeToBtcParams {
   cccSigner: Signer;
 }
 
-export const leapSporeFromCkbToBtc = async (
-  {
-    outIndex,
-    btcTxId,
-    sporeTypeArgs,
-    isMainnet,
-    collector,
-    ckbAddress,
-    btcTestnetType,
-    cccSigner,
-  }: LeapSporeToBtcParams,
-): Promise<string> => {
+export const leapSporeFromCkbToBtc = async ({
+  outIndex,
+  btcTxId,
+  sporeTypeArgs,
+  isMainnet,
+  collector,
+  ckbAddress,
+  btcTestnetType,
+  cccSigner,
+}: LeapSporeToBtcParams): Promise<string> => {
   const toRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
 
   const sporeType: CKBComponents.Script = {
