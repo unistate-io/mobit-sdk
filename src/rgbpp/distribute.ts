@@ -143,15 +143,8 @@ const distribute = async ({
       }
     }, 30 * 1000);
   } catch (error) {
-    let processedError: Error;
-    if (error instanceof Error) {
-      processedError = error;
-    } else {
-      processedError = new Error(String(error));
-    }
-    console.error(processedError);
-
-    return { error: processedError, btcTxId };
+    console.error(error);
+    throw error;
   }
 
   return { btcTxId };

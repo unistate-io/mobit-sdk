@@ -13,10 +13,9 @@ import {
   MIN_CAPACITY,
   NoLiveCellError,
   NoXudtLiveCellError,
-  SECP256K1_WITNESS_LOCK_SIZE,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
-import { getAddressCellDeps } from "../helper";
+import { calculateWitnessSize, getAddressCellDeps } from "../helper";
 
 interface CreateBurnXudtTransactionParams {
   xudtArgs: string;
@@ -159,11 +158,12 @@ export async function createBurnXudtTransaction({
   console.debug("Unsigned transaction:", unsignedTx);
 
   if (txFee === MAX_FEE) {
-    const txSize = getTransactionSize(unsignedTx) + SECP256K1_WITNESS_LOCK_SIZE;
+    const txSize = getTransactionSize(unsignedTx) +
+      calculateWitnessSize(ckbAddress, isMainnet);
     const estimatedTxFee = calculateTransactionFee(txSize);
     changeCapacity -= estimatedTxFee;
     unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
-      actualInputsCapacity.toString(16),
+      changeCapacity.toString(16),
     );
 
     console.debug("Transaction size:", txSize);

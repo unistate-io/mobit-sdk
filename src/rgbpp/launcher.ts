@@ -18,7 +18,6 @@ import {
   MAX_FEE,
   NoLiveCellError,
   RgbppTokenInfo,
-  SECP256K1_WITNESS_LOCK_SIZE,
   sendCkbTx,
   updateCkbTxWithRealBtcTxId,
 } from "@rgbpp-sdk/ckb";
@@ -26,6 +25,7 @@ import { BtcApiUtxo } from "@rgbpp-sdk/service";
 import { BtcAssetsApi } from "rgbpp";
 import {
   AbstractWallet,
+  calculateWitnessSize,
   getAddressCellDeps,
   signAndSendTransaction,
   TxResult,
@@ -104,7 +104,8 @@ const prepareLaunchCell = async ({
     outputsData,
     witnesses,
   };
-  const txSize = getTransactionSize(unsignedTx) + SECP256K1_WITNESS_LOCK_SIZE;
+  const txSize = getTransactionSize(unsignedTx) +
+    calculateWitnessSize(ckbAddress, isMainnet);
   const estimatedTxFee = calculateTransactionFee(txSize);
   changeCapacity -= estimatedTxFee;
   unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
@@ -196,14 +197,8 @@ const launchRgbppAsset = async ({
         `RGB++ Asset has been launched and CKB tx hash is ${txHash}`,
       );
     } catch (error) {
-      let processedError: Error;
-      if (error instanceof Error) {
-        processedError = error;
-      } else {
-        processedError = new Error(String(error));
-      }
-      console.error(processedError);
-      return { error: processedError, btcTxId };
+      console.error(error);
+      throw error;
     }
   }, 30 * 1000);
 
@@ -271,7 +266,7 @@ export const launchCombined = async ({
 
   const ownerRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
 
-  const { btcTxId: TxId, error } = await launchRgbppAsset({
+  const { btcTxId: TxId } = await launchRgbppAsset({
     ownerRgbppLockArgs,
     rgbppTokenInfo,
     collector,
@@ -287,7 +282,6 @@ export const launchCombined = async ({
 
   return {
     btcTxId: TxId,
-    error,
     ckbTxHash: txHash,
   };
 };

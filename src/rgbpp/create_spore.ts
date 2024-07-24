@@ -150,14 +150,8 @@ const createSpores = async ({
 
       console.info(`RGB++ Spore has been created and tx hash is ${txHash}`);
     } catch (error) {
-      let processedError: Error;
-      if (error instanceof Error) {
-        processedError = error;
-      } else {
-        processedError = new Error(String(error));
-      }
-      console.error(processedError);
-      return { error: processedError, btcTxId };
+      console.error(error);
+      throw error;
     }
   }, 30 * 1000);
 

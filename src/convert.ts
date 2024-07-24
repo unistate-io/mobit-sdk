@@ -166,7 +166,7 @@ export async function convertToTxSkeleton(
   console.debug("Fetching input cells");
   const inputCells = (await collector.getLiveCells(
     transaction.inputs.map((input) => input.previousOutput),
-    true
+    true,
   )).map((cell, idx) => {
     return convertLiveCell(cell, transaction.inputs[idx].previousOutput);
   });

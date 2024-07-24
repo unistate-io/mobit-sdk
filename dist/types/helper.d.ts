@@ -40,7 +40,6 @@ export declare class BtcHelper {
 export interface TxResult {
     btcTxId: string;
     ckbTxHash?: string;
-    error?: Error;
 }
 export declare function getIndexerCells({ ckbAddresses, type, collector, }: {
     ckbAddresses: string[];
@@ -48,4 +47,5 @@ export declare function getIndexerCells({ ckbAddresses, type, collector, }: {
     type?: CKBComponents.Script;
 }): Promise<IndexerCell[]>;
 export declare function getAddressCellDeps(isMainnet: boolean, ckbAddresses: string[]): Promise<CKBComponents.CellDep[]>;
+export declare function calculateWitnessSize(address: string, isMainnet: boolean): number;
 export {};
