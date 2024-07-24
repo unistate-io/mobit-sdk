@@ -17,7 +17,6 @@ import {
   MAX_FEE,
   NoLiveCellError,
   RawClusterData,
-  SECP256K1_WITNESS_LOCK_SIZE,
   sendCkbTx,
   updateCkbTxWithRealBtcTxId,
 } from "@rgbpp-sdk/ckb";
@@ -25,6 +24,7 @@ import { BtcApiUtxo } from "@rgbpp-sdk/service";
 import { BtcAssetsApi, DataSource, sendRgbppUtxos } from "rgbpp";
 import {
   AbstractWallet,
+  calculateWitnessSize,
   getAddressCellDeps,
   signAndSendTransaction,
   TxResult,
@@ -103,7 +103,8 @@ const prepareClusterCell = async ({
     witnesses,
   };
 
-  const txSize = getTransactionSize(unsignedTx) + SECP256K1_WITNESS_LOCK_SIZE;
+  const txSize = getTransactionSize(unsignedTx) +
+    calculateWitnessSize(ckbAddress, isMainnet);
   const estimatedTxFee = calculateTransactionFee(txSize);
   changeCapacity -= estimatedTxFee;
   unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
@@ -203,14 +204,8 @@ const createCluster = async ({
       const txHash = await sendCkbTx({ collector, signedTx: ckbTx });
       console.info(`RGB++ Cluster has been created and tx hash is ${txHash}`);
     } catch (error) {
-      let processedError: Error;
-      if (error instanceof Error) {
-        processedError = error;
-      } else {
-        processedError = new Error(String(error));
-      }
-      console.error(processedError);
-      return { error: processedError, btcTxId };
+      console.error(error);
+      throw error;
     }
   }, 30 * 1000);
 
@@ -278,7 +273,7 @@ export const createClusterCombined = async ({
 
   const ownerRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
 
-  const { btcTxId: TxId, error } = await createCluster({
+  const { btcTxId: TxId } = await createCluster({
     ownerRgbppLockArgs,
     clusterData,
     collector,
@@ -293,7 +288,6 @@ export const createClusterCombined = async ({
 
   return {
     btcTxId: TxId,
-    error,
     ckbTxHash: txHash,
   };
 };

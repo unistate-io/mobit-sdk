@@ -108,11 +108,12 @@ export class BtcHelper {
     this.unisat = unisat;
   }
 }
+
 export interface TxResult {
   btcTxId: string;
   ckbTxHash?: string;
-  error?: Error;
 }
+
 export async function getIndexerCells({
   ckbAddresses,
   type,
@@ -232,3 +233,41 @@ export async function getAddressCellDeps(
   return cellDeps;
 }
 
+const OMNILOCK_WITNESS_LOCK_SIZE = 292;
+const ACP_WITNESS_LOCK_SIZE = 41;
+const SECP256K1_WITNESS_LOCK_SIZE = 65;
+const SECP256K1_MULTISIG_WITNESS_LOCK_SIZE = 130;
+
+export function calculateWitnessSize(
+  address: string,
+  isMainnet: boolean,
+): number {
+  let config: Config;
+  if (isMainnet) {
+    config = MAINNET;
+  } else {
+    config = TESTNET;
+  }
+
+  if (isOmnilockAddress(address, config)) {
+    return OMNILOCK_WITNESS_LOCK_SIZE;
+  }
+
+  if (isAcpAddress(address, config)) {
+    return ACP_WITNESS_LOCK_SIZE;
+  }
+
+  if (isSecp256k1Blake160Address(address, config)) {
+    return SECP256K1_WITNESS_LOCK_SIZE;
+  }
+
+  if (isSecp256k1Blake160MultisigAddress(address, config)) {
+    return SECP256K1_MULTISIG_WITNESS_LOCK_SIZE;
+  }
+
+  // 对于未知类型，返回一个保守的估计值
+  console.warn(
+    `Unknown address type for address: ${address}. Using default witness size.`,
+  );
+  return SECP256K1_WITNESS_LOCK_SIZE;
+}

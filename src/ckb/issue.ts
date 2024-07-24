@@ -18,10 +18,9 @@ import {
   MIN_CAPACITY,
   NoLiveCellError,
   RgbppTokenInfo,
-  SECP256K1_WITNESS_LOCK_SIZE,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
-import { getAddressCellDeps } from "../helper";
+import { calculateWitnessSize, getAddressCellDeps } from "../helper";
 
 interface CreateIssueXudtTransactionParams {
   xudtTotalAmount: bigint;
@@ -168,7 +167,8 @@ export async function createIssueXudtTransaction({
 
   // Adjust the transaction fee if necessary and add debug information
   if (txFee === MAX_FEE) {
-    const txSize = getTransactionSize(unsignedTx) + SECP256K1_WITNESS_LOCK_SIZE;
+    const txSize = getTransactionSize(unsignedTx) +
+      calculateWitnessSize(ckbAddress, isMainnet);
     const estimatedTxFee = calculateTransactionFee(txSize);
     changeCapacity -= estimatedTxFee;
     unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(

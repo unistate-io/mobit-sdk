@@ -14,10 +14,13 @@ import {
   MAX_FEE,
   NoXudtLiveCellError,
   remove0x,
-  SECP256K1_WITNESS_LOCK_SIZE,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
-import { getAddressCellDeps, getIndexerCells } from "../helper";
+import {
+  calculateWitnessSize,
+  getAddressCellDeps,
+  getIndexerCells,
+} from "../helper";
 
 interface CreateMergeXudtTransactionParams {
   xudtArgs: string;
@@ -133,7 +136,8 @@ export async function createMergeXudtTransaction({
   console.debug("Unsigned transaction:", unsignedTx);
 
   if (txFee === MAX_FEE) {
-    const txSize = getTransactionSize(unsignedTx) + SECP256K1_WITNESS_LOCK_SIZE;
+    const txSize = getTransactionSize(unsignedTx) +
+      calculateWitnessSize(ckbAddress, isMainnet);
     const estimatedTxFee = calculateTransactionFee(txSize);
     changeCapacity -= estimatedTxFee;
     unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
