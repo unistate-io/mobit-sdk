@@ -47,7 +47,7 @@ const createSpores = async ({
   btcService,
   ckbAddress,
   cccSigner,
-}: SporeCreateParams): Promise<TxResult> => {
+}: SporeCreateParams, btcFeeRate = 120): Promise<TxResult> => {
   const ckbVirtualTxResult = await genCreateSporeCkbVirtualTx({
     collector,
     sporeDataList: receivers.map((receiver) => receiver.sporeData),
@@ -80,7 +80,7 @@ const createSpores = async ({
     from: fromBtcAccount,
     fromPubkey: fromBtcAccountPubkey,
     source: btcDataSource,
-    feeRate: 120,
+    feeRate: btcFeeRate,
   });
 
   const { txId: btcTxId, rawTxHex: btcTxBytes } = await signAndSendPsbt(
@@ -178,20 +178,42 @@ interface SporeCreateCombinedParams {
   cccSigner: ccc.Signer;
 }
 
-export const createSporesCombined = async ({
-  clusterTypeScriptArgs,
-  receivers,
-  collector,
-  isMainnet,
-  btcTestnetType,
-  fromBtcAccount,
-  fromBtcAccountPubkey,
-  btcDataSource,
-  unisat,
-  btcService,
-  ckbAddress,
-  cccSigner,
-}: SporeCreateCombinedParams): Promise<TxResult> => {
+/**
+ * Creates spores combined with the given parameters.
+ *
+ * @param {SporeCreateCombinedParams} params - The parameters for creating spores.
+ * @param {string} params.clusterTypeScriptArgs - The arguments for the cluster type script.
+ * @param {Array<{ toBtcAddress: string, sporeData: RawSporeData }>} params.receivers - The list of receivers with their BTC addresses and spore data.
+ * @param {Collector} params.collector - The collector instance.
+ * @param {boolean} params.isMainnet - Indicates if the operation is on mainnet.
+ * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
+ * @param {string} params.fromBtcAccount - The BTC account from which the spores are being created.
+ * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account (optional).
+ * @param {DataSource} params.btcDataSource - The data source for BTC.
+ * @param {AbstractWallet} params.unisat - The Unisat wallet instance.
+ * @param {string} params.ckbAddress - The CKB address.
+ * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
+ * @param {ccc.Signer} params.cccSigner - The CCC signer instance.
+ * @param {number} [btcFeeRate=120] - The fee rate for BTC transactions (default is 120).
+ * @returns {Promise<TxResult>} - The result of the transaction.
+ */
+export const createSporesCombined = async (
+  {
+    clusterTypeScriptArgs,
+    receivers,
+    collector,
+    isMainnet,
+    btcTestnetType,
+    fromBtcAccount,
+    fromBtcAccountPubkey,
+    btcDataSource,
+    unisat,
+    btcService,
+    ckbAddress,
+    cccSigner,
+  }: SporeCreateCombinedParams,
+  btcFeeRate: number = 120,
+): Promise<TxResult> => {
   const assets = await btcService.getRgbppAssetsByBtcAddress(fromBtcAccount, {
     type_script: encodeURIComponent(
       JSON.stringify({
@@ -224,7 +246,7 @@ export const createSporesCombined = async ({
     btcService,
     ckbAddress,
     cccSigner,
-  });
+  }, btcFeeRate);
 
   return res;
 };

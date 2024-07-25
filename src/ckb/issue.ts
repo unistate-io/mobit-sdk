@@ -32,20 +32,28 @@ interface CreateIssueXudtTransactionParams {
 
 /**
  * Creates an unsigned transaction for issuing xUDT assets with a unique cell as the token info cell.
- * @param xudtTotalAmount The total amount of xUDT asset to be issued
- * @param tokenInfo The xUDT token information including decimal, name, and symbol
- * @param ckbAddress The CKB address for the transaction
- * @param collector The collector instance used to fetch cells and collect inputs
- * @param isMainnet A boolean indicating whether the network is mainnet or testnet
- * @returns An unsigned transaction object
+ *
+ * @param xudtTotalAmount - The total amount of xUDT asset to be issued.
+ * @param tokenInfo - The xUDT token information including decimal, name, and symbol.
+ * @param ckbAddress - The CKB address for the transaction.
+ * @param collector - The collector instance used to fetch cells and collect inputs.
+ * @param isMainnet - A boolean indicating whether the network is mainnet or testnet.
+ * @param feeRate - (Optional) The fee rate to be used for the transaction.
+ * @param maxFee - (Optional) The maximum fee allowed for the transaction. Defaults to MAX_FEE.
+ *
+ * @returns A promise that resolves to an unsigned transaction object.
  */
-export async function createIssueXudtTransaction({
-  xudtTotalAmount,
-  tokenInfo,
-  ckbAddress,
-  collector,
-  isMainnet,
-}: CreateIssueXudtTransactionParams): Promise<
+export async function createIssueXudtTransaction(
+  {
+    xudtTotalAmount,
+    tokenInfo,
+    ckbAddress,
+    collector,
+    isMainnet,
+  }: CreateIssueXudtTransactionParams,
+  feeRate?: bigint,
+  maxFee: bigint = MAX_FEE,
+): Promise<
   CKBComponents.RawTransactionToSign
 > {
   const issueLock = addressToScript(ckbAddress);
@@ -77,7 +85,7 @@ export async function createIssueXudtTransaction({
   console.debug("Calculated xUDT token info cell capacity:", xudtInfoCapacity);
 
   // Set the transaction fee to the maximum fee and add debug information
-  const txFee = MAX_FEE;
+  const txFee = maxFee;
   console.debug("Set transaction fee to maximum fee:", txFee);
 
   // Collect inputs for the transaction and add debug information
@@ -166,10 +174,10 @@ export async function createIssueXudtTransaction({
   console.debug("Defined unsigned transaction:", unsignedTx);
 
   // Adjust the transaction fee if necessary and add debug information
-  if (txFee === MAX_FEE) {
+  if (txFee === maxFee) {
     const txSize = getTransactionSize(unsignedTx) +
       calculateWitnessSize(ckbAddress, isMainnet);
-    const estimatedTxFee = calculateTransactionFee(txSize);
+    const estimatedTxFee = calculateTransactionFee(txSize, feeRate);
     changeCapacity -= estimatedTxFee;
     unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
       changeCapacity.toString(16),

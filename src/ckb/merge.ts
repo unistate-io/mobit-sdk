@@ -31,19 +31,26 @@ interface CreateMergeXudtTransactionParams {
 
 /**
  * Merges multiple xUDT cells into a single xUDT cell and returns the remaining capacity as a separate cell.
- * @param xudtArgs The xUDT type script args
- * @param ckbAddresses The CKB addresses involved in the transaction
- * @param collector The collector instance used to fetch cells and collect inputs
- * @param isMainnet A boolean indicating whether the transaction is for the mainnet or testnet
- * @param ckbAddress The address for the output cell, defaulting to the first address in the input address set
+ * @param xudtArgs - The xUDT type script args
+ * @param ckbAddresses - The CKB addresses involved in the transaction
+ * @param collector - The collector instance used to fetch cells and collect inputs
+ * @param isMainnet - A boolean indicating whether the transaction is for the mainnet or testnet
+ * @param ckbAddress - The address for the output cell, defaulting to the first address in the input address set
+ * @param feeRate - The fee rate for the transaction, optional
+ * @param maxFee - The maximum fee for the transaction, defaulting to MAX_FEE
  * @returns An unsigned transaction object
  */
-export async function createMergeXudtTransaction({
-  xudtArgs,
-  ckbAddresses,
-  collector,
-  isMainnet,
-}: CreateMergeXudtTransactionParams, ckbAddress = ckbAddresses[0]): Promise<
+export async function createMergeXudtTransaction(
+  {
+    xudtArgs,
+    ckbAddresses,
+    collector,
+    isMainnet,
+  }: CreateMergeXudtTransactionParams,
+  ckbAddress = ckbAddresses[0],
+  feeRate?: bigint,
+  maxFee: bigint = MAX_FEE,
+): Promise<
   CKBComponents.RawTransactionToSign
 > {
   const fromLock = addressToScript(ckbAddress);
@@ -97,7 +104,7 @@ export async function createMergeXudtTransaction({
   console.debug("Updated outputs:", outputs);
   console.debug("Updated outputs data:", outputsData);
 
-  const txFee = MAX_FEE;
+  const txFee = maxFee;
   if (sumInputsCapacity <= sumXudtOutputCapacity) {
     throw new Error(
       "Thetotal input capacity is less than or equal to the total output capacity, which is not possible in a merge function.",
@@ -135,10 +142,10 @@ export async function createMergeXudtTransaction({
 
   console.debug("Unsigned transaction:", unsignedTx);
 
-  if (txFee === MAX_FEE) {
+  if (txFee === maxFee) {
     const txSize = getTransactionSize(unsignedTx) +
       calculateWitnessSize(ckbAddress, isMainnet);
-    const estimatedTxFee = calculateTransactionFee(txSize);
+    const estimatedTxFee = calculateTransactionFee(txSize, feeRate);
     changeCapacity -= estimatedTxFee;
     unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
       changeCapacity.toString(16),

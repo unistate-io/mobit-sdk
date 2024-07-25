@@ -69,7 +69,7 @@ const transfer = async ({
   fromBtcAccountPubkey,
   unisat,
   btcService,
-}: RgbppTransferParams): Promise<TxResult> => {
+}: RgbppTransferParams, btcFeeRate?: number): Promise<TxResult> => {
   const { ckbVirtualTxResult, btcPsbtHex } = await buildRgbppTransferTx({
     ckb: {
       collector,
@@ -83,6 +83,7 @@ const transfer = async ({
       fromPubkey: fromBtcAccountPubkey,
       dataSource: btcDataSource,
       testnetType: btcTestnetType,
+      feeRate: btcFeeRate,
     },
     isMainnet,
   });
@@ -143,6 +144,23 @@ interface RgbppTransferCombinedParams {
   btcService: BtcAssetsApi;
 }
 
+/**
+ * Combines the steps of getting the RGBPP lock arguments list and transferring RGBPP assets.
+ *
+ * @param toBtcAddress - The Bitcoin address to which the assets will be transferred.
+ * @param xudtTypeArgs - The type arguments for the XUDT script.
+ * @param transferAmount - The amount of assets to transfer, represented as a bigint.
+ * @param collector - The collector instance used for collecting assets.
+ * @param btcDataSource - The data source for Bitcoin transactions.
+ * @param btcTestnetType - (Optional) The type of Bitcoin testnet to use.
+ * @param isMainnet - A boolean indicating whether the operation is on the mainnet.
+ * @param fromBtcAccount - The Bitcoin account from which the assets will be transferred.
+ * @param fromBtcAccountPubkey - (Optional) The public key of the Bitcoin account.
+ * @param unisat - The Unisat wallet instance used for signing and sending transactions.
+ * @param btcService - The service instance for interacting with Bitcoin assets.
+ * @param btcFeeRate - (Optional) The fee rate to use for the Bitcoin transaction.
+ * @returns A promise that resolves to the transaction result.
+ */
 export const transferCombined = async ({
   toBtcAddress,
   xudtTypeArgs,
@@ -155,7 +173,7 @@ export const transferCombined = async ({
   fromBtcAccountPubkey,
   unisat,
   btcService,
-}: RgbppTransferCombinedParams): Promise<TxResult> => {
+}: RgbppTransferCombinedParams, btcFeeRate?: number): Promise<TxResult> => {
   const lockArgsListResponse = await getRgbppLockArgsList({
     xudtTypeArgs,
     fromBtcAccount,
@@ -176,7 +194,7 @@ export const transferCombined = async ({
     fromBtcAccountPubkey,
     unisat,
     btcService,
-  });
+  }, btcFeeRate);
 
   return res;
 };
