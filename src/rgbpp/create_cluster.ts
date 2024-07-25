@@ -41,15 +41,19 @@ interface prepareClusterCellParams {
   btcTestnetType?: BTCTestnetType;
 }
 
-const prepareClusterCell = async ({
-  outIndex,
-  btcTxId,
-  ckbAddress,
-  clusterData,
-  collector,
-  isMainnet,
-  btcTestnetType,
-}: prepareClusterCellParams): Promise<CKBComponents.RawTransactionToSign> => {
+const prepareClusterCell = async (
+  {
+    outIndex,
+    btcTxId,
+    ckbAddress,
+    clusterData,
+    collector,
+    isMainnet,
+    btcTestnetType,
+  }: prepareClusterCellParams,
+  maxFee = MAX_FEE,
+  ckbFeeRate?: bigint,
+): Promise<CKBComponents.RawTransactionToSign> => {
   const masterLock = addressToScript(ckbAddress);
   console.log("ckb address: ", ckbAddress);
 
@@ -64,7 +68,7 @@ const prepareClusterCell = async ({
   }
   emptyCells = emptyCells.filter((cell) => !cell.output.type);
 
-  const txFee = MAX_FEE;
+  const txFee = maxFee;
   const { inputs, sumInputsCapacity } = collector.collectInputs(
     emptyCells,
     clusterCellCapacity,
@@ -105,7 +109,7 @@ const prepareClusterCell = async ({
 
   const txSize = getTransactionSize(unsignedTx) +
     calculateWitnessSize(ckbAddress, isMainnet);
-  const estimatedTxFee = calculateTransactionFee(txSize);
+  const estimatedTxFee = calculateTransactionFee(txSize, ckbFeeRate);
   changeCapacity -= estimatedTxFee;
   unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
     changeCapacity.toString(16),
@@ -138,7 +142,7 @@ const createCluster = async ({
   btcDataSource,
   btcService,
   unisat,
-}: createClusterParams): Promise<TxResult> => {
+}: createClusterParams, btcFeeRate: number = 30): Promise<TxResult> => {
   const ckbVirtualTxResult = await genCreateClusterCkbVirtualTx({
     collector,
     rgbppLockArgs: ownerRgbppLockArgs,
@@ -163,7 +167,7 @@ const createCluster = async ({
     from: fromBtcAccount,
     fromPubkey: fromBtcAccountPubkey,
     source: btcDataSource,
-    feeRate: 30,
+    feeRate: btcFeeRate,
   });
 
   const { txId: btcTxId, rawTxHex: btcTxBytes } = await signAndSendPsbt(
@@ -229,20 +233,46 @@ interface createClusterCombinedParams {
   cccSigner: ccc.Signer;
 }
 
-export const createClusterCombined = async ({
-  clusterData,
-  fromBtcAccount,
-  fromBtcAccountPubkey,
-  collector,
-  isMainnet,
-  btcTestnetType,
-  btcDataSource,
-  ckbAddress,
-  filterUtxo,
-  btcService,
-  unisat,
-  cccSigner,
-}: createClusterCombinedParams): Promise<TxResult> => {
+/**
+ * Creates a cluster cell on the CKB network and initiates a corresponding BTC transaction.
+ *
+ * @param {createClusterCombinedParams} params - The parameters required to create the cluster.
+ * @param {string} params.ckbAddress - The CKB address where the cluster cell will be created.
+ * @param {RawClusterData} params.clusterData - The raw data required to create the cluster.
+ * @param {Collector} params.collector - The collector instance used to gather cells for the transaction.
+ * @param {boolean} params.isMainnet - A boolean indicating whether the operation is on the mainnet.
+ * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
+ * @param {string} params.fromBtcAccount - The BTC account from which the transaction will be initiated.
+ * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account (optional).
+ * @param {DataSource} params.btcDataSource - The data source for BTC transactions.
+ * @param {AbstractWallet} params.unisat - The Unisat wallet instance used for signing BTC transactions.
+ * @param {BtcAssetsApi} params.btcService - The BTC service instance for interacting with BTC assets.
+ * @param {(utxos: BtcApiUtxo[]) => Promise<{ outIndex: number; btcTxId: string }>} params.filterUtxo - A function to filter UTXOs for the BTC transaction.
+ * @param {ccc.Signer} params.cccSigner - The signer instance for signing CKB transactions.
+ * @param {bigint} [ckbFeeRate] - The fee rate for the CKB transaction (optional).
+ * @param {bigint} [maxFee=MAX_FEE] - The maximum fee for the CKB transaction (default is MAX_FEE).
+ * @param {number} [btcFeeRate=30] - The fee rate for the BTC transaction (default is 30).
+ * @returns {Promise<TxResult>} - A promise that resolves to the transaction result.
+ */
+export const createClusterCombined = async (
+  {
+    ckbAddress,
+    clusterData,
+    collector,
+    isMainnet,
+    btcTestnetType,
+    fromBtcAccount,
+    fromBtcAccountPubkey,
+    btcDataSource,
+    unisat,
+    btcService,
+    filterUtxo,
+    cccSigner,
+  }: createClusterCombinedParams,
+  ckbFeeRate?: bigint,
+  maxFee = MAX_FEE,
+  btcFeeRate: number = 30,
+): Promise<TxResult> => {
   const utxos = await btcService.getBtcUtxos(fromBtcAccount, {
     only_non_rgbpp_utxos: true,
     only_confirmed: true,
@@ -251,15 +281,19 @@ export const createClusterCombined = async ({
 
   const { outIndex, btcTxId } = await filterUtxo(utxos);
 
-  const prepareClusterCellTx = await prepareClusterCell({
-    outIndex,
-    btcTxId,
-    clusterData,
-    ckbAddress,
-    collector,
-    isMainnet,
-    btcTestnetType,
-  });
+  const prepareClusterCellTx = await prepareClusterCell(
+    {
+      outIndex,
+      btcTxId,
+      clusterData,
+      ckbAddress,
+      collector,
+      isMainnet,
+      btcTestnetType,
+    },
+    maxFee,
+    ckbFeeRate,
+  );
 
   const { txHash } = await signAndSendTransaction(
     prepareClusterCellTx,
@@ -284,7 +318,7 @@ export const createClusterCombined = async ({
     btcTestnetType,
     btcService,
     unisat,
-  });
+  }, btcFeeRate);
 
   return {
     btcTxId: TxId,

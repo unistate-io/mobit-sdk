@@ -36,7 +36,7 @@ const transferSpore = async ({
   btcDataSource,
   btcService,
   unisat,
-}: SporeTransferParams) => {
+}: SporeTransferParams, btcFeeRate: number = 30) => {
   const sporeTypeBytes = serializeScript({
     ...getSporeTypeScript(isMainnet),
     args: sporeTypeArgs,
@@ -62,7 +62,7 @@ const transferSpore = async ({
     from: fromBtcAddress,
     fromPubkey: fromBtcAddressPubkey,
     source: btcDataSource,
-    feeRate: 30,
+    feeRate: btcFeeRate,
   });
 
   const { txId: btcTxId } = await signAndSendPsbt(psbt, unisat, btcService);
@@ -127,6 +127,23 @@ interface SporeTransferCombinedParams {
   btcService: BtcAssetsApi;
 }
 
+/**
+ * Transfers a spore to a specified BTC address.
+ *
+ * @param {SporeTransferCombinedParams} params - The parameters for the spore transfer.
+ * @param {string} params.toBtcAddress - The recipient's BTC address.
+ * @param {Hex} params.sporeTypeArgs - The type arguments for the spore.
+ * @param {Collector} params.collector - The collector object.
+ * @param {boolean} params.isMainnet - Indicates if the operation is on the mainnet.
+ * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
+ * @param {string} params.fromBtcAddress - The sender's BTC address.
+ * @param {string} [params.fromBtcAddressPubkey] - The sender's BTC address public key (optional).
+ * @param {DataSource} params.btcDataSource - The data source for BTC.
+ * @param {AbstractWallet} params.unisat - The Unisat wallet object.
+ * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
+ * @param {number} [btcFeeRate=30] - The fee rate for the BTC transaction (optional, default is 30).
+ * @returns {Promise<{ btcTxId: string }>} - The result of the spore transfer, including the BTC transaction ID.
+ */
 export const transferSporeCombined = async ({
   toBtcAddress,
   sporeTypeArgs,
@@ -138,7 +155,7 @@ export const transferSporeCombined = async ({
   btcDataSource,
   unisat,
   btcService,
-}: SporeTransferCombinedParams) => {
+}: SporeTransferCombinedParams, btcFeeRate: number = 30) => {
   const sporeRgbppLockArgs = await getSporeRgbppLockArgs({
     fromBtcAddress,
     sporeTypeArgs,
@@ -158,7 +175,7 @@ export const transferSporeCombined = async ({
     btcDataSource,
     unisat,
     btcService,
-  });
+  }, btcFeeRate);
 
   return res;
 };
