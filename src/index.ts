@@ -11,6 +11,7 @@ import { leapFromBtcToCKB } from "./rgbpp/leap";
 import { transferCombined } from "./rgbpp/transfer";
 
 import { BtcHelper, CkbHelper } from "./helper";
+import { RgbppSDK } from "./sdk";
 
 export {
   BtcHelper,
@@ -24,5 +25,6 @@ export {
   launchCombined,
   leapFromBtcToCKB,
   leapFromCkbToBtc,
+  RgbppSDK,
   transferCombined,
 };

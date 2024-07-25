@@ -29,6 +29,7 @@ export declare class CkbHelper {
     isMainnet: boolean;
     constructor(isMainnet: boolean);
 }
+export declare const createBtcService: (btcTestnetType?: BTCTestnetType) => BtcAssetsApi;
 export declare class BtcHelper {
     btcDataSource: DataSource;
     btcTestnetType?: BTCTestnetType;

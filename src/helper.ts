@@ -69,6 +69,30 @@ export class CkbHelper {
   }
 }
 
+export const createBtcService = (
+  btcTestnetType?: BTCTestnetType,
+): BtcAssetsApi => {
+  let btcServiceUrl: string;
+
+  if (btcTestnetType === undefined) {
+    btcServiceUrl = "https://api.rgbpp.io";
+  } else if (btcTestnetType === "Signet") {
+    btcServiceUrl = "https://api.signet.rgbpp.io";
+  } else {
+    btcServiceUrl = "https://api.testnet.rgbpp.io";
+  }
+
+  const btcServiceToken =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJNb2JpdCIsImF1ZCI6Im1vYml0LmFwcCIsImp0aSI6IjNjMTAzNGNmLTcwZWEtNDgzMy04MGUwLTRlMDA2NTNkNTY3YiIsImlhdCI6MTcxODM0Njg0OX0.97pGqGCPMpP9rVaqq1QNaDcjykQLThGildYJWu93DiM";
+  const btcServiceOrigin = "https://mobit.app";
+
+  return BtcAssetsApi.fromToken(
+    btcServiceUrl,
+    btcServiceToken,
+    btcServiceOrigin,
+  );
+};
+
 export class BtcHelper {
   btcDataSource: DataSource;
   btcTestnetType?: BTCTestnetType;
@@ -84,25 +108,7 @@ export class BtcHelper {
     this.btcTestnetType = btcTestnetType;
     this.networkType = networkType;
 
-    let btcServiceUrl: string;
-
-    if (btcTestnetType === undefined) {
-      btcServiceUrl = "https://api.rgbpp.io";
-    } else if (btcTestnetType === "Signet") {
-      btcServiceUrl = "https://api.signet.rgbpp.io";
-    } else {
-      btcServiceUrl = "https://api.testnet.rgbpp.io";
-    }
-
-    const btcServiceToken =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJNb2JpdCIsImF1ZCI6Im1vYml0LmFwcCIsImp0aSI6IjNjMTAzNGNmLTcwZWEtNDgzMy04MGUwLTRlMDA2NTNkNTY3YiIsImlhdCI6MTcxODM0Njg0OX0.97pGqGCPMpP9rVaqq1QNaDcjykQLThGildYJWu93DiM";
-    const btcServiceOrigin = "https://mobit.app";
-
-    this.btcService = BtcAssetsApi.fromToken(
-      btcServiceUrl,
-      btcServiceToken,
-      btcServiceOrigin,
-    );
+    this.btcService = createBtcService(btcTestnetType);
 
     this.btcDataSource = new DataSource(this.btcService, networkType);
     this.unisat = unisat;

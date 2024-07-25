@@ -9,4 +9,5 @@ import { launchCombined } from "./rgbpp/launcher";
 import { leapFromBtcToCKB } from "./rgbpp/leap";
 import { transferCombined } from "./rgbpp/transfer";
 import { BtcHelper, CkbHelper } from "./helper";
-export { BtcHelper, CkbHelper, convertToTxSkeleton, createBurnXudtTransaction, createIssueXudtTransaction, createMergeXudtTransaction, createTransferXudtTransaction, distributeCombined, launchCombined, leapFromBtcToCKB, leapFromCkbToBtc, transferCombined, };
+import { RgbppSDK } from "./sdk";
+export { BtcHelper, CkbHelper, convertToTxSkeleton, createBurnXudtTransaction, createIssueXudtTransaction, createMergeXudtTransaction, createTransferXudtTransaction, distributeCombined, launchCombined, leapFromBtcToCKB, leapFromCkbToBtc, RgbppSDK, transferCombined, };
