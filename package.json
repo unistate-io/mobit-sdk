@@ -1,6 +1,6 @@
 {
   "name": "mobit-sdk",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "",
   "main": "dist/sdk.js",
   "types": "dist/types/index.d.ts",
@@ -22,6 +22,7 @@
     "assert": "^2.1.0",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.0",
+    "graphql": "^16.9.0",
     "html-webpack-plugin": "^5.6.0",
     "process": "^0.11.10",
     "stream-browserify": "^3.0.0",
@@ -34,6 +35,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
+    "@apollo/client": "^3.11.1",
     "@ckb-ccc/core": "0.0.5-alpha.2",
     "@ckb-lumos/base": "0.0.0-canary-d279b87-20240624101315",
     "@ckb-lumos/codec": "0.0.0-canary-d279b87-20240624101315",
