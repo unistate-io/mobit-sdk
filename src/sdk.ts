@@ -29,15 +29,17 @@ export enum MintStatus {
     REBASE_STARTED = 2,
 }
 
-// Interfaces
 export interface TokenInfo {
     decimal: number;
     name: string;
     symbol: string;
-    expected_supply: bigint | null;
-    mint_limit: bigint | null;
-    mint_status: number | null;
-    udt_hash: string | null;
+}
+
+export interface RawInscriptionInfo extends TokenInfo {
+    expected_supply: bigint;
+    mint_limit: bigint;
+    mint_status: number;
+    udt_hash: string;
 }
 
 export interface XudtCell {
@@ -46,17 +48,16 @@ export interface XudtCell {
     type_id: string;
     addressByTypeId: {
         token_info: TokenInfo | null;
+        token_infos: RawInscriptionInfo[];
         script_args: string;
     };
 }
-export interface ProcessedTokenInfo {
-    decimal: number;
-    name: string;
-    symbol: string;
-    expected_supply: bigint | null;
-    mint_limit: bigint | null;
-    mint_status: MintStatus | null;
-    udt_hash: string | null;
+
+export interface InscriptionInfo extends TokenInfo {
+    expected_supply: bigint;
+    mint_limit: bigint;
+    mint_status: MintStatus;
+    udt_hash: string;
 }
 
 export interface ProcessedXudtCell {
@@ -64,7 +65,8 @@ export interface ProcessedXudtCell {
     is_consumed: boolean;
     type_id: string;
     addressByTypeId: {
-        token_info: ProcessedTokenInfo | null;
+        token_info: TokenInfo | null;
+        inscription_infos: InscriptionInfo[];
         script_args: string;
     };
 }
@@ -128,7 +130,6 @@ interface GraphQLResponse {
     sporeActions: SporeAction | null;
 }
 
-// Main SDK class
 export class RgbppSDK {
     private service: BtcAssetsApi;
     private client: ApolloClient<NormalizedCacheObject>;
@@ -154,7 +155,7 @@ export class RgbppSDK {
 
     public async fetchTxsDetails(
         btcAddress: string,
-        afterTxId?: string,
+        afterTxId?: string
     ): Promise<BtcApiTransaction[]> {
         try {
             return await this.service.getBtcTransactions(btcAddress, {
@@ -166,28 +167,28 @@ export class RgbppSDK {
         }
     }
 
-    public async fetchAssetsAndQueryDetails(
-        btcAddress: string,
-    ): Promise<QueryResult> {
+    public async fetchAssetsAndQueryDetails(btcAddress: string): Promise<QueryResult> {
         try {
             const [assets, balance] = await Promise.all([
                 this.service.getRgbppAssetsByBtcAddress(btcAddress),
                 this.service.getBtcBalance(btcAddress),
             ]);
 
-            const assetQueries = assets
-                .filter((asset) => asset.outPoint)
-                .map((asset) => this.queryAssetDetails(asset.outPoint!));
+            const validAssets = assets.filter((asset) => asset.outPoint);
 
-            const assetResults = await Promise.all(assetQueries);
+            if (validAssets.length === 0) {
+                return { balance, assets: { xudtCells: [], sporeActions: [] } };
+            }
+
+            const assetDetails = await Promise.all(
+                validAssets.map((asset) => this.queryAssetDetails(asset.outPoint!))
+            );
 
             const assetsResult: AssetDetails = {
-                xudtCells: assetResults.flatMap((result) =>
-                    result.xudtCell
-                        ? [this.processXudtCell(result.xudtCell)]
-                        : []
+                xudtCells: assetDetails.flatMap((result) =>
+                    result.xudtCell ? [this.processXudtCell(result.xudtCell)] : []
                 ),
-                sporeActions: assetResults.flatMap((result) =>
+                sporeActions: assetDetails.flatMap((result) =>
                     result.sporeActions ? [result.sporeActions] : []
                 ),
             };
@@ -203,39 +204,67 @@ export class RgbppSDK {
         return `\\x${txHash.replace(/^0x/, "")}`;
     }
 
-    private async queryAssetDetails(
-        outPoint: { txHash: string; index: string },
-    ): Promise<GraphQLResponse> {
+    private async queryAssetDetails(outPoint: {
+        txHash: string;
+        index: string;
+    }): Promise<GraphQLResponse> {
         const query = gql`
-            query AssetDetails($txHash: bytea!, $txIndex: Int!) {
-                xudtCell: xudt_cell_by_pk(transaction_hash: $txHash, transaction_index: $txIndex) {
-                    amount is_consumed type_id
-                    addressByTypeId {
-                        script_args
-                        token_info { 
-                            decimal name symbol expected_supply 
-                            mint_limit mint_status udt_hash 
-                        }
-                    }
-                }
-                sporeActions: spore_actions_by_pk(tx: $txHash) {
-                    cluster {
-                        cluster_description cluster_name created_at id
-                        is_burned mutant_id owner_address updated_at
-                        address {
-                            script_args
-                        }
-                    }
-                    spore {
-                        cluster_id content content_type created_at id
-                        is_burned owner_address updated_at
-                        address {
-                            script_args
-                        }
-                    }
-                }
+      query AssetDetails($txHash: bytea!, $txIndex: Int!) {
+        xudtCell: xudt_cell_by_pk(
+          transaction_hash: $txHash
+          transaction_index: $txIndex
+        ) {
+          amount
+          is_consumed
+          type_id
+          addressByTypeId {
+            script_args
+            token_info {
+              decimal
+              name
+              symbol
             }
-        `;
+            token_infos {
+              decimal
+              name
+              symbol
+              expected_supply
+              mint_limit
+              mint_status
+              udt_hash
+            }
+          }
+        }
+        sporeActions: spore_actions_by_pk(tx: $txHash) {
+          cluster {
+            cluster_description
+            cluster_name
+            created_at
+            id
+            is_burned
+            mutant_id
+            owner_address
+            updated_at
+            address {
+              script_args
+            }
+          }
+          spore {
+            cluster_id
+            content
+            content_type
+            created_at
+            id
+            is_burned
+            owner_address
+            updated_at
+            address {
+              script_args
+            }
+          }
+        }
+      }
+    `;
 
         const { data } = await this.client.query({
             query,
@@ -249,33 +278,25 @@ export class RgbppSDK {
     }
 
     private processXudtCell(cell: XudtCell): ProcessedXudtCell {
-        const { token_info, ...restAddressTypeId } = cell.addressByTypeId;
-
-        const processedCell: ProcessedXudtCell = {
-            ...cell,
+        return {
+            amount: cell.amount,
+            is_consumed: cell.is_consumed,
+            type_id: cell.type_id,
             addressByTypeId: {
-                ...restAddressTypeId,
-                token_info: token_info
-                    ? {
-                        ...token_info,
-                        mint_status: this.validateMintStatus(
-                            token_info.mint_status,
-                        ),
-                    }
-                    : null,
+                token_info: cell.addressByTypeId.token_info,
+                inscription_infos: cell.addressByTypeId.token_infos.map((info) => ({
+                    ...info,
+                    mint_status: this.validateMintStatus(info.mint_status),
+                })),
+                script_args: cell.addressByTypeId.script_args,
             },
         };
-
-        return processedCell;
     }
 
-    private validateMintStatus(status: number | null): MintStatus | null {
-        if (status) {
-            if (status in MintStatus) {
-                return status as MintStatus;
-            }
-            throw new Error(`Invalid MintStatus: ${status}`);
+    private validateMintStatus(status: number): MintStatus {
+        if (status in MintStatus) {
+            return status as MintStatus;
         }
-        return null;
+        throw new Error(`Invalid MintStatus: ${status}`);
     }
 }
