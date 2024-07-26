@@ -1,15 +1,15 @@
 import { Signer } from "@ckb-ccc/core";
 import { BTCTestnetType, Collector } from "@rgbpp-sdk/ckb";
 export interface LeapToBtcParams {
-    outIndex: number;
-    btcTxId: string;
-    xudtTypeArgs: string;
-    transferAmount: bigint;
-    isMainnet: boolean;
-    collector: Collector;
-    ckbAddress: string;
-    btcTestnetType?: BTCTestnetType;
-    cccSigner: Signer;
+  outIndex: number;
+  btcTxId: string;
+  xudtTypeArgs: string;
+  transferAmount: bigint;
+  isMainnet: boolean;
+  collector: Collector;
+  ckbAddress: string;
+  btcTestnetType?: BTCTestnetType;
+  cccSigner: Signer;
 }
 /**
  * Leap from CKB to BTC
@@ -32,4 +32,17 @@ export interface LeapToBtcParams {
  *
  * @returns {Promise<string>} - The transaction hash of the CKB transaction.
  */
-export declare const leapFromCkbToBtc: ({ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType, cccSigner, }: LeapToBtcParams, feeRate?: bigint) => Promise<string>;
+export declare const leapFromCkbToBtc: (
+  {
+    outIndex,
+    btcTxId,
+    xudtTypeArgs,
+    transferAmount,
+    isMainnet,
+    collector,
+    ckbAddress,
+    btcTestnetType,
+    cccSigner,
+  }: LeapToBtcParams,
+  feeRate?: bigint,
+) => Promise<string>;

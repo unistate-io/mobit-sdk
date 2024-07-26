@@ -1,13 +1,13 @@
 import { Collector } from "@rgbpp-sdk/ckb";
 interface CreateTransferXudtTransactionParams {
-    xudtArgs: string;
-    receivers: {
-        toAddress: string;
-        transferAmount: bigint;
-    }[];
-    ckbAddress: string;
-    collector: Collector;
-    isMainnet: boolean;
+  xudtArgs: string;
+  receivers: {
+    toAddress: string;
+    transferAmount: bigint;
+  }[];
+  ckbAddress: string;
+  collector: Collector;
+  isMainnet: boolean;
 }
 /**
  * Creates an unsigned transaction for transferring xUDT assets. This function can also be used to mint xUDT assets.
@@ -25,5 +25,10 @@ interface CreateTransferXudtTransactionParams {
  * @throws {NoXudtLiveCellError} If the address has no xudt cells.
  * @throws {NoLiveCellError} If the address has no empty cells.
  */
-export declare function createTransferXudtTransaction({ xudtArgs, receivers, ckbAddress, collector, isMainnet, }: CreateTransferXudtTransactionParams, feeRate?: bigint, maxFee?: bigint): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createTransferXudtTransaction(
+  { xudtArgs, receivers, ckbAddress, collector, isMainnet }:
+    CreateTransferXudtTransactionParams,
+  feeRate?: bigint,
+  maxFee?: bigint,
+): Promise<CKBComponents.RawTransactionToSign>;
 export {};

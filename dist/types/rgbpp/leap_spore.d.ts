@@ -2,16 +2,16 @@ import { BTCTestnetType, Collector, Hex } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi, DataSource } from "rgbpp";
 import { AbstractWallet, TxResult } from "../helper";
 interface SporeLeapCombinedParams {
-    toCkbAddress: string;
-    sporeTypeArgs: Hex;
-    collector: Collector;
-    isMainnet: boolean;
-    btcTestnetType?: BTCTestnetType;
-    fromBtcAddress: string;
-    fromBtcAddressPubkey?: string;
-    btcDataSource: DataSource;
-    unisat: AbstractWallet;
-    btcService: BtcAssetsApi;
+  toCkbAddress: string;
+  sporeTypeArgs: Hex;
+  collector: Collector;
+  isMainnet: boolean;
+  btcTestnetType?: BTCTestnetType;
+  fromBtcAddress: string;
+  fromBtcAddressPubkey?: string;
+  btcDataSource: DataSource;
+  unisat: AbstractWallet;
+  btcService: BtcAssetsApi;
 }
 /**
  * Combines the process of leaping a spore from BTC to CKB with the necessary parameters.
@@ -32,5 +32,19 @@ interface SporeLeapCombinedParams {
  *
  * @returns {Promise<TxResult>} - The result of the transaction, including the BTC transaction ID.
  */
-export declare const leapSporeFromBtcToCkbCombined: ({ toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, unisat, btcService, }: SporeLeapCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
+export declare const leapSporeFromBtcToCkbCombined: (
+  {
+    toCkbAddress,
+    sporeTypeArgs,
+    collector,
+    isMainnet,
+    btcTestnetType,
+    fromBtcAddress,
+    fromBtcAddressPubkey,
+    btcDataSource,
+    unisat,
+    btcService,
+  }: SporeLeapCombinedParams,
+  btcFeeRate?: number,
+) => Promise<TxResult>;
 export {};

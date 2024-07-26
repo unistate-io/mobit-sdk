@@ -4,21 +4,21 @@ import { BtcApiUtxo } from "@rgbpp-sdk/service";
 import { BtcAssetsApi, DataSource } from "rgbpp";
 import { AbstractWallet, TxResult } from "../helper";
 interface createClusterCombinedParams {
-    ckbAddress: string;
-    clusterData: RawClusterData;
-    collector: Collector;
-    isMainnet: boolean;
-    btcTestnetType?: BTCTestnetType;
-    fromBtcAccount: string;
-    fromBtcAccountPubkey?: string;
-    btcDataSource: DataSource;
-    unisat: AbstractWallet;
-    btcService: BtcAssetsApi;
-    filterUtxo: (utxos: BtcApiUtxo[]) => Promise<{
-        outIndex: number;
-        btcTxId: string;
-    }>;
-    cccSigner: ccc.Signer;
+  ckbAddress: string;
+  clusterData: RawClusterData;
+  collector: Collector;
+  isMainnet: boolean;
+  btcTestnetType?: BTCTestnetType;
+  fromBtcAccount: string;
+  fromBtcAccountPubkey?: string;
+  btcDataSource: DataSource;
+  unisat: AbstractWallet;
+  btcService: BtcAssetsApi;
+  filterUtxo: (utxos: BtcApiUtxo[]) => Promise<{
+    outIndex: number;
+    btcTxId: string;
+  }>;
+  cccSigner: ccc.Signer;
 }
 /**
  * Creates a cluster cell on the CKB network and initiates a corresponding BTC transaction.
@@ -41,5 +41,23 @@ interface createClusterCombinedParams {
  * @param {number} [btcFeeRate=30] - The fee rate for the BTC transaction (default is 30).
  * @returns {Promise<TxResult>} - A promise that resolves to the transaction result.
  */
-export declare const createClusterCombined: ({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, unisat, btcService, filterUtxo, cccSigner, }: createClusterCombinedParams, ckbFeeRate?: bigint, maxFee?: bigint, btcFeeRate?: number) => Promise<TxResult>;
+export declare const createClusterCombined: (
+  {
+    ckbAddress,
+    clusterData,
+    collector,
+    isMainnet,
+    btcTestnetType,
+    fromBtcAccount,
+    fromBtcAccountPubkey,
+    btcDataSource,
+    unisat,
+    btcService,
+    filterUtxo,
+    cccSigner,
+  }: createClusterCombinedParams,
+  ckbFeeRate?: bigint,
+  maxFee?: bigint,
+  btcFeeRate?: number,
+) => Promise<TxResult>;
 export {};

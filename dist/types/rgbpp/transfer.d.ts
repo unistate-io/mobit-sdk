@@ -3,17 +3,17 @@ import { BTCTestnetType, Collector } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi } from "rgbpp";
 import { AbstractWallet, TxResult } from "../helper";
 interface RgbppTransferCombinedParams {
-    toBtcAddress: string;
-    xudtTypeArgs: string;
-    transferAmount: bigint;
-    collector: Collector;
-    btcDataSource: DataSource;
-    btcTestnetType?: BTCTestnetType;
-    isMainnet: boolean;
-    fromBtcAccount: string;
-    fromBtcAccountPubkey?: string;
-    unisat: AbstractWallet;
-    btcService: BtcAssetsApi;
+  toBtcAddress: string;
+  xudtTypeArgs: string;
+  transferAmount: bigint;
+  collector: Collector;
+  btcDataSource: DataSource;
+  btcTestnetType?: BTCTestnetType;
+  isMainnet: boolean;
+  fromBtcAccount: string;
+  fromBtcAccountPubkey?: string;
+  unisat: AbstractWallet;
+  btcService: BtcAssetsApi;
 }
 /**
  * Combines the steps of getting the RGBPP lock arguments list and transferring RGBPP assets.
@@ -32,5 +32,17 @@ interface RgbppTransferCombinedParams {
  * @param btcFeeRate - (Optional) The fee rate to use for the Bitcoin transaction.
  * @returns A promise that resolves to the transaction result.
  */
-export declare const transferCombined: ({ toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, unisat, btcService, }: RgbppTransferCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
+export declare const transferCombined: ({
+  toBtcAddress,
+  xudtTypeArgs,
+  transferAmount,
+  collector,
+  btcDataSource,
+  btcTestnetType,
+  isMainnet,
+  fromBtcAccount,
+  fromBtcAccountPubkey,
+  unisat,
+  btcService,
+}: RgbppTransferCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
 export {};
