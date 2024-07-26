@@ -2,16 +2,16 @@ import { BTCTestnetType, Collector, Hex } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi, DataSource } from "rgbpp";
 import { AbstractWallet } from "../helper";
 interface SporeTransferCombinedParams {
-  toBtcAddress: string;
-  sporeTypeArgs: Hex;
-  collector: Collector;
-  isMainnet: boolean;
-  btcTestnetType?: BTCTestnetType;
-  fromBtcAddress: string;
-  fromBtcAddressPubkey?: string;
-  btcDataSource: DataSource;
-  unisat: AbstractWallet;
-  btcService: BtcAssetsApi;
+    toBtcAddress: string;
+    sporeTypeArgs: Hex;
+    collector: Collector;
+    isMainnet: boolean;
+    btcTestnetType?: BTCTestnetType;
+    fromBtcAddress: string;
+    fromBtcAddressPubkey?: string;
+    btcDataSource: DataSource;
+    unisat: AbstractWallet;
+    btcService: BtcAssetsApi;
 }
 /**
  * Transfers a spore to a specified BTC address.
@@ -30,27 +30,11 @@ interface SporeTransferCombinedParams {
  * @param {number} [btcFeeRate=30] - The fee rate for the BTC transaction (optional, default is 30).
  * @returns {Promise<{ btcTxId: string }>} - The result of the spore transfer, including the BTC transaction ID.
  */
-export declare const transferSporeCombined: (
-  {
-    toBtcAddress,
-    sporeTypeArgs,
-    collector,
-    isMainnet,
-    btcTestnetType,
-    fromBtcAddress,
-    fromBtcAddressPubkey,
-    btcDataSource,
-    unisat,
-    btcService,
-  }: SporeTransferCombinedParams,
-  btcFeeRate?: number,
-) => Promise<
-  {
+export declare const transferSporeCombined: ({ toBtcAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, unisat, btcService, }: SporeTransferCombinedParams, btcFeeRate?: number) => Promise<{
     error: Error;
     btcTxId: string;
-  } | {
+} | {
     btcTxId: string;
     error?: undefined;
-  }
->;
+}>;
 export {};

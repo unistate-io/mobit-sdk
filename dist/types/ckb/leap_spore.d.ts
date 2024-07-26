@@ -1,14 +1,14 @@
 import { Signer } from "@ckb-ccc/core";
 import { BTCTestnetType, Collector } from "@rgbpp-sdk/ckb";
 export interface LeapSporeToBtcParams {
-  outIndex: number;
-  btcTxId: string;
-  sporeTypeArgs: string;
-  isMainnet: boolean;
-  collector: Collector;
-  ckbAddress: string;
-  btcTestnetType?: BTCTestnetType;
-  cccSigner: Signer;
+    outIndex: number;
+    btcTxId: string;
+    sporeTypeArgs: string;
+    isMainnet: boolean;
+    collector: Collector;
+    ckbAddress: string;
+    btcTestnetType?: BTCTestnetType;
+    cccSigner: Signer;
 }
 /**
  * Leap a spore from CKB to BTC.
@@ -25,16 +25,4 @@ export interface LeapSporeToBtcParams {
  * @param feeRate - (Optional) The fee rate for the transaction.
  * @returns A promise that resolves to the transaction hash of the CKB transaction.
  */
-export declare const leapSporeFromCkbToBtc: (
-  {
-    outIndex,
-    btcTxId,
-    sporeTypeArgs,
-    isMainnet,
-    collector,
-    ckbAddress,
-    btcTestnetType,
-    cccSigner,
-  }: LeapSporeToBtcParams,
-  feeRate?: bigint,
-) => Promise<string>;
+export declare const leapSporeFromCkbToBtc: ({ outIndex, btcTxId, sporeTypeArgs, isMainnet, collector, ckbAddress, btcTestnetType, cccSigner, }: LeapSporeToBtcParams, feeRate?: bigint) => Promise<string>;

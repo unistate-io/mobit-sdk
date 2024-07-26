@@ -1,10 +1,10 @@
 import { Collector } from "@rgbpp-sdk/ckb";
 interface CreateBurnXudtTransactionParams {
-  xudtArgs: string;
-  burnAmount: bigint;
-  ckbAddress: string;
-  collector: Collector;
-  isMainnet: boolean;
+    xudtArgs: string;
+    burnAmount: bigint;
+    ckbAddress: string;
+    collector: Collector;
+    isMainnet: boolean;
 }
 /**
  * Creates an unsigned transaction for burning xUDT assets.
@@ -21,10 +21,5 @@ interface CreateBurnXudtTransactionParams {
  * @param maxFee An optional parameter specifying the maximum fee for the transaction. Defaults to MAX_FEE if not provided.
  * @returns An unsigned transaction object that can be signed and submitted to the network.
  */
-export declare function createBurnXudtTransaction(
-  { xudtArgs, burnAmount, ckbAddress, collector, isMainnet }:
-    CreateBurnXudtTransactionParams,
-  feeRate?: bigint,
-  maxFee?: bigint,
-): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createBurnXudtTransaction({ xudtArgs, burnAmount, ckbAddress, collector, isMainnet, }: CreateBurnXudtTransactionParams, feeRate?: bigint, maxFee?: bigint): Promise<CKBComponents.RawTransactionToSign>;
 export {};

@@ -5,22 +5,22 @@ import { BtcApiUtxo } from "@rgbpp-sdk/service";
 import { BtcAssetsApi } from "rgbpp";
 import { AbstractWallet, TxResult } from "../helper";
 interface RgbppLauncerCombinedParams {
-  rgbppTokenInfo: RgbppTokenInfo;
-  collector: Collector;
-  isMainnet: boolean;
-  btcTestnetType?: BTCTestnetType;
-  btcAccount: string;
-  btcAccountPubkey?: string;
-  btcDataSource: DataSource;
-  launchAmount: bigint;
-  btcService: BtcAssetsApi;
-  ckbAddress: string;
-  cccSigner: ccc.Signer;
-  filterUtxo: (utxos: BtcApiUtxo[]) => Promise<{
-    outIndex: number;
-    btcTxId: string;
-  }>;
-  unisat: AbstractWallet;
+    rgbppTokenInfo: RgbppTokenInfo;
+    collector: Collector;
+    isMainnet: boolean;
+    btcTestnetType?: BTCTestnetType;
+    btcAccount: string;
+    btcAccountPubkey?: string;
+    btcDataSource: DataSource;
+    launchAmount: bigint;
+    btcService: BtcAssetsApi;
+    ckbAddress: string;
+    cccSigner: ccc.Signer;
+    filterUtxo: (utxos: BtcApiUtxo[]) => Promise<{
+        outIndex: number;
+        btcTxId: string;
+    }>;
+    unisat: AbstractWallet;
 }
 /**
  * Launches an RGB++ asset by preparing a launch cell and subsequently sending a BTC transaction.
@@ -45,24 +45,5 @@ interface RgbppLauncerCombinedParams {
  *
  * @returns A promise that resolves to the transaction result, including the BTC transaction ID and CKB transaction hash.
  */
-export declare const launchCombined: (
-  {
-    rgbppTokenInfo,
-    collector,
-    isMainnet,
-    btcTestnetType,
-    btcAccount,
-    btcDataSource,
-    btcAccountPubkey,
-    launchAmount,
-    ckbAddress,
-    filterUtxo,
-    btcService,
-    unisat,
-    cccSigner,
-  }: RgbppLauncerCombinedParams,
-  ckbFeeRate?: bigint,
-  maxFee?: bigint,
-  btcFeeRate?: number,
-) => Promise<TxResult>;
+export declare const launchCombined: ({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, ckbAddress, filterUtxo, btcService, unisat, cccSigner, }: RgbppLauncerCombinedParams, ckbFeeRate?: bigint, maxFee?: bigint, btcFeeRate?: number) => Promise<TxResult>;
 export {};

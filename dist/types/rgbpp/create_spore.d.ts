@@ -3,21 +3,21 @@ import { BTCTestnetType, Collector, RawSporeData } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi, DataSource } from "rgbpp";
 import { AbstractWallet, TxResult } from "../helper";
 interface SporeCreateCombinedParams {
-  clusterTypeScriptArgs: string;
-  receivers: {
-    toBtcAddress: string;
-    sporeData: RawSporeData;
-  }[];
-  collector: Collector;
-  isMainnet: boolean;
-  btcTestnetType?: BTCTestnetType;
-  fromBtcAccount: string;
-  fromBtcAccountPubkey?: string;
-  btcDataSource: DataSource;
-  unisat: AbstractWallet;
-  ckbAddress: string;
-  btcService: BtcAssetsApi;
-  cccSigner: ccc.Signer;
+    clusterTypeScriptArgs: string;
+    receivers: {
+        toBtcAddress: string;
+        sporeData: RawSporeData;
+    }[];
+    collector: Collector;
+    isMainnet: boolean;
+    btcTestnetType?: BTCTestnetType;
+    fromBtcAccount: string;
+    fromBtcAccountPubkey?: string;
+    btcDataSource: DataSource;
+    unisat: AbstractWallet;
+    ckbAddress: string;
+    btcService: BtcAssetsApi;
+    cccSigner: ccc.Signer;
 }
 /**
  * Creates spores combined with the given parameters.
@@ -38,18 +38,5 @@ interface SporeCreateCombinedParams {
  * @param {number} [btcFeeRate=120] - The fee rate for BTC transactions (default is 120).
  * @returns {Promise<TxResult>} - The result of the transaction.
  */
-export declare const createSporesCombined: ({
-  clusterTypeScriptArgs,
-  receivers,
-  collector,
-  isMainnet,
-  btcTestnetType,
-  fromBtcAccount,
-  fromBtcAccountPubkey,
-  btcDataSource,
-  unisat,
-  btcService,
-  ckbAddress,
-  cccSigner,
-}: SporeCreateCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
+export declare const createSporesCombined: ({ clusterTypeScriptArgs, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, unisat, btcService, ckbAddress, cccSigner, }: SporeCreateCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
 export {};

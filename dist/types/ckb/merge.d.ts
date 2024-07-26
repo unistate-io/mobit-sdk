@@ -1,9 +1,9 @@
 import { Collector } from "@rgbpp-sdk/ckb";
 interface CreateMergeXudtTransactionParams {
-  xudtArgs: string;
-  ckbAddresses: string[];
-  collector: Collector;
-  isMainnet: boolean;
+    xudtArgs: string;
+    ckbAddresses: string[];
+    collector: Collector;
+    isMainnet: boolean;
 }
 /**
  * Merges multiple xUDT cells into a single xUDT cell and returns the remaining capacity as a separate cell.
@@ -16,11 +16,5 @@ interface CreateMergeXudtTransactionParams {
  * @param maxFee - The maximum fee for the transaction, defaulting to MAX_FEE
  * @returns An unsigned transaction object
  */
-export declare function createMergeXudtTransaction(
-  { xudtArgs, ckbAddresses, collector, isMainnet }:
-    CreateMergeXudtTransactionParams,
-  ckbAddress?: string,
-  feeRate?: bigint,
-  maxFee?: bigint,
-): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createMergeXudtTransaction({ xudtArgs, ckbAddresses, collector, isMainnet, }: CreateMergeXudtTransactionParams, ckbAddress?: string, feeRate?: bigint, maxFee?: bigint): Promise<CKBComponents.RawTransactionToSign>;
 export {};

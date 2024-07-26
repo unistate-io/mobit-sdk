@@ -1,36 +1,29 @@
 import { DataSource } from "@rgbpp-sdk/btc";
-import {
-  BTCTestnetType,
-  Collector,
-  RgbppBtcAddressReceiver,
-} from "@rgbpp-sdk/ckb";
+import { BTCTestnetType, Collector, RgbppBtcAddressReceiver } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi } from "rgbpp";
 import { AbstractWallet, TxResult } from "../helper";
 interface RgbppLockArgsListParams {
-  xudtTypeArgs: string;
-  fromBtcAccount: string;
-  isMainnet: boolean;
-  btcService: BtcAssetsApi;
+    xudtTypeArgs: string;
+    fromBtcAccount: string;
+    isMainnet: boolean;
+    btcService: BtcAssetsApi;
 }
 interface RgbppLockArgsListResponse {
-  rgbppLockArgsList: string[];
+    rgbppLockArgsList: string[];
 }
-export declare const getRgbppLockArgsList: (
-  { xudtTypeArgs, fromBtcAccount, isMainnet, btcService }:
-    RgbppLockArgsListParams,
-) => Promise<RgbppLockArgsListResponse>;
+export declare const getRgbppLockArgsList: ({ xudtTypeArgs, fromBtcAccount, isMainnet, btcService, }: RgbppLockArgsListParams) => Promise<RgbppLockArgsListResponse>;
 interface RgbppDistributeCombinedParams {
-  receivers: RgbppBtcAddressReceiver[];
-  xudtTypeArgs: string;
-  collector: Collector;
-  btcDataSource: DataSource;
-  btcTestnetType?: BTCTestnetType;
-  isMainnet: boolean;
-  fromBtcAccount: string;
-  fromBtcAccountPubkey?: string;
-  unisat: AbstractWallet;
-  filterRgbppArgslist: (argsList: string[]) => Promise<string[]>;
-  btcService: BtcAssetsApi;
+    receivers: RgbppBtcAddressReceiver[];
+    xudtTypeArgs: string;
+    collector: Collector;
+    btcDataSource: DataSource;
+    btcTestnetType?: BTCTestnetType;
+    isMainnet: boolean;
+    fromBtcAccount: string;
+    fromBtcAccountPubkey?: string;
+    unisat: AbstractWallet;
+    filterRgbppArgslist: (argsList: string[]) => Promise<string[]>;
+    btcService: BtcAssetsApi;
 }
 /**
  * Distributes RGBPP assets to multiple receivers.
@@ -50,17 +43,5 @@ interface RgbppDistributeCombinedParams {
  * @param {number} [btcFeeRate] - The fee rate for the BTC transaction (optional).
  * @returns {Promise<TxResult>} - The result of the transaction.
  */
-export declare const distributeCombined: ({
-  xudtTypeArgs,
-  receivers,
-  collector,
-  btcDataSource,
-  btcTestnetType,
-  isMainnet,
-  fromBtcAccount,
-  fromBtcAccountPubkey,
-  unisat,
-  filterRgbppArgslist,
-  btcService,
-}: RgbppDistributeCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
+export declare const distributeCombined: ({ xudtTypeArgs, receivers, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, unisat, filterRgbppArgslist, btcService, }: RgbppDistributeCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
 export {};

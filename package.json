@@ -8,7 +8,7 @@
     "dist"
   ],
   "scripts": {
-    "fmt": "deno fmt",
+    "fmt": "deno fmt --ignore=dist/",
     "build-dev": "npx webpack --config webpack.config.cjs",
     "build": "npx webpack --config webpack.config.cjs --mode production",
     "update-rgbpp": "yarn add @rgbpp-sdk/btc@snap @rgbpp-sdk/ckb@snap @rgbpp-sdk/service@snap rgbpp@snap",

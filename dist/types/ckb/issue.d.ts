@@ -1,10 +1,10 @@
 import { Collector, RgbppTokenInfo } from "@rgbpp-sdk/ckb";
 interface CreateIssueXudtTransactionParams {
-  xudtTotalAmount: bigint;
-  tokenInfo: RgbppTokenInfo;
-  ckbAddress: string;
-  collector: Collector;
-  isMainnet: boolean;
+    xudtTotalAmount: bigint;
+    tokenInfo: RgbppTokenInfo;
+    ckbAddress: string;
+    collector: Collector;
+    isMainnet: boolean;
 }
 /**
  * Creates an unsigned transaction for issuing xUDT assets with a unique cell as the token info cell.
@@ -19,10 +19,5 @@ interface CreateIssueXudtTransactionParams {
  *
  * @returns A promise that resolves to an unsigned transaction object.
  */
-export declare function createIssueXudtTransaction(
-  { xudtTotalAmount, tokenInfo, ckbAddress, collector, isMainnet }:
-    CreateIssueXudtTransactionParams,
-  feeRate?: bigint,
-  maxFee?: bigint,
-): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createIssueXudtTransaction({ xudtTotalAmount, tokenInfo, ckbAddress, collector, isMainnet, }: CreateIssueXudtTransactionParams, feeRate?: bigint, maxFee?: bigint): Promise<CKBComponents.RawTransactionToSign>;
 export {};
