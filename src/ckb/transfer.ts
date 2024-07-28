@@ -15,12 +15,16 @@ import {
   NoXudtLiveCellError,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
-import { calculateWitnessSize, getAddressCellDeps } from "../helper";
+import {
+  calculateWitnessSize,
+  getAddressCellDeps,
+  getIndexerCells,
+} from "../helper";
 
 interface CreateTransferXudtTransactionParams {
   xudtArgs: string;
   receivers: { toAddress: string; transferAmount: bigint }[];
-  ckbAddress: string;
+  ckbAddresses: string[];
   collector: Collector;
   isMainnet: boolean;
 }
@@ -30,9 +34,10 @@ interface CreateTransferXudtTransactionParams {
  *
  * @param xudtArgs - The xUDT type script args.
  * @param receivers - An array of receiver objects containing `toAddress` and `transferAmount`.
- * @param ckbAddress - The CKB address for the transaction.
+ * @param ckbAddresses - The CKB addresses for the transaction.
  * @param collector - The collector instance used to fetch cells and collect inputs.
  * @param isMainnet - A boolean indicating whether the network is mainnet or testnet.
+ * @param ckbAddress - The address for the output cell, defaulting to the first address in the input address set
  * @param feeRate - (Optional) The fee rate to be used for the transaction.
  * @param maxFee - (Optional) The maximum fee allowed for the transaction. Defaults to `MAX_FEE`.
  *
@@ -45,10 +50,11 @@ export async function createTransferXudtTransaction(
   {
     xudtArgs,
     receivers,
-    ckbAddress,
+    ckbAddresses,
     collector,
     isMainnet,
   }: CreateTransferXudtTransactionParams,
+  ckbAddress = ckbAddresses[0],
   feeRate?: bigint,
   maxFee: bigint = MAX_FEE,
 ): Promise<
@@ -58,16 +64,17 @@ export async function createTransferXudtTransaction(
     ...getXudtTypeScript(isMainnet),
     args: xudtArgs,
   };
-  const fromLock = addressToScript(ckbAddress);
-  const xudtCells = await collector.getCells({
-    lock: fromLock,
+
+  const xudtCells = await getIndexerCells({
+    ckbAddresses,
     type: xudtType,
+    collector,
   });
 
   console.debug("Fetched xudt cells:", xudtCells);
 
   if (!xudtCells || xudtCells.length === 0) {
-    throw new NoXudtLiveCellError("The address has no xudt cells");
+    throw new NoXudtLiveCellError("The addresses have no xudt cells");
   }
 
   const sumTransferAmount = receivers
@@ -117,9 +124,11 @@ export async function createTransferXudtTransaction(
   console.debug("Outputs Data:", outputsData);
 
   if (sumAmount > sumTransferAmount) {
-    const xudtChangeCapacity = calculateUdtCellCapacity(fromLock);
+    const xudtChangeCapacity = calculateUdtCellCapacity(
+      addressToScript(ckbAddress),
+    );
     outputs.push({
-      lock: fromLock,
+      lock: addressToScript(ckbAddress),
       type: xudtType,
       capacity: append0x(xudtChangeCapacity.toString(16)),
     });
@@ -134,8 +143,9 @@ export async function createTransferXudtTransaction(
   const txFee = maxFee;
 
   if (sumXudtInputsCapacity <= sumXudtOutputCapacity) {
-    let emptyCells = await collector.getCells({
-      lock: fromLock,
+    let emptyCells = await getIndexerCells({
+      ckbAddresses,
+      collector,
     });
 
     console.debug("Fetched Empty Cells:", emptyCells);
@@ -143,7 +153,7 @@ export async function createTransferXudtTransaction(
     emptyCells = emptyCells.filter((cell) => !cell.output.type);
 
     if (!emptyCells || emptyCells.length === 0) {
-      throw new NoLiveCellError("The address has no empty cells");
+      throw new NoLiveCellError("The addresses have no empty cells");
     }
 
     const needCapacity = sumXudtOutputCapacity - sumXudtInputsCapacity;
@@ -161,7 +171,7 @@ export async function createTransferXudtTransaction(
 
   let changeCapacity = actualInputsCapacity - sumXudtOutputCapacity;
   outputs.push({
-    lock: fromLock,
+    lock: addressToScript(ckbAddress),
     capacity: append0x(changeCapacity.toString(16)),
   });
   outputsData.push("0x");
@@ -173,10 +183,8 @@ export async function createTransferXudtTransaction(
   const emptyWitness = { lock: "", inputType: "", outputType: "" };
   const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
 
-  console.debug("Witnesses:", witnesses);
-
   const cellDeps = [
-    ...(await getAddressCellDeps(isMainnet, [ckbAddress])),
+    ...(await getAddressCellDeps(isMainnet, ckbAddresses)),
     ...(await fetchTypeIdCellDeps(isMainnet, { xudt: true })),
   ];
 
@@ -202,7 +210,6 @@ export async function createTransferXudtTransaction(
     unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
       changeCapacity.toString(16),
     );
-
     console.debug("Transaction Size:", txSize);
     console.debug("Estimated Transaction Fee:", estimatedTxFee);
     console.debug("Updated Change Capacity:", changeCapacity);

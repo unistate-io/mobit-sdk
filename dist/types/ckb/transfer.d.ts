@@ -5,7 +5,7 @@ interface CreateTransferXudtTransactionParams {
         toAddress: string;
         transferAmount: bigint;
     }[];
-    ckbAddress: string;
+    ckbAddresses: string[];
     collector: Collector;
     isMainnet: boolean;
 }
@@ -14,9 +14,10 @@ interface CreateTransferXudtTransactionParams {
  *
  * @param xudtArgs - The xUDT type script args.
  * @param receivers - An array of receiver objects containing `toAddress` and `transferAmount`.
- * @param ckbAddress - The CKB address for the transaction.
+ * @param ckbAddresses - The CKB addresses for the transaction.
  * @param collector - The collector instance used to fetch cells and collect inputs.
  * @param isMainnet - A boolean indicating whether the network is mainnet or testnet.
+ * @param ckbAddress - The address for the output cell, defaulting to the first address in the input address set
  * @param feeRate - (Optional) The fee rate to be used for the transaction.
  * @param maxFee - (Optional) The maximum fee allowed for the transaction. Defaults to `MAX_FEE`.
  *
@@ -25,5 +26,5 @@ interface CreateTransferXudtTransactionParams {
  * @throws {NoXudtLiveCellError} If the address has no xudt cells.
  * @throws {NoLiveCellError} If the address has no empty cells.
  */
-export declare function createTransferXudtTransaction({ xudtArgs, receivers, ckbAddress, collector, isMainnet, }: CreateTransferXudtTransactionParams, feeRate?: bigint, maxFee?: bigint): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createTransferXudtTransaction({ xudtArgs, receivers, ckbAddresses, collector, isMainnet, }: CreateTransferXudtTransactionParams, ckbAddress?: string, feeRate?: bigint, maxFee?: bigint): Promise<CKBComponents.RawTransactionToSign>;
 export {};
