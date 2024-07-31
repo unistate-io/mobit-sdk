@@ -149,9 +149,11 @@ const Kn=BigInt("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffff
         mutant_id
         owner_address
         updated_at
-        address {
+        addressByTypeId {
           script_args
-        }
+          script_code_hash
+          script_hash_type
+      }
       }
       spore {
         cluster_id
@@ -162,9 +164,11 @@ const Kn=BigInt("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffff
         is_burned
         owner_address
         updated_at
-        address {
+        addressByTypeId {
           script_args
-        }
+          script_code_hash
+          script_hash_type
+      }
       }
     }
   }

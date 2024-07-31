@@ -80,8 +80,10 @@ export interface ClusterInfo {
   mutant_id: string;
   owner_address: string;
   updated_at: string;
-  address: {
+  addressByTypeId: {
     script_args: string;
+    script_code_hash: string;
+    script_hash_type: number;
   };
 }
 
@@ -94,8 +96,10 @@ export interface SporeInfo {
   is_burned: boolean;
   owner_address: string;
   updated_at: string;
-  address: {
+  addressByTypeId: {
     script_args: string;
+    script_code_hash: string;
+    script_hash_type: number;
   };
 }
 
@@ -168,9 +172,11 @@ const ASSET_DETAILS_QUERY = gql`
         mutant_id
         owner_address
         updated_at
-        address {
+        addressByTypeId {
           script_args
-        }
+          script_code_hash
+          script_hash_type
+      }
       }
       spore {
         cluster_id
@@ -181,9 +187,11 @@ const ASSET_DETAILS_QUERY = gql`
         is_burned
         owner_address
         updated_at
-        address {
+        addressByTypeId {
           script_args
-        }
+          script_code_hash
+          script_hash_type
+      }
       }
     }
   }

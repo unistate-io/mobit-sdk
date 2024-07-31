@@ -54,8 +54,10 @@ export interface ClusterInfo {
     mutant_id: string;
     owner_address: string;
     updated_at: string;
-    address: {
+    addressByTypeId: {
         script_args: string;
+        script_code_hash: string;
+        script_hash_type: number;
     };
 }
 export interface SporeInfo {
@@ -67,8 +69,10 @@ export interface SporeInfo {
     is_burned: boolean;
     owner_address: string;
     updated_at: string;
-    address: {
+    addressByTypeId: {
         script_args: string;
+        script_code_hash: string;
+        script_hash_type: number;
     };
 }
 export interface SporeAction {
