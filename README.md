@@ -2,7 +2,10 @@
 
 ## Overview
 
-The Mobit SDK is a comprehensive toolkit designed for interacting with the CKB (Nervos Network) and Bitcoin networks. It provides a set of utilities for handling XUDT tokens and RGBPP assets, enabling developers to create, manage, and transfer assets across these networks with ease.
+The Mobit SDK is a comprehensive toolkit designed for interacting with the CKB
+(Nervos Network) and Bitcoin networks. It provides a set of utilities for
+handling XUDT tokens and RGBPP assets, enabling developers to create, manage,
+and transfer assets across these networks with ease.
 
 ## Installation
 
@@ -16,7 +19,8 @@ npm install mobit-sdk
 
 ### Initializing the SDK
 
-To start using the SDK, you need to initialize the `RgbppSDK` class with the appropriate network configuration. Here’s how you can do it:
+To start using the SDK, you need to initialize the `RgbppSDK` class with the
+appropriate network configuration. Here’s how you can do it:
 
 ```typescript
 import { RgbppSDK } from "mobit-sdk";
@@ -27,7 +31,8 @@ const sdk = new RgbppSDK(isMainnet);
 
 ### CKB Helper
 
-The `CkbHelper` class provides a way to interact with the CKB network, depending on whether you're on the mainnet or testnet.
+The `CkbHelper` class provides a way to interact with the CKB network, depending
+on whether you're on the mainnet or testnet.
 
 ```typescript
 import { CkbHelper } from "mobit-sdk";
@@ -37,11 +42,15 @@ const ckbHelper = new CkbHelper(true); // true for mainnet, false for testnet
 
 ### BTC Helper
 
-The `BtcHelper` class provides utilities for interacting with the Bitcoin network.
+The `BtcHelper` class provides utilities for interacting with the Bitcoin
+network.
 
 ```typescript
-import { BtcHelper } from "mobit-sdk";
+import { BtcHelper, AbstractWallet } from "mobit-sdk";
 
+const wallet: AbstractWallet = // Initialize your wallet instance
+const networkType = "mainnet" || "testnet";
+const btcTestnetType = "testnet" || undefined;
 const btcHelper = new BtcHelper(wallet, networkType, btcTestnetType);
 ```
 
@@ -51,47 +60,143 @@ The SDK provides several functions to create different types of transactions:
 
 #### XUDT Transactions
 
-- `createBurnXudtTransaction`: Burns XUDT tokens.
-- `createIssueXudtTransaction`: Issues new XUDT tokens.
-- `createMergeXudtTransaction`: Merges XUDT tokens.
-- `createTransferXudtTransaction`: Transfers XUDT tokens.
+- **Burn XUDT Tokens**:
+  ```typescript
+  createBurnXudtTransaction(params: CreateBurnXudtTransactionParams, feeRate?: bigint, maxFee: bigint = MAX_FEE, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>
+  ```
+
+- **Issue XUDT Tokens**:
+  ```typescript
+  createIssueXudtTransaction(params: CreateIssueXudtTransactionParams, feeRate?: bigint, maxFee: bigint = MAX_FEE, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>
+  ```
+
+- **Merge XUDT Tokens**:
+  ```typescript
+  createMergeXudtTransaction(params: CreateMergeXudtTransactionParams, ckbAddress?: string, feeRate?: bigint, maxFee: bigint = MAX_FEE, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>
+  ```
+
+- **Transfer XUDT Tokens**:
+  ```typescript
+  createTransferXudtTransaction(params: CreateTransferXudtTransactionParams, ckbAddress?: string, feeRate?: bigint, maxFee: bigint = MAX_FEE, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>
+  ```
 
 #### Leap Transactions
 
-- `leapFromCkbToBtcTransaction`: Handles the leap from CKB to BTC.
-- `leapSporeFromCkbToBtcTransaction`: Handles the leap of spores from CKB to BTC.
+- **Leap from CKB to BTC**:
+  ```typescript
+  leapFromCkbToBtcTransaction(params: LeapToBtcTransactionParams, feeRate?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>
+  ```
+
+- **Leap Spore from CKB to BTC**:
+  ```typescript
+  leapSporeFromCkbToBtcTransaction(params: LeapSporeToBtcTransactionParams, feeRate?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>
+  ```
+
+- **Leap from BTC to CKB**:
+  ```typescript
+  leapFromBtcToCkbCombined(params: RgbppLeapFromBtcToCkbCombinedParams, btcFeeRate?: number): Promise<TxResult>
+  ```
+
+- **Leap Spore from BTC to CKB**:
+  ```typescript
+  leapSporeFromBtcToCkbCombined(params: SporeLeapCombinedParams, btcFeeRate: number = 30): Promise<{ btcTxId: string }>
+  ```
 
 ### RGBPP Functions
 
-- `distributeCombined`: Distributes RGBPP assets.
-- `launchCombined`: Launches RGBPP assets.
-- `transferCombined`: Transfers RGBPP assets.
+- **Distribute RGBPP Assets**:
+  ```typescript
+  distributeCombined(params: RgbppDistributeCombinedParams, btcFeeRate?: number): Promise<TxResult>
+  ```
+
+- **Launch RGBPP Assets**:
+  ```typescript
+  launchCombined(params: RgbppLauncerCombinedParams, ckbFeeRate?: bigint, maxFee: bigint = MAX_FEE, btcFeeRate?: number, witnessLockPlaceholderSize?: number): Promise<TxResult>
+  ```
+
+- **Transfer RGBPP Assets**:
+  ```typescript
+  transferCombined(params: RgbppTransferCombinedParams, btcFeeRate?: number): Promise<TxResult>
+  ```
 
 ### Spore Functions
 
-- `createClusterCombined`: Creates a new cluster.
-- `createSporesCombined`: Creates new spores.
-- `transferSporeCombined`: Transfers spores.
+- **Create Cluster**:
+  ```typescript
+  createClusterCombined(params: createClusterCombinedParams, ckbFeeRate?: bigint, maxFee: bigint = MAX_FEE, btcFeeRate: number = 30, witnessLockPlaceholderSize?: number): Promise<TxResult>
+  ```
+
+- **Create Spores**:
+  ```typescript
+  createSporesCombined(params: SporeCreateCombinedParams, btcFeeRate: number = 120, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number): Promise<TxResult>
+  ```
+
+- **Transfer Spores**:
+  ```typescript
+  transferSporeCombined(params: SporeTransferCombinedParams, btcFeeRate: number = 30): Promise<{ btcTxId: string }>
+  ```
 
 ### Preparing Transactions
 
-The SDK also provides functions to prepare unsigned transactions and PSBTs (Partially Signed Bitcoin Transactions):
+The SDK also provides functions to prepare unsigned transactions and PSBTs
+(Partially Signed Bitcoin Transactions):
 
-- `prepareClusterCellTransaction`: Prepares a cluster cell transaction.
-- `prepareCreateSporeUnsignedPsbt`: Prepares an unsigned PSBT for creating spores.
-- `prepareCreateSporeUnsignedTransaction`: Prepares an unsigned transaction for creating spores.
-- `prepareDistributeUnsignedPsbt`: Prepares an unsigned PSBT for distributing RGBPP assets.
-- `prepareLaunchCellTransaction`: Prepares a launch cell transaction.
-- `prepareLauncherUnsignedPsbt`: Prepares an unsigned PSBT for launching RGBPP assets.
-- `prepareLeapUnsignedPsbt`: Prepares an unsigned PSBT for leaping RGBPP assets from BTC to CKB.
-- `prepareLeapSporeUnsignedPsbt`: Prepares an unsigned PSBT for leaping spores from BTC to CKB.
-- `prepareTransferUnsignedPsbt`: Prepares an unsigned PSBT for transferring RGBPP assets.
-- `prepareTransferSporeUnsignedPsbt`: Prepares an unsigned PSBT for transferring spores.
+- **Prepare Cluster Cell Transaction**:
+  ```typescript
+  prepareClusterCellTransaction(params: PrepareClusterCellTransactionParams, maxFee: bigint = MAX_FEE, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>
+  ```
+
+- **Prepare Create Spore Unsigned PSBT**:
+  ```typescript
+  prepareCreateSporeUnsignedPsbt(params: PrepareCreateSporeUnsignedPsbtParams): Promise<bitcoin.Psbt>
+  ```
+
+- **Prepare Create Spore Unsigned Transaction**:
+  ```typescript
+  prepareCreateSporeUnsignedTransaction(params: PrepareCreateSporeUnsignedTransactionParams): Promise<CKBComponents.RawTransactionToSign>
+  ```
+
+- **Prepare Distribute Unsigned PSBT**:
+  ```typescript
+  prepareDistributeUnsignedPsbt(params: PrepareDistributeUnsignedPsbtParams): Promise<bitcoin.Psbt>
+  ```
+
+- **Prepare Launch Cell Transaction**:
+  ```typescript
+  prepareLaunchCellTransaction(params: PrepareLaunchCellTransactionParams, maxFee: bigint = MAX_FEE, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>
+  ```
+
+- **Prepare Launcher Unsigned PSBT**:
+  ```typescript
+  prepareLauncherUnsignedPsbt(params: PrepareLauncherUnsignedPsbtParams, btcFeeRate?: number): Promise<bitcoin.Psbt>
+  ```
+
+- **Prepare Leap Unsigned PSBT**:
+  ```typescript
+  prepareLeapUnsignedPsbt(params: PrepareLeapUnsignedPsbtParams, btcFeeRate?: number): Promise<bitcoin.Psbt>
+  ```
+
+- **Prepare Leap Spore Unsigned PSBT**:
+  ```typescript
+  prepareLeapSporeUnsignedPsbt(params: PrepareLeapSporeUnsignedPsbtParams, btcFeeRate?: number): Promise<bitcoin.Psbt>
+  ```
+
+- **Prepare Transfer Unsigned PSBT**:
+  ```typescript
+  prepareTransferUnsignedPsbt(params: PrepareTransferUnsignedPsbtParams, btcFeeRate?: number): Promise<bitcoin.Psbt>
+  ```
+
+- **Prepare Transfer Spore Unsigned PSBT**:
+  ```typescript
+  prepareTransferSporeUnsignedPsbt(params: PrepareTransferSporeUnsignedPsbtParams, btcFeeRate?: number): Promise<bitcoin.Psbt>
+  ```
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request for any changes.
+Contributions are welcome! Please open an issue or submit a pull request for any
+changes.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file
+for details.
