@@ -1,6 +1,6 @@
 {
   "name": "mobit-sdk",
-  "version": "1.7.0-test.20240814205112",
+  "version": "1.7.0-test.20240815150716",
   "description": "",
   "main": "dist/sdk.js",
   "types": "dist/types/index.d.ts",
