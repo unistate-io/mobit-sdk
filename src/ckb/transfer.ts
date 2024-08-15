@@ -86,7 +86,7 @@ export async function createTransferXudtTransaction(
 
   let sumXudtOutputCapacity = receivers
     .map(({ toAddress }) =>
-      calculateUdtCellCapacity(addressToScript(toAddress)),
+      calculateUdtCellCapacity(addressToScript(toAddress))
     )
     .reduce((prev, current) => prev + current, BigInt(0));
 
@@ -118,7 +118,7 @@ export async function createTransferXudtTransaction(
   );
 
   const outputsData = receivers.map(({ transferAmount }) =>
-    append0x(u128ToLe(transferAmount)),
+    append0x(u128ToLe(transferAmount))
   );
 
   console.debug("Outputs:", outputs);
@@ -182,9 +182,7 @@ export async function createTransferXudtTransaction(
   console.debug("Updated Outputs Data:", outputsData);
 
   const emptyWitness = { lock: "", inputType: "", outputType: "" };
-  const witnesses = inputs.map((_, index) =>
-    index === 0 ? emptyWitness : "0x",
-  );
+  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
 
   const cellDeps = [
     ...(await getAddressCellDeps(isMainnet, ckbAddresses)),
@@ -206,8 +204,7 @@ export async function createTransferXudtTransaction(
   console.debug("Unsigned Transaction:", unsignedTx);
 
   if (txFee === maxFee) {
-    const txSize =
-      getTransactionSize(unsignedTx) +
+    const txSize = getTransactionSize(unsignedTx) +
       (witnessLockPlaceholderSize ??
         calculateWitnessSize(ckbAddress, isMainnet));
     const estimatedTxFee = calculateTransactionFee(txSize, feeRate);

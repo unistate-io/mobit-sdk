@@ -60,8 +60,7 @@ const prepareLaunchCell = async (
   console.log("ckb address: ", ckbAddress);
 
   // The capacity required to launch cells is determined by the token info cell capacity, and transaction fee.
-  const launchCellCapacity =
-    calculateRgbppCellCapacity() +
+  const launchCellCapacity = calculateRgbppCellCapacity() +
     calculateRgbppTokenInfoCellCapacity(rgbppTokenInfo, isMainnet);
 
   let emptyCells = await collector.getCells({
@@ -97,9 +96,7 @@ const prepareLaunchCell = async (
   });
   const outputsData = ["0x", "0x"];
   const emptyWitness = { lock: "", inputType: "", outputType: "" };
-  const witnesses = inputs.map((_, index) =>
-    index === 0 ? emptyWitness : "0x",
-  );
+  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
 
   const cellDeps = [...(await getAddressCellDeps(isMainnet, [ckbAddress]))];
 
@@ -112,8 +109,7 @@ const prepareLaunchCell = async (
     outputsData,
     witnesses,
   };
-  const txSize =
-    getTransactionSize(unsignedTx) +
+  const txSize = getTransactionSize(unsignedTx) +
     (witnessLockPlaceholderSize ?? calculateWitnessSize(ckbAddress, isMainnet));
   const estimatedTxFee = calculateTransactionFee(txSize, ckbFeeRate);
   changeCapacity -= estimatedTxFee;

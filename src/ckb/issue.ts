@@ -152,9 +152,7 @@ export async function createIssueXudtTransaction(
   console.debug("Defined empty witness:", emptyWitness);
 
   // Define the witnesses and add debug information
-  const witnesses = inputs.map((_, index) =>
-    index === 0 ? emptyWitness : "0x",
-  );
+  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
   console.debug("Defined witnesses:", witnesses);
 
   // Define the cell dependencies and add debug information
@@ -178,8 +176,7 @@ export async function createIssueXudtTransaction(
 
   // Adjust the transaction fee if necessary and add debug information
   if (txFee === maxFee) {
-    const txSize =
-      getTransactionSize(unsignedTx) +
+    const txSize = getTransactionSize(unsignedTx) +
       (witnessLockPlaceholderSize ??
         calculateWitnessSize(ckbAddress, isMainnet));
     const estimatedTxFee = calculateTransactionFee(txSize, feeRate);

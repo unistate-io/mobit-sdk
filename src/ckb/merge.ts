@@ -124,9 +124,7 @@ export async function createMergeXudtTransaction(
   console.debug("Updated Outputs Data:", outputsData);
 
   const emptyWitness = { lock: "", inputType: "", outputType: "" };
-  const witnesses = inputs.map((_, index) =>
-    index === 0 ? emptyWitness : "0x",
-  );
+  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
 
   const cellDeps = [
     ...(await getAddressCellDeps(isMainnet, ckbAddresses)),
@@ -146,8 +144,7 @@ export async function createMergeXudtTransaction(
   console.debug("Unsigned transaction:", unsignedTx);
 
   if (txFee === maxFee) {
-    const txSize =
-      getTransactionSize(unsignedTx) +
+    const txSize = getTransactionSize(unsignedTx) +
       (witnessLockPlaceholderSize ??
         calculateWitnessSize(ckbAddress, isMainnet));
     const estimatedTxFee = calculateTransactionFee(txSize, feeRate);

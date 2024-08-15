@@ -304,7 +304,9 @@ export const prepareCreateSporeUnsignedTransaction = async ({
   ckbAddress,
   ckbFeeRate,
   witnessLockPlaceholderSize,
-}: PrepareCreateSporeUnsignedTransactionParams): Promise<CKBComponents.RawTransactionToSign> => {
+}: PrepareCreateSporeUnsignedTransactionParams): Promise<
+  CKBComponents.RawTransactionToSign
+> => {
   const ckbVirtualTxResult = await genCreateSporeCkbVirtualTx({
     collector,
     sporeDataList: receivers.map((receiver) => receiver.sporeData),
