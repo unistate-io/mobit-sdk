@@ -22,11 +22,29 @@ import {
 } from "@rgbpp-sdk/ckb";
 import { calculateWitnessSize, getAddressCellDeps } from "../helper";
 
-interface CreateIssueXudtTransactionParams {
+/**
+ * Interface for parameters required to create an issue xUDT transaction.
+ */
+export interface CreateIssueXudtTransactionParams {
+  /**
+   * The total amount of xUDT asset to be issued.
+   */
   xudtTotalAmount: bigint;
+  /**
+   * The xUDT token information including decimal, name, and symbol.
+   */
   tokenInfo: RgbppTokenInfo;
+  /**
+   * The CKB address for the transaction.
+   */
   ckbAddress: string;
+  /**
+   * The collector instance used to fetch cells and collect inputs.
+   */
   collector: Collector;
+  /**
+   * A boolean indicating whether the network is mainnet or testnet.
+   */
   isMainnet: boolean;
 }
 

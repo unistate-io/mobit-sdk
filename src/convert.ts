@@ -12,6 +12,11 @@ import {
 } from "@ckb-lumos/helpers";
 import { Collector } from "@rgbpp-sdk/ckb";
 
+/**
+ * Converts a CKBComponents.CellDep to BaseComponents.CellDep.
+ * @param {CKBComponents.CellDep} cellDep - The cell dependency to convert.
+ * @returns {BaseComponents.CellDep} The converted cell dependency.
+ */
 function convertCellDep(
   cellDep: CKBComponents.CellDep,
 ): BaseComponents.CellDep {
@@ -24,6 +29,11 @@ function convertCellDep(
   };
 }
 
+/**
+ * Converts a CKBComponents.CellOutput to BaseComponents.Output.
+ * @param {CKBComponents.CellOutput} cellOutput - The cell output to convert.
+ * @returns {BaseComponents.Output} The converted cell output.
+ */
 function convertCellOutput(
   cellOutput: CKBComponents.CellOutput,
 ): BaseComponents.Output {
@@ -34,6 +44,11 @@ function convertCellOutput(
   };
 }
 
+/**
+ * Converts a CKBComponents.CellInput to BaseComponents.Input.
+ * @param {CKBComponents.CellInput} cellInput - The cell input to convert.
+ * @returns {BaseComponents.Input} The converted cell input.
+ */
 function convertCellInput(
   cellInput: CKBComponents.CellInput,
 ): BaseComponents.Input {
@@ -48,6 +63,12 @@ function convertCellInput(
   };
 }
 
+/**
+ * Converts a CKBComponents.LiveCell to BaseComponents.Cell.
+ * @param {CKBComponents.LiveCell} liveCell - The live cell to convert.
+ * @param {BaseComponents.OutPoint} outPoint - The outpoint of the live cell.
+ * @returns {BaseComponents.Cell} The converted live cell.
+ */
 function convertLiveCell(
   liveCell: CKBComponents.LiveCell,
   outPoint: BaseComponents.OutPoint,
@@ -65,6 +86,11 @@ const { Uint8 } = number;
 
 const { bytify, hexify } = bytes;
 
+/**
+ * Creates a fixed hex bytes codec.
+ * @param {number} byteLength - The length of the bytes.
+ * @returns {FixedBytesCodec<string, BytesLike>} The fixed bytes codec.
+ */
 function createFixedHexBytesCodec(
   byteLength: number,
 ): FixedBytesCodec<string, BytesLike> {
@@ -116,6 +142,12 @@ const EMPTY_WITNESS: string = (() => {
   return bytes.hexify(witnessArgs);
 })();
 
+/**
+ * Converts a raw transaction to a transaction skeleton.
+ * @param {CKBComponents.RawTransactionToSign} rawTransaction - The raw transaction to convert.
+ * @param {Collector} collector - The collector instance.
+ * @returns {Promise<TransactionSkeletonType>} The transaction skeleton.
+ */
 export async function convertToTxSkeleton(
   rawTransaction: CKBComponents.RawTransactionToSign,
   collector: Collector,
@@ -164,10 +196,12 @@ export async function convertToTxSkeleton(
     });
 
   console.debug("Fetching input cells");
-  const inputCells = (await collector.getLiveCells(
-    transaction.inputs.map((input) => input.previousOutput),
-    true,
-  )).map((cell, idx) => {
+  const inputCells = (
+    await collector.getLiveCells(
+      transaction.inputs.map((input) => input.previousOutput),
+      true,
+    )
+  ).map((cell, idx) => {
     return convertLiveCell(cell, transaction.inputs[idx].previousOutput);
   });
 
@@ -191,7 +225,9 @@ export async function convertToTxSkeleton(
     (output, index) => {
       console.debug(
         `Creating output cell for output at index ${index}: ${
-          JSON.stringify(output)
+          JSON.stringify(
+            output,
+          )
         }`,
       );
       return {

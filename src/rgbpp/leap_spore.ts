@@ -106,16 +106,29 @@ const leapSporeFromBtcToCkb = async (
   };
 };
 
-interface SporeLeapCombinedParams {
+/**
+ * Parameters required for the combined process of leaping a spore from BTC to CKB.
+ */
+export interface SporeLeapCombinedParams {
+  /** The CKB address to which the spore will be sent. */
   toCkbAddress: string;
+  /** The type arguments for the spore. */
   sporeTypeArgs: Hex;
+  /** The collector object used for collecting the spore. */
   collector: Collector;
+  /** Indicates whether the operation is on the mainnet. */
   isMainnet: boolean;
+  /** The type of BTC testnet (optional). */
   btcTestnetType?: BTCTestnetType;
+  /** The BTC address from which the spore will be sent. */
   fromBtcAddress: string;
+  /** The public key of the BTC address (optional). */
   fromBtcAddressPubkey?: string;
+  /** The data source for BTC transactions. */
   btcDataSource: DataSource;
+  /** Wallet instance used for signing BTC transactions. */
   wallet: AbstractWallet;
+  /** The BTC assets API service. */
   btcService: BtcAssetsApi;
 }
 
@@ -179,16 +192,30 @@ export const leapSporeFromBtcToCkbCombined = async (
 
   return res;
 };
-interface PrepareLeapSporeUnsignedPsbtParams {
+/**
+ * Parameters required to generate an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping a spore from Bitcoin to CKB.
+ * This interface is used to estimate transaction fees before finalizing the transaction.
+ */
+export interface PrepareLeapSporeUnsignedPsbtParams {
+  /** RGBPP lock arguments for the spore. */
   sporeRgbppLockArgs: Hex;
+  /** The destination CKB address. */
   toCkbAddress: string;
+  /** Type arguments for the spore. */
   sporeTypeArgs: Hex;
+  /** Collector instance used to gather cells for the transaction. */
   collector: Collector;
+  /** Indicates whether the operation is on the mainnet. */
   isMainnet: boolean;
+  /** Type of BTC testnet (optional). */
   btcTestnetType?: BTCTestnetType;
+  /** BTC address from which the spore will be leaped. */
   fromBtcAddress: string;
+  /** Public key of the BTC address (optional). */
   fromBtcAddressPubkey?: string;
+  /** Data source for BTC transactions. */
   btcDataSource: DataSource;
+  /** Fee rate for the BTC transaction (optional, default is 30). */
   btcFeeRate?: number;
 }
 

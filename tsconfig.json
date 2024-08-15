@@ -7,11 +7,10 @@
     "moduleResolution": "Node",
     "target": "ESNext",
     "declaration": true,
+    "declarationMap": true,
     "declarationDir": "./dist/types/",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }

@@ -110,17 +110,31 @@ const leapFromBtcToCKB = async (
   return { btcTxId };
 };
 
-interface RgbppLeapFromBtcToCkbCombinedParams {
+/**
+ * Parameters for combining the leap operation of RGBPP assets from Bitcoin to CKB.
+ */
+export interface RgbppLeapFromBtcToCkbCombinedParams {
+  /** The destination CKB address. */
   toCkbAddress: string;
+  /** The arguments for the XUDT type script. */
   xudtTypeArgs: string;
+  /** The amount of assets to transfer. */
   transferAmount: bigint;
+  /** The collector instance for CKB operations. */
   collector: Collector;
+  /** The data source for BTC operations. */
   btcDataSource: DataSource;
+  /** The type of BTC testnet (optional). */
   btcTestnetType?: BTCTestnetType;
+  /** Indicates if the operation is on mainnet. */
   isMainnet: boolean;
+  /** The source BTC account. */
   fromBtcAccount: string;
+  /** The public key of the source BTC account (optional). */
   fromBtcAccountPubkey?: string;
+  /** Wallet instance used for signing BTC transactions. */
   wallet: AbstractWallet;
+  /** The BTC assets service instance. */
   btcService: BtcAssetsApi;
 }
 
@@ -187,17 +201,31 @@ export const leapFromBtcToCkbCombined = async (
   return res;
 };
 
-interface PrepareLeapUnsignedPsbtParams {
+/**
+ * Parameters for preparing an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping RGBPP assets from Bitcoin to CKB.
+ */
+export interface PrepareLeapUnsignedPsbtParams {
+  /** List of RGBPP lock arguments. */
   rgbppLockArgsList: string[];
+  /** The destination CKB address. */
   toCkbAddress: string;
+  /** Type arguments for the XUDT type script. */
   xudtTypeArgs: string;
+  /** The amount of assets to transfer. */
   transferAmount: bigint;
+  /** Indicates whether the operation is on the mainnet. */
   isMainnet: boolean;
+  /** Collector instance used to gather cells for the transaction. */
   collector: Collector;
+  /** Type of BTC testnet (optional). */
   btcTestnetType?: BTCTestnetType;
+  /** BTC account from which the assets will be leaped. */
   fromBtcAccount: string;
+  /** Public key of the BTC account (optional). */
   fromBtcAccountPubkey?: string;
+  /** Data source for BTC transactions. */
   btcDataSource: DataSource;
+  /** Fee rate for the BTC transaction (optional, default is 30). */
   btcFeeRate?: number;
 }
 

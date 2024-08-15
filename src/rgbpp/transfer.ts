@@ -97,17 +97,31 @@ const transfer = async (
   return { btcTxId };
 };
 
-interface RgbppTransferCombinedParams {
+/**
+ * Parameters for combining the steps of getting the RGBPP lock arguments list and transferring RGBPP assets.
+ */
+export interface RgbppTransferCombinedParams {
+  /** The Bitcoin address to which the assets will be transferred. */
   toBtcAddress: string;
+  /** The type arguments for the XUDT script. */
   xudtTypeArgs: string;
+  /** The amount of assets to transfer, represented as a bigint. */
   transferAmount: bigint;
+  /** The collector instance used for collecting assets. */
   collector: Collector;
+  /** The data source for Bitcoin transactions. */
   btcDataSource: DataSource;
+  /** (Optional) The type of Bitcoin testnet to use. */
   btcTestnetType?: BTCTestnetType;
+  /** A boolean indicating whether the operation is on the mainnet. */
   isMainnet: boolean;
+  /** The Bitcoin account from which the assets will be transferred. */
   fromBtcAccount: string;
+  /** (Optional) The public key of the Bitcoin account. */
   fromBtcAccountPubkey?: string;
+  /** Wallet instance used for signing BTC transactions. */
   wallet: AbstractWallet;
+  /** The service instance for interacting with Bitcoin assets. */
   btcService: BtcAssetsApi;
 }
 
@@ -172,17 +186,32 @@ export const transferCombined = async (
   return res;
 };
 
-interface PrepareTransferUnsignedPsbtParams {
+/**
+ * Parameters required to generate an unsigned PSBT (Partially Signed Bitcoin Transaction) for transferring RGBPP assets.
+ * This interface is used to estimate transaction fees before finalizing the transaction.
+ */
+export interface PrepareTransferUnsignedPsbtParams {
+  /** List of RGBPP lock arguments. */
   rgbppLockArgsList: string[];
+  /** The recipient's BTC address. */
   toBtcAddress: string;
+  /** Type arguments for the XUDT script. */
   xudtTypeArgs: string;
+  /** The amount of assets to transfer. */
   transferAmount: bigint;
+  /** Collector instance used to gather cells for the transaction. */
   collector: Collector;
+  /** Data source for BTC transactions. */
   btcDataSource: DataSource;
+  /** Type of BTC testnet (optional). */
   btcTestnetType?: BTCTestnetType;
+  /** Indicates whether the operation is on the mainnet. */
   isMainnet: boolean;
+  /** BTC account from which the assets will be transferred. */
   fromBtcAccount: string;
+  /** Public key of the BTC account (optional). */
   fromBtcAccountPubkey?: string;
+  /** Fee rate for the BTC transaction (optional, default is 30). */
   btcFeeRate?: number;
 }
 

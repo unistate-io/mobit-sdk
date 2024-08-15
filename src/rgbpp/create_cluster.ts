@@ -221,20 +221,70 @@ const createCluster = async (
   return { btcTxId };
 };
 
-interface createClusterCombinedParams {
+/**
+ * Parameters required to create a combined cluster.
+ */
+export interface createClusterCombinedParams {
+  /**
+   * CKB address where the cluster cell will be created.
+   */
   ckbAddress: string;
+
+  /**
+   * Raw data required to create the cluster.
+   */
   clusterData: RawClusterData;
+
+  /**
+   * Collector instance used to gather cells for the transaction.
+   */
   collector: Collector;
+
+  /**
+   * Indicates whether the operation is on the mainnet.
+   */
   isMainnet: boolean;
+
+  /**
+   * Type of BTC testnet (optional).
+   */
   btcTestnetType?: BTCTestnetType;
+
+  /**
+   * BTC account from which the transaction will be initiated.
+   */
   fromBtcAccount: string;
+
+  /**
+   * Public key of the BTC account (optional).
+   */
   fromBtcAccountPubkey?: string;
+
+  /**
+   * Data source for BTC transactions.
+   */
   btcDataSource: DataSource;
+
+  /**
+   * Wallet instance used for signing BTC transactions.
+   */
   wallet: AbstractWallet;
+
+  /**
+   * BTC service instance for interacting with BTC assets.
+   */
   btcService: BtcAssetsApi;
+
+  /**
+   * Function to filter UTXOs for the BTC transaction.
+   */
   filterUtxo: (
     utxos: BtcApiUtxo[],
   ) => Promise<{ outIndex: number; btcTxId: string }>;
+
+  /**
+   * Signer instance for signing CKB transactions.
+   */
   cccSigner: ccc.Signer;
 }
 
@@ -335,15 +385,48 @@ export const createClusterCombined = async (
     ckbTxHash: txHash,
   };
 };
-
-interface PrepareClusterCellTransactionParams {
+/**
+ * Parameters required to prepare a cluster cell transaction.
+ */
+export interface PrepareClusterCellTransactionParams {
+  /**
+   * CKB address where the cluster cell will be created.
+   */
   ckbAddress: string;
+
+  /**
+   * Raw data required to create the cluster.
+   */
   clusterData: RawClusterData;
+
+  /**
+   * Collector instance used to gather cells for the transaction.
+   */
   collector: Collector;
+
+  /**
+   * Indicates whether the operation is on the mainnet.
+   */
   isMainnet: boolean;
+
+  /**
+   * BTC service instance for interacting with BTC assets.
+   */
   btcService: BtcAssetsApi;
+
+  /**
+   * BTC account from which the transaction will be initiated.
+   */
   fromBtcAccount: string;
+
+  /**
+   * Type of BTC testnet (optional).
+   */
   btcTestnetType?: BTCTestnetType;
+
+  /**
+   * Function to filter UTXOs for the BTC transaction.
+   */
   filterUtxo: (
     utxos: BtcApiUtxo[],
   ) => Promise<{ outIndex: number; btcTxId: string }>;
@@ -407,16 +490,59 @@ export const prepareClusterCellTransaction = async (
   return prepareClusterCellTx;
 };
 
-interface GenerateCreateClusterUnsignedPsbtParams {
+/**
+ * Parameters required to generate an unsigned PSBT (Partially Signed Bitcoin Transaction) for creating a cluster.
+ * This interface is used to estimate transaction fees before finalizing the transaction.
+ */
+export interface GenerateCreateClusterUnsignedPsbtParams {
+  /**
+   * RGB++ lock arguments for the owner.
+   */
   ownerRgbppLockArgs: string;
+
+  /**
+   * Collector instance used to gather cells for the transaction.
+   */
   collector: Collector;
+
+  /**
+   * Raw data required to create the cluster.
+   */
   clusterData: RawClusterData;
+
+  /**
+   * Indicates whether the operation is on the mainnet.
+   */
   isMainnet: boolean;
+
+  /**
+   * Type of BTC testnet (optional).
+   */
   btcTestnetType?: BTCTestnetType;
+
+  /**
+   * BTC account from which the transaction will be initiated.
+   */
   fromBtcAccount: string;
+
+  /**
+   * Public key of the BTC account (optional).
+   */
   fromBtcAccountPubkey?: string;
+
+  /**
+   * Data source for BTC transactions.
+   */
   btcDataSource: DataSource;
+
+  /**
+   * BTC service instance for interacting with BTC assets.
+   */
   btcService: BtcAssetsApi;
+
+  /**
+   * Fee rate for the BTC transaction (optional, default is 30).
+   */
   btcFeeRate?: number;
 }
 

@@ -3,21 +3,66 @@ import { BTCTestnetType, Collector, Hex, RawSporeData } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi, DataSource } from "rgbpp";
 import { AbstractWallet, TxResult } from "../helper";
 import { bitcoin } from "@rgbpp-sdk/btc";
-interface SporeCreateCombinedParams {
+/**
+ * Parameters for creating spores combined with the given parameters.
+ */
+export interface SporeCreateCombinedParams {
+    /**
+     * The arguments for the cluster type script.
+     */
     clusterTypeScriptArgs: string;
+    /**
+     * The list of receivers with their BTC addresses and spore data.
+     */
     receivers: {
+        /**
+         * The BTC address of the receiver.
+         */
         toBtcAddress: string;
+        /**
+         * The raw spore data.
+         */
         sporeData: RawSporeData;
     }[];
+    /**
+     * The collector instance.
+     */
     collector: Collector;
+    /**
+     * Indicates if the operation is on mainnet.
+     */
     isMainnet: boolean;
+    /**
+     * The type of BTC testnet (optional).
+     */
     btcTestnetType?: BTCTestnetType;
+    /**
+     * The BTC account from which the spores are being created.
+     */
     fromBtcAccount: string;
+    /**
+     * The public key of the BTC account (optional).
+     */
     fromBtcAccountPubkey?: string;
+    /**
+     * The data source for BTC.
+     */
     btcDataSource: DataSource;
+    /**
+     * Wallet instance used for signing BTC transactions.
+     */
     wallet: AbstractWallet;
+    /**
+     * The CKB address.
+     */
     ckbAddress: string;
+    /**
+     * The BTC assets API service.
+     */
     btcService: BtcAssetsApi;
+    /**
+     * The CCC signer instance.
+     */
     cccSigner: ccc.Signer;
 }
 /**
@@ -41,17 +86,50 @@ interface SporeCreateCombinedParams {
  * @returns {Promise<TxResult>} - The result of the transaction.
  */
 export declare const createSporesCombined: ({ clusterTypeScriptArgs, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, ckbAddress, cccSigner, }: SporeCreateCombinedParams, btcFeeRate?: number, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<TxResult>;
-interface PrepareCreateSporeUnsignedTransactionParams {
+/**
+ * Parameters for preparing an unsigned CKB transaction for creating spores.
+ */
+export interface PrepareCreateSporeUnsignedTransactionParams {
+    /**
+     * The arguments for the cluster RGBPP lock.
+     */
     clusterRgbppLockArgs: Hex;
+    /**
+     * The list of receivers with their BTC addresses and spore data.
+     */
     receivers: {
+        /**
+         * The BTC address of the receiver.
+         */
         toBtcAddress: string;
+        /**
+         * The raw spore data.
+         */
         sporeData: RawSporeData;
     }[];
+    /**
+     * The collector instance.
+     */
     collector: Collector;
+    /**
+     * Indicates if the operation is on mainnet.
+     */
     isMainnet: boolean;
+    /**
+     * The type of BTC testnet (optional).
+     */
     btcTestnetType?: BTCTestnetType;
+    /**
+     * The CKB address.
+     */
     ckbAddress: string;
+    /**
+     * The fee rate for CKB transactions (optional).
+     */
     ckbFeeRate?: bigint;
+    /**
+     * The size of the witness lock placeholder (optional). This parameter is used to estimate the transaction size when the witness lock placeholder size is known.
+     */
     witnessLockPlaceholderSize?: number;
 }
 /**
@@ -69,18 +147,54 @@ interface PrepareCreateSporeUnsignedTransactionParams {
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - The unsigned CKB transaction.
  */
 export declare const prepareCreateSporeUnsignedTransaction: ({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, ckbAddress, ckbFeeRate, witnessLockPlaceholderSize, }: PrepareCreateSporeUnsignedTransactionParams) => Promise<CKBComponents.RawTransactionToSign>;
-interface PrepareCreateSporeUnsignedPsbtParams {
+/**
+ * Parameters for preparing an unsigned BTC transaction for creating spores.
+ */
+export interface PrepareCreateSporeUnsignedPsbtParams {
+    /**
+     * The arguments for the cluster RGBPP lock.
+     */
     clusterRgbppLockArgs: Hex;
+    /**
+     * The list of receivers with their BTC addresses and spore data.
+     */
     receivers: {
+        /**
+         * The BTC address of the receiver.
+         */
         toBtcAddress: string;
+        /**
+         * The raw spore data.
+         */
         sporeData: RawSporeData;
     }[];
+    /**
+     * The collector instance.
+     */
     collector: Collector;
+    /**
+     * Indicates if the operation is on mainnet.
+     */
     isMainnet: boolean;
+    /**
+     * The type of BTC testnet (optional).
+     */
     btcTestnetType?: BTCTestnetType;
+    /**
+     * The BTC account from which the spores are being created.
+     */
     fromBtcAccount: string;
+    /**
+     * The public key of the BTC account (optional).
+     */
     fromBtcAccountPubkey?: string;
+    /**
+     * The data source for BTC.
+     */
     btcDataSource: DataSource;
+    /**
+     * The fee rate for BTC transactions (optional).
+     */
     btcFeeRate?: number;
 }
 /**
@@ -99,4 +213,4 @@ interface PrepareCreateSporeUnsignedPsbtParams {
  * @returns {Promise<bitcoin.Psbt>} - The unsigned BTC transaction in PSBT format.
  */
 export declare const prepareCreateSporeUnsignedPsbt: ({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate, }: PrepareCreateSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
-export {};
+//# sourceMappingURL=create_spore.d.ts.map

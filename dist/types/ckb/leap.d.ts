@@ -1,12 +1,39 @@
 import { BTCTestnetType, Collector } from "@rgbpp-sdk/ckb";
+/**
+ * Interface for parameters required for the leap from CKB to BTC transaction.
+ */
 export interface LeapToBtcTransactionParams {
+    /**
+     * The output index in the BTC transaction.
+     */
     outIndex: number;
+    /**
+     * The transaction ID of the BTC transaction.
+     */
     btcTxId: string;
+    /**
+     * The type arguments for the XUDT (User Defined Token) on CKB.
+     */
     xudtTypeArgs: string;
+    /**
+     * The amount of assets to transfer.
+     */
     transferAmount: bigint;
+    /**
+     * Indicates whether the operation is on the mainnet.
+     */
     isMainnet: boolean;
+    /**
+     * The collector instance used for collecting cells.
+     */
     collector: Collector;
+    /**
+     * The CKB address from which the assets are being transferred.
+     */
     ckbAddress: string;
+    /**
+     * The type of BTC testnet, if applicable.
+     */
     btcTestnetType?: BTCTestnetType;
 }
 /**
@@ -31,3 +58,4 @@ export interface LeapToBtcTransactionParams {
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - The unsigned raw transaction to sign.
  */
 export declare const leapFromCkbToBtcTransaction: ({ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType, }: LeapToBtcTransactionParams, feeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>;
+//# sourceMappingURL=leap.d.ts.map

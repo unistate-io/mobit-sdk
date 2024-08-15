@@ -127,3 +127,6 @@ experiment/*/lib
 .parcel-cache
 .DS_Store
 .verdaccio-cache
+
+/etc
+/temp

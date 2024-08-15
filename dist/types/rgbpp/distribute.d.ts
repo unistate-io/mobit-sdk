@@ -12,17 +12,53 @@ interface RgbppLockArgsListResponse {
     rgbppLockArgsList: string[];
 }
 export declare const getRgbppLockArgsList: ({ xudtTypeArgs, fromBtcAccount, isMainnet, btcService, }: RgbppLockArgsListParams) => Promise<RgbppLockArgsListResponse>;
-interface RgbppDistributeCombinedParams {
+/**
+ * Interface for parameters required to distribute RGBPP assets combined.
+ */
+export interface RgbppDistributeCombinedParams {
+    /**
+     * List of receivers for the RGBPP assets.
+     */
     receivers: RgbppBtcAddressReceiver[];
+    /**
+     * Type arguments for the XUDT type script.
+     */
     xudtTypeArgs: string;
+    /**
+     * Collector instance used to gather cells for the transaction.
+     */
     collector: Collector;
+    /**
+     * Data source for BTC transactions.
+     */
     btcDataSource: DataSource;
+    /**
+     * Type of BTC testnet (optional).
+     */
     btcTestnetType?: BTCTestnetType;
+    /**
+     * Indicates whether the operation is on the mainnet.
+     */
     isMainnet: boolean;
+    /**
+     * BTC account from which the assets will be distributed.
+     */
     fromBtcAccount: string;
+    /**
+     * Public key of the BTC account (optional).
+     */
     fromBtcAccountPubkey?: string;
+    /**
+     * Wallet instance used for signing BTC transactions.
+     */
     wallet: AbstractWallet;
+    /**
+     * Function to filter the RGBPP args list.
+     */
     filterRgbppArgslist: (argsList: string[]) => Promise<string[]>;
+    /**
+     * BTC assets API service.
+     */
     btcService: BtcAssetsApi;
 }
 /**
@@ -44,16 +80,49 @@ interface RgbppDistributeCombinedParams {
  * @returns {Promise<TxResult>} - The result of the transaction.
  */
 export declare const distributeCombined: ({ xudtTypeArgs, receivers, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, filterRgbppArgslist, btcService, }: RgbppDistributeCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
-interface PrepareDistributeUnsignedPsbtParams {
+/**
+ * Interface for parameters required to prepare an unsigned PSBT for distributing RGBPP assets.
+ */
+export interface PrepareDistributeUnsignedPsbtParams {
+    /**
+     * List of RGBPP lock arguments.
+     */
     rgbppLockArgsList: string[];
+    /**
+     * List of receivers for the RGBPP assets.
+     */
     receivers: RgbppBtcAddressReceiver[];
+    /**
+     * Type arguments for the XUDT type script.
+     */
     xudtTypeArgs: string;
+    /**
+     * Collector instance used to gather cells for the transaction.
+     */
     collector: Collector;
+    /**
+     * Data source for BTC transactions.
+     */
     btcDataSource: DataSource;
+    /**
+     * Type of BTC testnet (optional).
+     */
     btcTestnetType?: BTCTestnetType;
+    /**
+     * Indicates whether the operation is on the mainnet.
+     */
     isMainnet: boolean;
+    /**
+     * BTC account from which the assets will be distributed.
+     */
     fromBtcAccount: string;
+    /**
+     * Public key of the BTC account (optional).
+     */
     fromBtcAccountPubkey?: string;
+    /**
+     * Fee rate for the BTC transaction (optional, default is 30).
+     */
     btcFeeRate?: number;
 }
 /**
@@ -75,3 +144,4 @@ interface PrepareDistributeUnsignedPsbtParams {
  */
 export declare const prepareDistributeUnsignedPsbt: ({ rgbppLockArgsList, receivers, xudtTypeArgs, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, }: PrepareDistributeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 export {};
+//# sourceMappingURL=distribute.d.ts.map

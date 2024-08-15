@@ -17,13 +17,36 @@ import {
 } from "@rgbpp-sdk/ckb";
 import { calculateWitnessSize, getAddressCellDeps } from "../helper";
 
-interface CreateBurnXudtTransactionParams {
+/**
+ * Interface for parameters required to create a burn transaction for xUDT assets.
+ */
+export interface CreateBurnXudtTransactionParams {
+  /**
+   * The xUDT type script args, which is the unique identifier for the xUDT token type.
+   */
   xudtArgs: string;
+
+  /**
+   * The amount of xUDT asset to be burned, representing the quantity of tokens that will be destroyed.
+   */
   burnAmount: bigint;
+
+  /**
+   * The CKB address for the transaction, from which the tokens will be burned.
+   */
   ckbAddress: string;
+
+  /**
+   * The collector instance used to fetch cells and collect inputs, responsible for gathering the necessary cells to construct the transaction.
+   */
   collector: Collector;
+
+  /**
+   * A boolean indicating whether the network is mainnet or testnet, affecting the type script and cell dependencies.
+   */
   isMainnet: boolean;
 }
+
 /**
  * Creates an unsigned transaction for burning xUDT assets.
  *

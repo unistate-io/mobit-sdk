@@ -1,11 +1,35 @@
 import { BTCTestnetType, Collector } from "@rgbpp-sdk/ckb";
+/**
+ * Interface for parameters required to leap a spore from CKB to BTC.
+ */
 export interface LeapSporeToBtcTransactionParams {
+    /**
+     * The output index of the spore.
+     */
     outIndex: number;
+    /**
+     * The transaction ID of the BTC transaction.
+     */
     btcTxId: string;
+    /**
+     * The type arguments for the spore.
+     */
     sporeTypeArgs: string;
+    /**
+     * A flag indicating whether the operation is on the mainnet.
+     */
     isMainnet: boolean;
+    /**
+     * The collector instance.
+     */
     collector: Collector;
+    /**
+     * The CKB address.
+     */
     ckbAddress: string;
+    /**
+     * (Optional) The type of BTC testnet.
+     */
     btcTestnetType?: BTCTestnetType;
 }
 /**
@@ -24,3 +48,4 @@ export interface LeapSporeToBtcTransactionParams {
  * @returns {Promise<CKBComponents.RawTransactionToSign>} A promise that resolves to the unsigned raw transaction to sign.
  */
 export declare const leapSporeFromCkbToBtcTransaction: ({ outIndex, btcTxId, sporeTypeArgs, isMainnet, collector, ckbAddress, btcTestnetType, }: LeapSporeToBtcTransactionParams, feeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>;
+//# sourceMappingURL=leap_spore.d.ts.map

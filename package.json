@@ -1,16 +1,18 @@
 {
   "name": "mobit-sdk",
-  "version": "1.7.0-test.20240815150716",
+  "version": "1.7.0",
   "description": "",
   "main": "dist/sdk.js",
   "types": "dist/types/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "scripts": {
-    "fmt": "deno fmt --ignore=dist/",
+    "fmt": "deno fmt --ignore=dist/,docs/",
     "build-dev": "npx webpack --config webpack.config.cjs",
     "build": "npx webpack --config webpack.config.cjs --mode production",
+    "update-docs": "npx api-extractor run --local && npx api-documenter markdown -i ./temp -o ./docs",
     "update-rgbpp": "yarn add @rgbpp-sdk/btc@snap @rgbpp-sdk/ckb@snap @rgbpp-sdk/service@snap rgbpp@snap",
     "update-rgbpp-latest": "yarn add @rgbpp-sdk/btc@latest @rgbpp-sdk/ckb@latest @rgbpp-sdk/service@latest rgbpp@latest"
   },
@@ -19,6 +21,9 @@
   "author": "cupnfish",
   "license": "MIT",
   "devDependencies": {
+    "@microsoft/api-documenter": "^7.25.11",
+    "@microsoft/api-extractor": "^7.47.6",
+    "@types/elliptic": "^6.4.18",
     "assert": "^2.1.0",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.0",

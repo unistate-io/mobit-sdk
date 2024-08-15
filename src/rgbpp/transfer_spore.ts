@@ -118,16 +118,29 @@ const transferSpore = async (
   };
 };
 
-interface SporeTransferCombinedParams {
+/**
+ * Interface for parameters required to transfer a spore combined.
+ */
+export interface SporeTransferCombinedParams {
+  /** The recipient's BTC address. */
   toBtcAddress: string;
+  /** Type arguments for the spore. */
   sporeTypeArgs: Hex;
+  /** Collector instance used to gather cells for the transaction. */
   collector: Collector;
+  /** Indicates whether the operation is on the mainnet. */
   isMainnet: boolean;
+  /** Type of BTC testnet (optional). */
   btcTestnetType?: BTCTestnetType;
+  /** BTC address from which the spore will be transferred. */
   fromBtcAddress: string;
+  /** Public key of the BTC address (optional). */
   fromBtcAddressPubkey?: string;
+  /** Data source for BTC transactions. */
   btcDataSource: DataSource;
+  /** Wallet instance used for signing BTC transactions. */
   wallet: AbstractWallet;
+  /** The BTC assets API service. */
   btcService: BtcAssetsApi;
 }
 
@@ -190,13 +203,29 @@ export const transferSporeCombined = async (
   return res;
 };
 
-interface GetSporeRgbppLockArgsParams {
+/**
+ * Interface for parameters required to get spore RGBPP lock arguments.
+ */
+export interface GetSporeRgbppLockArgsParams {
+  /** The BTC address from which the spore will be transferred. */
   fromBtcAddress: string;
+  /** Type arguments for the spore. */
   sporeTypeArgs: Hex;
+  /** Indicates whether the operation is on the mainnet. */
   isMainnet: boolean;
+  /** The BTC assets API service. */
   btcService: BtcAssetsApi;
 }
 
+/**
+ * Retrieves the spore RGBPP lock arguments based on the provided parameters.
+ * @param {GetSporeRgbppLockArgsParams} params - The parameters for retrieving the spore RGBPP lock arguments.
+ * @param {string} params.fromBtcAddress - The BTC address from which the spore will be transferred.
+ * @param {Hex} params.sporeTypeArgs - Type arguments for the spore.
+ * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
+ * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
+ * @returns {Promise<Hex>} - A promise that resolves to the spore RGBPP lock arguments.
+ */
 export const getSporeRgbppLockArgs = async ({
   fromBtcAddress,
   sporeTypeArgs,
@@ -234,16 +263,29 @@ export const getSporeRgbppLockArgs = async ({
   }
 };
 
-interface PrepareTransferSporeUnsignedPsbtParams {
+/**
+ * Interface for parameters required to prepare an unsigned PSBT for transferring a spore.
+ */
+export interface PrepareTransferSporeUnsignedPsbtParams {
+  /** RGBPP lock arguments for the spore. */
   sporeRgbppLockArgs: Hex;
+  /** The recipient's BTC address. */
   toBtcAddress: string;
+  /** Type arguments for the spore. */
   sporeTypeArgs: Hex;
+  /** Collector instance used to gather cells for the transaction. */
   collector: Collector;
+  /** Indicates whether the operation is on the mainnet. */
   isMainnet: boolean;
+  /** Type of BTC testnet (optional). */
   btcTestnetType?: BTCTestnetType;
+  /** BTC address from which the spore will be transferred. */
   fromBtcAddress: string;
+  /** Public key of the BTC address (optional). */
   fromBtcAddressPubkey?: string;
+  /** Data source for BTC transactions. */
   btcDataSource: DataSource;
+  /** Fee rate for the BTC transaction (optional, default is 30). */
   btcFeeRate?: number;
 }
 

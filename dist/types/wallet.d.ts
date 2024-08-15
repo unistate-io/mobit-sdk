@@ -6,3 +6,4 @@ export declare function signAndSendPsbt(psbt: bitcoin.Psbt, wallet: AbstractWall
     txHex: string;
     rawTxHex: string;
 }>;
+//# sourceMappingURL=wallet.d.ts.map

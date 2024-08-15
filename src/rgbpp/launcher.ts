@@ -214,21 +214,37 @@ const launchRgbppAsset = async (
   return { btcTxId };
 };
 
-interface RgbppLauncerCombinedParams {
+/**
+ * Parameters required for launching an RGB++ asset combined with CKB transaction preparation.
+ */
+export interface RgbppLauncerCombinedParams {
+  /** Information about the RGB++ token to be launched. */
   rgbppTokenInfo: RgbppTokenInfo;
+  /** Collector instance used to gather cells for the transaction. */
   collector: Collector;
+  /** Indicates whether the operation is on the mainnet. */
   isMainnet: boolean;
+  /** (Optional) Type of BTC testnet to use. */
   btcTestnetType?: BTCTestnetType;
+  /** BTC account address. */
   btcAccount: string;
+  /** (Optional) Public key of the BTC account. */
   btcAccountPubkey?: string;
+  /** Data source for BTC transactions. */
   btcDataSource: DataSource;
+  /** Amount of the asset to be launched, represented as a bigint. */
   launchAmount: bigint;
+  /** Service instance for interacting with BTC assets. */
   btcService: BtcAssetsApi;
+  /** CKB address where the asset will be launched. */
   ckbAddress: string;
+  /** Signer instance for CKB transactions. */
   cccSigner: ccc.Signer;
+  /** Function to filter UTXOs for the BTC transaction. */
   filterUtxo: (
     utxos: BtcApiUtxo[],
   ) => Promise<{ outIndex: number; btcTxId: string }>;
+  /** Wallet instance used for signing BTC transactions. */
   wallet: AbstractWallet;
 }
 
@@ -332,15 +348,25 @@ export const launchCombined = async (
     ckbTxHash: txHash,
   };
 };
-
-interface PrepareLaunchCellTransactionParams {
+/**
+ * Parameters required for preparing a launch cell transaction on the CKB network.
+ */
+export interface PrepareLaunchCellTransactionParams {
+  /** CKB address where the launch cell will be created. */
   ckbAddress: string;
+  /** Information about the RGB++ token to be launched. */
   rgbppTokenInfo: RgbppTokenInfo;
+  /** Collector instance used to gather cells for the transaction. */
   collector: Collector;
+  /** Indicates whether the operation is on the mainnet. */
   isMainnet: boolean;
+  /** BTC service instance for interacting with BTC assets. */
   btcService: BtcAssetsApi;
+  /** BTC account from which the transaction will be initiated. */
   btcAccount: string;
+  /** Type of BTC testnet (optional). */
   btcTestnetType?: BTCTestnetType;
+  /** Function to filter UTXOs for the BTC transaction. */
   filterUtxo: (
     utxos: BtcApiUtxo[],
   ) => Promise<{ outIndex: number; btcTxId: string }>;
@@ -404,15 +430,27 @@ export const prepareLaunchCellTransaction = async (
   return prepareLaunchCellTx;
 };
 
-interface PrepareLauncherUnsignedPsbtParams {
+/**
+ * Parameters required for generating an unsigned PSBT for launching an RGB++ asset.
+ */
+export interface PrepareLauncherUnsignedPsbtParams {
+  /** Information about the RGB++ token to be launched. */
   rgbppTokenInfo: RgbppTokenInfo;
+  /** Instance used to collect cells for the transaction. */
   collector: Collector;
+  /** Indicates if the operation is on the mainnet. */
   isMainnet: boolean;
+  /** (Optional) Type of BTC testnet to use. */
   btcTestnetType?: BTCTestnetType;
+  /** Address of the BTC account. */
   btcAccount: string;
+  /** (Optional) Public key of the BTC account. */
   btcAccountPubkey?: string;
+  /** Source for BTC transaction data. */
   btcDataSource: DataSource;
+  /** Amount of the asset to be launched, as a bigint. */
   launchAmount: bigint;
+  /** Lock arguments for the owner of the RGB++ asset. */
   ownerRgbppLockArgs: string;
 }
 

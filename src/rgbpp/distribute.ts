@@ -154,17 +154,53 @@ const distribute = async (
   return { btcTxId };
 };
 
-interface RgbppDistributeCombinedParams {
+/**
+ * Interface for parameters required to distribute RGBPP assets combined.
+ */
+export interface RgbppDistributeCombinedParams {
+  /**
+   * List of receivers for the RGBPP assets.
+   */
   receivers: RgbppBtcAddressReceiver[];
+  /**
+   * Type arguments for the XUDT type script.
+   */
   xudtTypeArgs: string;
+  /**
+   * Collector instance used to gather cells for the transaction.
+   */
   collector: Collector;
+  /**
+   * Data source for BTC transactions.
+   */
   btcDataSource: DataSource;
+  /**
+   * Type of BTC testnet (optional).
+   */
   btcTestnetType?: BTCTestnetType;
+  /**
+   * Indicates whether the operation is on the mainnet.
+   */
   isMainnet: boolean;
+  /**
+   * BTC account from which the assets will be distributed.
+   */
   fromBtcAccount: string;
+  /**
+   * Public key of the BTC account (optional).
+   */
   fromBtcAccountPubkey?: string;
+  /**
+   * Wallet instance used for signing BTC transactions.
+   */
   wallet: AbstractWallet;
+  /**
+   * Function to filter the RGBPP args list.
+   */
   filterRgbppArgslist: (argsList: string[]) => Promise<string[]>;
+  /**
+   * BTC assets API service.
+   */
   btcService: BtcAssetsApi;
 }
 
@@ -231,17 +267,49 @@ export const distributeCombined = async (
 
   return res;
 };
-
-interface PrepareDistributeUnsignedPsbtParams {
+/**
+ * Interface for parameters required to prepare an unsigned PSBT for distributing RGBPP assets.
+ */
+export interface PrepareDistributeUnsignedPsbtParams {
+  /**
+   * List of RGBPP lock arguments.
+   */
   rgbppLockArgsList: string[];
+  /**
+   * List of receivers for the RGBPP assets.
+   */
   receivers: RgbppBtcAddressReceiver[];
+  /**
+   * Type arguments for the XUDT type script.
+   */
   xudtTypeArgs: string;
+  /**
+   * Collector instance used to gather cells for the transaction.
+   */
   collector: Collector;
+  /**
+   * Data source for BTC transactions.
+   */
   btcDataSource: DataSource;
+  /**
+   * Type of BTC testnet (optional).
+   */
   btcTestnetType?: BTCTestnetType;
+  /**
+   * Indicates whether the operation is on the mainnet.
+   */
   isMainnet: boolean;
+  /**
+   * BTC account from which the assets will be distributed.
+   */
   fromBtcAccount: string;
+  /**
+   * Public key of the BTC account (optional).
+   */
   fromBtcAccountPubkey?: string;
+  /**
+   * Fee rate for the BTC transaction (optional, default is 30).
+   */
   btcFeeRate?: number;
 }
 

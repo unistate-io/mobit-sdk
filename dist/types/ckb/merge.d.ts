@@ -1,8 +1,23 @@
 import { Collector } from "@rgbpp-sdk/ckb";
-interface CreateMergeXudtTransactionParams {
+/**
+ * Parameters for creating a merged xUDT transaction.
+ */
+export interface CreateMergeXudtTransactionParams {
+    /**
+     * The xUDT type script args.
+     */
     xudtArgs: string;
+    /**
+     * The CKB addresses involved in the transaction.
+     */
     ckbAddresses: string[];
+    /**
+     * The collector instance used to fetch cells and collect inputs.
+     */
     collector: Collector;
+    /**
+     * A boolean indicating whether the transaction is for the mainnet or testnet.
+     */
     isMainnet: boolean;
 }
 /**
@@ -19,4 +34,4 @@ interface CreateMergeXudtTransactionParams {
  * @returns {Promise<CKBComponents.RawTransactionToSign>} An unsigned transaction object.
  */
 export declare function createMergeXudtTransaction({ xudtArgs, ckbAddresses, collector, isMainnet, }: CreateMergeXudtTransactionParams, ckbAddress?: string, feeRate?: bigint, maxFee?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>;
-export {};
+//# sourceMappingURL=merge.d.ts.map

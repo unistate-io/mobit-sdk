@@ -1,5 +1,9 @@
 # Mobit SDK
 
+[![npm version](https://img.shields.io/npm/v/mobit-sdk.svg)](https://www.npmjs.com/package/mobit-sdk)
+[![npm downloads](https://img.shields.io/npm/dm/mobit-sdk.svg)](https://www.npmjs.com/package/mobit-sdk)
+[![license](https://img.shields.io/npm/l/mobit-sdk.svg)](https://www.npmjs.com/package/mobit-sdk)
+
 ## Overview
 
 The Mobit SDK is a comprehensive toolkit designed for interacting with the CKB
@@ -56,140 +60,73 @@ const btcHelper = new BtcHelper(wallet, networkType, btcTestnetType);
 
 ### Transactions
 
-The SDK provides several functions to create different types of transactions:
+The SDK provides several functions to create different types of transactions.
+For detailed usage and parameters, refer to the
+[API Documentation](./docs/mobit-sdk.md).
 
 #### XUDT Transactions
 
 - **Burn XUDT Tokens**:
-  ```typescript
-  createBurnXudtTransaction(params: CreateBurnXudtTransactionParams, feeRate?: bigint, maxFee: bigint = MAX_FEE, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>
-  ```
-
+  [Documentation](./docs/mobit-sdk.createburnxudttransaction.md)
 - **Issue XUDT Tokens**:
-  ```typescript
-  createIssueXudtTransaction(params: CreateIssueXudtTransactionParams, feeRate?: bigint, maxFee: bigint = MAX_FEE, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>
-  ```
-
+  [Documentation](./docs/mobit-sdk.createissuexudttransaction.md)
 - **Merge XUDT Tokens**:
-  ```typescript
-  createMergeXudtTransaction(params: CreateMergeXudtTransactionParams, ckbAddress?: string, feeRate?: bigint, maxFee: bigint = MAX_FEE, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>
-  ```
-
+  [Documentation](./docs/mobit-sdk.createmergexudttransaction.md)
 - **Transfer XUDT Tokens**:
-  ```typescript
-  createTransferXudtTransaction(params: CreateTransferXudtTransactionParams, ckbAddress?: string, feeRate?: bigint, maxFee: bigint = MAX_FEE, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>
-  ```
+  [Documentation](./docs/mobit-sdk.createtransferxudttransaction.md)
 
 #### Leap Transactions
 
 - **Leap from CKB to BTC**:
-  ```typescript
-  leapFromCkbToBtcTransaction(params: LeapToBtcTransactionParams, feeRate?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>
-  ```
-
+  [Documentation](./docs/mobit-sdk.leapfromckbtobtctransaction.md)
 - **Leap Spore from CKB to BTC**:
-  ```typescript
-  leapSporeFromCkbToBtcTransaction(params: LeapSporeToBtcTransactionParams, feeRate?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>
-  ```
-
+  [Documentation](./docs/mobit-sdk.leapsporefromckbtobtctransaction.md)
 - **Leap from BTC to CKB**:
-  ```typescript
-  leapFromBtcToCkbCombined(params: RgbppLeapFromBtcToCkbCombinedParams, btcFeeRate?: number): Promise<TxResult>
-  ```
-
+  [Documentation](./docs/mobit-sdk.leapfrombtctockbcombined.md)
 - **Leap Spore from BTC to CKB**:
-  ```typescript
-  leapSporeFromBtcToCkbCombined(params: SporeLeapCombinedParams, btcFeeRate: number = 30): Promise<{ btcTxId: string }>
-  ```
+  [Documentation](./docs/mobit-sdk.leapsporefrombtctockbcombined.md)
 
 ### RGBPP Functions
 
 - **Distribute RGBPP Assets**:
-  ```typescript
-  distributeCombined(params: RgbppDistributeCombinedParams, btcFeeRate?: number): Promise<TxResult>
-  ```
-
-- **Launch RGBPP Assets**:
-  ```typescript
-  launchCombined(params: RgbppLauncerCombinedParams, ckbFeeRate?: bigint, maxFee: bigint = MAX_FEE, btcFeeRate?: number, witnessLockPlaceholderSize?: number): Promise<TxResult>
-  ```
-
+  [Documentation](./docs/mobit-sdk.distributecombined.md)
+- **Launch RGBPP Assets**: [Documentation](./docs/mobit-sdk.launchcombined.md)
 - **Transfer RGBPP Assets**:
-  ```typescript
-  transferCombined(params: RgbppTransferCombinedParams, btcFeeRate?: number): Promise<TxResult>
-  ```
+  [Documentation](./docs/mobit-sdk.transfercombined.md)
 
 ### Spore Functions
 
-- **Create Cluster**:
-  ```typescript
-  createClusterCombined(params: createClusterCombinedParams, ckbFeeRate?: bigint, maxFee: bigint = MAX_FEE, btcFeeRate: number = 30, witnessLockPlaceholderSize?: number): Promise<TxResult>
-  ```
-
-- **Create Spores**:
-  ```typescript
-  createSporesCombined(params: SporeCreateCombinedParams, btcFeeRate: number = 120, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number): Promise<TxResult>
-  ```
-
+- **Create Cluster**: [Documentation](./docs/mobit-sdk.createclustercombined.md)
+- **Create Spores**: [Documentation](./docs/mobit-sdk.createsporescombined.md)
 - **Transfer Spores**:
-  ```typescript
-  transferSporeCombined(params: SporeTransferCombinedParams, btcFeeRate: number = 30): Promise<{ btcTxId: string }>
-  ```
+  [Documentation](./docs/mobit-sdk.transfersporecombined.md)
 
 ### Preparing Transactions
 
 The SDK also provides functions to prepare unsigned transactions and PSBTs
-(Partially Signed Bitcoin Transactions):
+(Partially Signed Bitcoin Transactions). For detailed usage and parameters,
+refer to the [API Documentation](./docs/mobit-sdk.md).
 
 - **Prepare Cluster Cell Transaction**:
-  ```typescript
-  prepareClusterCellTransaction(params: PrepareClusterCellTransactionParams, maxFee: bigint = MAX_FEE, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>
-  ```
-
+  [Documentation](./docs/mobit-sdk.prepareclustercelltransaction.md)
 - **Prepare Create Spore Unsigned PSBT**:
-  ```typescript
-  prepareCreateSporeUnsignedPsbt(params: PrepareCreateSporeUnsignedPsbtParams): Promise<bitcoin.Psbt>
-  ```
-
+  [Documentation](./docs/mobit-sdk.preparecreatesporeunsignedpsbt.md)
 - **Prepare Create Spore Unsigned Transaction**:
-  ```typescript
-  prepareCreateSporeUnsignedTransaction(params: PrepareCreateSporeUnsignedTransactionParams): Promise<CKBComponents.RawTransactionToSign>
-  ```
-
+  [Documentation](./docs/mobit-sdk.preparecreatesporeunsignedtransaction.md)
 - **Prepare Distribute Unsigned PSBT**:
-  ```typescript
-  prepareDistributeUnsignedPsbt(params: PrepareDistributeUnsignedPsbtParams): Promise<bitcoin.Psbt>
-  ```
-
+  [Documentation](./docs/mobit-sdk.preparedistributeunsignedpsbt.md)
 - **Prepare Launch Cell Transaction**:
-  ```typescript
-  prepareLaunchCellTransaction(params: PrepareLaunchCellTransactionParams, maxFee: bigint = MAX_FEE, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>
-  ```
-
+  [Documentation](./docs/mobit-sdk.preparelaunchcelltransaction.md)
 - **Prepare Launcher Unsigned PSBT**:
-  ```typescript
-  prepareLauncherUnsignedPsbt(params: PrepareLauncherUnsignedPsbtParams, btcFeeRate?: number): Promise<bitcoin.Psbt>
-  ```
-
+  [Documentation](./docs/mobit-sdk.preparelauncherunsignedpsbt.md)
 - **Prepare Leap Unsigned PSBT**:
-  ```typescript
-  prepareLeapUnsignedPsbt(params: PrepareLeapUnsignedPsbtParams, btcFeeRate?: number): Promise<bitcoin.Psbt>
-  ```
-
+  [Documentation](./docs/mobit-sdk.prepareleapunsignedpsbt.md)
 - **Prepare Leap Spore Unsigned PSBT**:
-  ```typescript
-  prepareLeapSporeUnsignedPsbt(params: PrepareLeapSporeUnsignedPsbtParams, btcFeeRate?: number): Promise<bitcoin.Psbt>
-  ```
-
+  [Documentation](./docs/mobit-sdk.prepareleapsporeunsignedpsbt.md)
 - **Prepare Transfer Unsigned PSBT**:
-  ```typescript
-  prepareTransferUnsignedPsbt(params: PrepareTransferUnsignedPsbtParams, btcFeeRate?: number): Promise<bitcoin.Psbt>
-  ```
-
+  [Documentation](./docs/mobit-sdk.preparetransferunsignedpsbt.md)
 - **Prepare Transfer Spore Unsigned PSBT**:
-  ```typescript
-  prepareTransferSporeUnsignedPsbt(params: PrepareTransferSporeUnsignedPsbtParams, btcFeeRate?: number): Promise<bitcoin.Psbt>
-  ```
+  [Documentation](./docs/mobit-sdk.preparetransfersporeunsignedpsbt.md)
 
 ## Contributing
 

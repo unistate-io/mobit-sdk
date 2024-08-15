@@ -21,11 +21,29 @@ import {
   getIndexerCells,
 } from "../helper";
 
-interface CreateTransferXudtTransactionParams {
+/**
+ * Parameters for creating a transaction to transfer xUDT assets.
+ */
+export interface CreateTransferXudtTransactionParams {
+  /**
+   * The xUDT type script args.
+   */
   xudtArgs: string;
+  /**
+   * An array of receiver objects containing `toAddress` and `transferAmount`.
+   */
   receivers: { toAddress: string; transferAmount: bigint }[];
+  /**
+   * The CKB addresses for the transaction.
+   */
   ckbAddresses: string[];
+  /**
+   * The collector instance used to fetch cells and collect inputs.
+   */
   collector: Collector;
+  /**
+   * A boolean indicating whether the network is mainnet or testnet.
+   */
   isMainnet: boolean;
 }
 
