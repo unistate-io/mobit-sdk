@@ -30,12 +30,12 @@ module.exports = (env, argv) => {
     resolve: {
       extensions: [".ts", ".js"],
       fallback: {
-        "crypto": require.resolve("crypto-browserify"),
-        "stream": require.resolve("stream-browserify"),
-        "assert": require.resolve("assert/"),
-        "url": require.resolve("url/"),
-        "buffer": require.resolve("buffer/"),
-        "vm": require.resolve("vm-browserify"),
+        crypto: require.resolve("crypto-browserify"),
+        stream: require.resolve("stream-browserify"),
+        assert: require.resolve("assert/"),
+        url: require.resolve("url/"),
+        buffer: require.resolve("buffer/"),
+        vm: require.resolve("vm-browserify"),
       },
     },
     plugins: [

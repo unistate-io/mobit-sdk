@@ -33,15 +33,17 @@ interface CreateIssueXudtTransactionParams {
 /**
  * Creates an unsigned transaction for issuing xUDT assets with a unique cell as the token info cell.
  *
- * @param xudtTotalAmount - The total amount of xUDT asset to be issued.
- * @param tokenInfo - The xUDT token information including decimal, name, and symbol.
- * @param ckbAddress - The CKB address for the transaction.
- * @param collector - The collector instance used to fetch cells and collect inputs.
- * @param isMainnet - A boolean indicating whether the network is mainnet or testnet.
- * @param feeRate - (Optional) The fee rate to be used for the transaction.
- * @param maxFee - (Optional) The maximum fee allowed for the transaction. Defaults to MAX_FEE.
+ * @param {CreateIssueXudtTransactionParams} params - An object containing the parameters for the transaction.
+ * @param {bigint} params.xudtTotalAmount - The total amount of xUDT asset to be issued.
+ * @param {RgbppTokenInfo} params.tokenInfo - The xUDT token information including decimal, name, and symbol.
+ * @param {string} params.ckbAddress - The CKB address for the transaction.
+ * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
+ * @param {boolean} params.isMainnet - A boolean indicating whether the network is mainnet or testnet.
+ * @param {bigint} [feeRate] - (Optional) The fee rate to be used for the transaction.
+ * @param {bigint} [maxFee=MAX_FEE] - (Optional) The maximum fee allowed for the transaction. Defaults to MAX_FEE.
+ * @param {number} [witnessLockPlaceholderSize] - (Optional) The size of the witness lock placeholder.
  *
- * @returns A promise that resolves to an unsigned transaction object.
+ * @returns {Promise<CKBComponents.RawTransactionToSign>} A promise that resolves to an unsigned transaction object.
  */
 export async function createIssueXudtTransaction(
   {
@@ -53,9 +55,8 @@ export async function createIssueXudtTransaction(
   }: CreateIssueXudtTransactionParams,
   feeRate?: bigint,
   maxFee: bigint = MAX_FEE,
-): Promise<
-  CKBComponents.RawTransactionToSign
-> {
+  witnessLockPlaceholderSize?: number,
+): Promise<CKBComponents.RawTransactionToSign> {
   const issueLock = addressToScript(ckbAddress);
 
   // Fetching empty cells and adding debug information
@@ -151,7 +152,9 @@ export async function createIssueXudtTransaction(
   console.debug("Defined empty witness:", emptyWitness);
 
   // Define the witnesses and add debug information
-  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
+  const witnesses = inputs.map((_, index) =>
+    index === 0 ? emptyWitness : "0x",
+  );
   console.debug("Defined witnesses:", witnesses);
 
   // Define the cell dependencies and add debug information
@@ -175,8 +178,10 @@ export async function createIssueXudtTransaction(
 
   // Adjust the transaction fee if necessary and add debug information
   if (txFee === maxFee) {
-    const txSize = getTransactionSize(unsignedTx) +
-      calculateWitnessSize(ckbAddress, isMainnet);
+    const txSize =
+      getTransactionSize(unsignedTx) +
+      (witnessLockPlaceholderSize ??
+        calculateWitnessSize(ckbAddress, isMainnet));
     const estimatedTxFee = calculateTransactionFee(txSize, feeRate);
     changeCapacity -= estimatedTxFee;
     unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(

@@ -1,4 +1,3 @@
-import { Signer } from "@ckb-ccc/core";
 import {
   BTCTestnetType,
   buildRgbppLockArgs,
@@ -7,9 +6,9 @@ import {
   getXudtTypeScript,
   serializeScript,
 } from "@rgbpp-sdk/ckb";
-import { getAddressCellDeps, signAndSendTransaction } from "../helper";
+import { getAddressCellDeps } from "../helper";
 
-export interface LeapToBtcParams {
+export interface LeapToBtcTransactionParams {
   outIndex: number;
   btcTxId: string;
   xudtTypeArgs: string;
@@ -18,7 +17,6 @@ export interface LeapToBtcParams {
   collector: Collector;
   ckbAddress: string;
   btcTestnetType?: BTCTestnetType;
-  cccSigner: Signer;
 }
 
 /**
@@ -28,7 +26,7 @@ export interface LeapToBtcParams {
  * It constructs the necessary arguments and transactions to move the specified amount of assets, identified by their type arguments,
  * from a CKB address to a BTC transaction. The function also handles the signing and sending of the transaction.
  *
- * @param {LeapToBtcParams} params - The parameters required for the leap operation.
+ * @param {LeapToBtcTransactionParams} params - The parameters required for the leap operation.
  * @param {number} params.outIndex - The output index in the BTC transaction.
  * @param {string} params.btcTxId - The transaction ID of the BTC transaction.
  * @param {string} params.xudtTypeArgs - The type arguments for the XUDT (User Defined Token) on CKB.
@@ -37,22 +35,25 @@ export interface LeapToBtcParams {
  * @param {Collector} params.collector - The collector instance used for collecting cells.
  * @param {string} params.ckbAddress - The CKB address from which the assets are being transferred.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet, if applicable.
- * @param {Signer} params.cccSigner - The signer instance used for signing the transaction.
  * @param {bigint} [feeRate] - The fee rate for the transaction, optional.
+ * @param {number} [witnessLockPlaceholderSize] - The size of the witness lock placeholder, optional.
  *
- * @returns {Promise<string>} - The transaction hash of the CKB transaction.
+ * @returns {Promise<CKBComponents.RawTransactionToSign>} - The unsigned raw transaction to sign.
  */
-export const leapFromCkbToBtc = async ({
-  outIndex,
-  btcTxId,
-  xudtTypeArgs,
-  transferAmount,
-  isMainnet,
-  collector,
-  ckbAddress,
-  btcTestnetType,
-  cccSigner,
-}: LeapToBtcParams, feeRate?: bigint): Promise<string> => {
+export const leapFromCkbToBtcTransaction = async (
+  {
+    outIndex,
+    btcTxId,
+    xudtTypeArgs,
+    transferAmount,
+    isMainnet,
+    collector,
+    ckbAddress,
+    btcTestnetType,
+  }: LeapToBtcTransactionParams,
+  feeRate?: bigint,
+  witnessLockPlaceholderSize?: number,
+): Promise<CKBComponents.RawTransactionToSign> => {
   const toRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
 
   const xudtType: CKBComponents.Script = {
@@ -68,6 +69,7 @@ export const leapFromCkbToBtc = async ({
     transferAmount,
     btcTestnetType,
     ckbFeeRate: feeRate,
+    witnessLockPlaceholderSize,
   });
 
   const emptyWitness = { lock: "", inputType: "", outputType: "" };
@@ -80,15 +82,5 @@ export const leapFromCkbToBtc = async ({
     witnesses: [emptyWitness, ...ckbRawTx.witnesses.slice(1)],
   };
 
-  const { txHash } = await signAndSendTransaction(
-    unsignedTx,
-    collector,
-    cccSigner,
-  );
-
-  console.info(
-    `Rgbpp asset has been jumped from CKB to BTC and CKB tx hash is ${txHash}`,
-  );
-
-  return txHash;
+  return unsignedTx;
 };

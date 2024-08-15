@@ -1,4 +1,4 @@
-import { DataSource } from "@rgbpp-sdk/btc";
+import { bitcoin, DataSource } from "@rgbpp-sdk/btc";
 import { BTCTestnetType, Collector } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi } from "rgbpp";
 import { AbstractWallet, TxResult } from "../helper";
@@ -12,7 +12,7 @@ interface RgbppTransferCombinedParams {
     isMainnet: boolean;
     fromBtcAccount: string;
     fromBtcAccountPubkey?: string;
-    unisat: AbstractWallet;
+    wallet: AbstractWallet;
     btcService: BtcAssetsApi;
 }
 /**
@@ -27,10 +27,42 @@ interface RgbppTransferCombinedParams {
  * @param isMainnet - A boolean indicating whether the operation is on the mainnet.
  * @param fromBtcAccount - The Bitcoin account from which the assets will be transferred.
  * @param fromBtcAccountPubkey - (Optional) The public key of the Bitcoin account.
- * @param unisat - The Unisat wallet instance used for signing and sending transactions.
+ * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param btcService - The service instance for interacting with Bitcoin assets.
  * @param btcFeeRate - (Optional) The fee rate to use for the Bitcoin transaction.
  * @returns A promise that resolves to the transaction result.
  */
-export declare const transferCombined: ({ toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, unisat, btcService, }: RgbppTransferCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
+export declare const transferCombined: ({ toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService, }: RgbppTransferCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
+interface PrepareTransferUnsignedPsbtParams {
+    rgbppLockArgsList: string[];
+    toBtcAddress: string;
+    xudtTypeArgs: string;
+    transferAmount: bigint;
+    collector: Collector;
+    btcDataSource: DataSource;
+    btcTestnetType?: BTCTestnetType;
+    isMainnet: boolean;
+    fromBtcAccount: string;
+    fromBtcAccountPubkey?: string;
+    btcFeeRate?: number;
+}
+/**
+ * Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for transferring RGBPP assets.
+ * This function is used to estimate transaction fees before finalizing the transaction.
+ *
+ * @param {PrepareTransferUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
+ * @param {string[]} params.rgbppLockArgsList - List of RGBPP lock arguments.
+ * @param {string} params.toBtcAddress - The recipient's BTC address.
+ * @param {string} params.xudtTypeArgs - Type arguments for the XUDT script.
+ * @param {bigint} params.transferAmount - The amount of assets to transfer.
+ * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
+ * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
+ * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
+ * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
+ * @param {string} params.fromBtcAccount - BTC account from which the assets will be transferred.
+ * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
+ * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
+ * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
+ */
+export declare const prepareTransferUnsignedPsbt: ({ rgbppLockArgsList, toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, }: PrepareTransferUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 export {};

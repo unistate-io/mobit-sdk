@@ -8,7 +8,9 @@ import {
 } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi, DataSource, sendRgbppUtxos } from "rgbpp";
 import { AbstractWallet, TxResult } from "../helper";
-import { signAndSendPsbt } from "../unisat";
+import { signAndSendPsbt } from "../wallet";
+import { getSporeRgbppLockArgs } from "./transfer_spore";
+import { bitcoin } from "@rgbpp-sdk/btc";
 
 interface SporeLeapParams {
   sporeRgbppLockArgs: Hex;
@@ -20,23 +22,26 @@ interface SporeLeapParams {
   fromBtcAddress: string;
   fromBtcAddressPubkey?: string;
   btcDataSource: DataSource;
-  unisat: AbstractWallet;
+  wallet: AbstractWallet;
   btcService: BtcAssetsApi;
 }
 
-const leapSporeFromBtcToCkb = async ({
-  sporeRgbppLockArgs,
-  toCkbAddress,
-  sporeTypeArgs,
-  collector,
-  isMainnet,
-  btcTestnetType,
-  fromBtcAddress,
-  fromBtcAddressPubkey,
-  btcDataSource,
-  unisat,
-  btcService,
-}: SporeLeapParams, btcFeeRate: number = 30): Promise<TxResult> => {
+const leapSporeFromBtcToCkb = async (
+  {
+    sporeRgbppLockArgs,
+    toCkbAddress,
+    sporeTypeArgs,
+    collector,
+    isMainnet,
+    btcTestnetType,
+    fromBtcAddress,
+    fromBtcAddressPubkey,
+    btcDataSource,
+    wallet,
+    btcService,
+  }: SporeLeapParams,
+  btcFeeRate: number = 30,
+): Promise<TxResult> => {
   const sporeTypeBytes = serializeScript({
     ...getSporeTypeScript(isMainnet),
     args: sporeTypeArgs,
@@ -63,7 +68,7 @@ const leapSporeFromBtcToCkb = async ({
     source: btcDataSource,
     feeRate: btcFeeRate,
   });
-  const { txId: btcTxId } = await signAndSendPsbt(psbt, unisat, btcService);
+  const { txId: btcTxId } = await signAndSendPsbt(psbt, wallet, btcService);
   console.log("BTC TxId: ", btcTxId);
   await btcService.sendRgbppCkbTransaction({
     btc_txid: btcTxId,
@@ -71,16 +76,14 @@ const leapSporeFromBtcToCkb = async ({
   });
   try {
     const interval = setInterval(async () => {
-      const { state, failedReason } = await btcService.getRgbppTransactionState(
-        btcTxId,
-      );
+      const { state, failedReason } =
+        await btcService.getRgbppTransactionState(btcTxId);
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
-          const { txhash: txHash } = await btcService.getRgbppTransactionHash(
-            btcTxId,
-          );
+          const { txhash: txHash } =
+            await btcService.getRgbppTransactionHash(btcTxId);
           console.info(
             `Rgbpp spore has been leaped from BTC to CKB and the related CKB tx hash is ${txHash}`,
           );
@@ -110,7 +113,7 @@ interface SporeLeapCombinedParams {
   fromBtcAddress: string;
   fromBtcAddressPubkey?: string;
   btcDataSource: DataSource;
-  unisat: AbstractWallet;
+  wallet: AbstractWallet;
   btcService: BtcAssetsApi;
 }
 
@@ -128,32 +131,13 @@ interface SporeLeapCombinedParams {
  * @param {string} params.fromBtcAddress - The BTC address from which the spore will be sent.
  * @param {string} [params.fromBtcAddressPubkey] - The public key of the BTC address (optional).
  * @param {DataSource} params.btcDataSource - The data source for BTC transactions.
- * @param {AbstractWallet} params.unisat - The Unisat wallet instance.
+ * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  *
  * @returns {Promise<TxResult>} - The result of the transaction, including the BTC transaction ID.
  */
-export const leapSporeFromBtcToCkbCombined = async ({
-  toCkbAddress,
-  sporeTypeArgs,
-  collector,
-  isMainnet,
-  btcTestnetType,
-  fromBtcAddress,
-  fromBtcAddressPubkey,
-  btcDataSource,
-  unisat,
-  btcService,
-}: SporeLeapCombinedParams, btcFeeRate: number = 30) => {
-  const sporeRgbppLockArgs = await getSporeRgbppLockArgs({
-    fromBtcAddress,
-    sporeTypeArgs,
-    isMainnet,
-    btcService,
-  });
-
-  const res = await leapSporeFromBtcToCkb({
-    sporeRgbppLockArgs,
+export const leapSporeFromBtcToCkbCombined = async (
+  {
     toCkbAddress,
     sporeTypeArgs,
     collector,
@@ -162,53 +146,107 @@ export const leapSporeFromBtcToCkbCombined = async ({
     fromBtcAddress,
     fromBtcAddressPubkey,
     btcDataSource,
-    unisat,
+    wallet,
     btcService,
-  }, btcFeeRate);
+  }: SporeLeapCombinedParams,
+  btcFeeRate: number = 30,
+): Promise<TxResult> => {
+  const sporeRgbppLockArgs = await getSporeRgbppLockArgs({
+    fromBtcAddress,
+    sporeTypeArgs,
+    isMainnet,
+    btcService,
+  });
+
+  const res = await leapSporeFromBtcToCkb(
+    {
+      sporeRgbppLockArgs,
+      toCkbAddress,
+      sporeTypeArgs,
+      collector,
+      isMainnet,
+      btcTestnetType,
+      fromBtcAddress,
+      fromBtcAddressPubkey,
+      btcDataSource,
+      wallet,
+      btcService,
+    },
+    btcFeeRate,
+  );
 
   return res;
 };
-
-interface GetSporeRgbppLockArgsParams {
-  fromBtcAddress: string;
+interface PrepareLeapSporeUnsignedPsbtParams {
+  sporeRgbppLockArgs: Hex;
+  toCkbAddress: string;
   sporeTypeArgs: Hex;
+  collector: Collector;
   isMainnet: boolean;
-  btcService: BtcAssetsApi;
+  btcTestnetType?: BTCTestnetType;
+  fromBtcAddress: string;
+  fromBtcAddressPubkey?: string;
+  btcDataSource: DataSource;
+  btcFeeRate?: number;
 }
 
-const getSporeRgbppLockArgs = async ({
-  fromBtcAddress,
+/**
+ * Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping a spore from Bitcoin to CKB.
+ * This function is used to estimate transaction fees before finalizing the transaction.
+ *
+ * @param {PrepareLeapSporeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
+ * @param {Hex} params.sporeRgbppLockArgs - RGBPP lock arguments for the spore.
+ * @param {string} params.toCkbAddress - The destination CKB address.
+ * @param {Hex} params.sporeTypeArgs - Type arguments for the spore.
+ * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
+ * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
+ * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
+ * @param {string} params.fromBtcAddress - BTC address from which the spore will be leaped.
+ * @param {string} [params.fromBtcAddressPubkey] - Public key of the BTC address (optional).
+ * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
+ * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
+ * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
+ */
+export const prepareLeapSporeUnsignedPsbt = async ({
+  sporeRgbppLockArgs,
+  toCkbAddress,
   sporeTypeArgs,
+  collector,
   isMainnet,
-  btcService,
-}: GetSporeRgbppLockArgsParams): Promise<Hex> => {
-  const type_script = JSON.stringify({
+  btcTestnetType,
+  fromBtcAddress,
+  fromBtcAddressPubkey,
+  btcDataSource,
+  btcFeeRate = 30,
+}: PrepareLeapSporeUnsignedPsbtParams): Promise<bitcoin.Psbt> => {
+  const sporeTypeBytes = serializeScript({
     ...getSporeTypeScript(isMainnet),
     args: sporeTypeArgs,
   });
 
-  console.log(type_script);
+  const ckbVirtualTxResult = await genLeapSporeFromBtcToCkbVirtualTx({
+    collector,
+    sporeRgbppLockArgs,
+    sporeTypeBytes,
+    toCkbAddress,
+    isMainnet,
+    btcTestnetType,
+  });
 
-  try {
-    const data = await btcService.getRgbppAssetsByBtcAddress(fromBtcAddress, {
-      type_script: encodeURIComponent(type_script),
-      no_cache: false,
-    });
+  const { commitment, ckbRawTx, needPaymasterCell } = ckbVirtualTxResult;
 
-    console.log(data);
+  // Generate unsigned PSBT
+  const psbt = await sendRgbppUtxos({
+    ckbVirtualTx: ckbRawTx,
+    commitment,
+    tos: [fromBtcAddress],
+    needPaymaster: needPaymasterCell,
+    ckbCollector: collector,
+    from: fromBtcAddress,
+    fromPubkey: fromBtcAddressPubkey,
+    source: btcDataSource,
+    feeRate: btcFeeRate,
+  });
 
-    if (!data || data.length === 0) {
-      throw new Error(
-        "No assets found for the given BTC address and type script.",
-      );
-    }
-    // Assuming you want to return the sporeRgbppLockArgs based on the response
-    const sporeRgbppLockArgs = data.map((asset) => asset.cellOutput.lock.args);
-
-    // Assuming you need to return a single Hex value from the list
-    return sporeRgbppLockArgs[0];
-  } catch (error) {
-    console.error("Error fetching sporeRgbppLockArgs:", error);
-    throw error;
-  }
+  return psbt;
 };

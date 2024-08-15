@@ -32,16 +32,18 @@ interface CreateTransferXudtTransactionParams {
 /**
  * Creates an unsigned transaction for transferring xUDT assets. This function can also be used to mint xUDT assets.
  *
- * @param xudtArgs - The xUDT type script args.
- * @param receivers - An array of receiver objects containing `toAddress` and `transferAmount`.
- * @param ckbAddresses - The CKB addresses for the transaction.
- * @param collector - The collector instance used to fetch cells and collect inputs.
- * @param isMainnet - A boolean indicating whether the network is mainnet or testnet.
- * @param ckbAddress - The address for the output cell, defaulting to the first address in the input address set
- * @param feeRate - (Optional) The fee rate to be used for the transaction.
- * @param maxFee - (Optional) The maximum fee allowed for the transaction. Defaults to `MAX_FEE`.
+ * @param {CreateTransferXudtTransactionParams} params - The parameters for creating the transaction.
+ * @param {string} params.xudtArgs - The xUDT type script args.
+ * @param {Array<{ toAddress: string, transferAmount: bigint }>} params.receivers - An array of receiver objects containing `toAddress` and `transferAmount`.
+ * @param {Array<string>} params.ckbAddresses - The CKB addresses for the transaction.
+ * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
+ * @param {boolean} params.isMainnet - A boolean indicating whether the network is mainnet or testnet.
+ * @param {string} [ckbAddress=params.ckbAddresses[0]] - The address for the output cell, defaulting to the first address in the input address set.
+ * @param {bigint} [feeRate] - (Optional) The fee rate to be used for the transaction.
+ * @param {bigint} [maxFee=MAX_FEE] - (Optional) The maximum fee allowed for the transaction. Defaults to `MAX_FEE`.
+ * @param {number} [witnessLockPlaceholderSize] - (Optional) The size of the witness lock placeholder.
  *
- * @returns A promise that resolves to an unsigned transaction object.
+ * @returns {Promise<CKBComponents.RawTransactionToSign>} A promise that resolves to an unsigned transaction object.
  *
  * @throws {NoXudtLiveCellError} If the address has no xudt cells.
  * @throws {NoLiveCellError} If the address has no empty cells.
@@ -54,12 +56,11 @@ export async function createTransferXudtTransaction(
     collector,
     isMainnet,
   }: CreateTransferXudtTransactionParams,
-  ckbAddress = ckbAddresses[0],
+  ckbAddress: string = ckbAddresses[0],
   feeRate?: bigint,
   maxFee: bigint = MAX_FEE,
-): Promise<
-  CKBComponents.RawTransactionToSign
-> {
+  witnessLockPlaceholderSize?: number,
+): Promise<CKBComponents.RawTransactionToSign> {
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
     args: xudtArgs,
@@ -85,7 +86,7 @@ export async function createTransferXudtTransaction(
 
   let sumXudtOutputCapacity = receivers
     .map(({ toAddress }) =>
-      calculateUdtCellCapacity(addressToScript(toAddress))
+      calculateUdtCellCapacity(addressToScript(toAddress)),
     )
     .reduce((prev, current) => prev + current, BigInt(0));
 
@@ -117,7 +118,7 @@ export async function createTransferXudtTransaction(
   );
 
   const outputsData = receivers.map(({ transferAmount }) =>
-    append0x(u128ToLe(transferAmount))
+    append0x(u128ToLe(transferAmount)),
   );
 
   console.debug("Outputs:", outputs);
@@ -181,7 +182,9 @@ export async function createTransferXudtTransaction(
   console.debug("Updated Outputs Data:", outputsData);
 
   const emptyWitness = { lock: "", inputType: "", outputType: "" };
-  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
+  const witnesses = inputs.map((_, index) =>
+    index === 0 ? emptyWitness : "0x",
+  );
 
   const cellDeps = [
     ...(await getAddressCellDeps(isMainnet, ckbAddresses)),
@@ -203,8 +206,10 @@ export async function createTransferXudtTransaction(
   console.debug("Unsigned Transaction:", unsignedTx);
 
   if (txFee === maxFee) {
-    const txSize = getTransactionSize(unsignedTx) +
-      calculateWitnessSize(ckbAddress, isMainnet);
+    const txSize =
+      getTransactionSize(unsignedTx) +
+      (witnessLockPlaceholderSize ??
+        calculateWitnessSize(ckbAddress, isMainnet));
     const estimatedTxFee = calculateTransactionFee(txSize, feeRate);
     changeCapacity -= estimatedTxFee;
     unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(

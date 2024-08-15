@@ -1,6 +1,6 @@
 {
   "name": "mobit-sdk",
-  "version": "1.6.0",
+  "version": "1.7.0-test.20240814205112",
   "description": "",
   "main": "dist/sdk.js",
   "types": "dist/types/index.d.ts",
@@ -28,24 +28,24 @@
     "stream-browserify": "^3.0.0",
     "terser-webpack-plugin": "^5.3.10",
     "ts-loader": "^9.5.1",
-    "typescript": "^5.5.3",
-    "url": "^0.11.3",
+    "typescript": "^5.5.4",
+    "url": "^0.11.4",
     "vm-browserify": "^1.1.2",
     "webpack": "^5.93.0",
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "@apollo/client": "^3.11.1",
-    "@ckb-ccc/core": "0.0.5-alpha.2",
+    "@apollo/client": "^3.11.4",
+    "@ckb-ccc/core": "0.0.11-alpha.3",
     "@ckb-lumos/base": "0.0.0-canary-d279b87-20240624101315",
     "@ckb-lumos/codec": "0.0.0-canary-d279b87-20240624101315",
     "@ckb-lumos/common-scripts": "0.0.0-canary-d279b87-20240624101315",
     "@ckb-lumos/helpers": "0.0.0-canary-d279b87-20240624101315",
     "@ckb-lumos/lumos": "0.0.0-canary-d279b87-20240624101315",
-    "@nervosnetwork/ckb-sdk-utils": "^0.109.2",
-    "@rgbpp-sdk/btc": "^0.4.0",
-    "@rgbpp-sdk/ckb": "^0.4.0",
-    "@rgbpp-sdk/service": "^0.4.0",
-    "rgbpp": "^0.4.0"
+    "@nervosnetwork/ckb-sdk-utils": "^0.109.3",
+    "@rgbpp-sdk/btc": "^0.5.0",
+    "@rgbpp-sdk/ckb": "^0.5.0",
+    "@rgbpp-sdk/service": "^0.5.0",
+    "rgbpp": "^0.5.0"
   }
 }

@@ -101,11 +101,11 @@ export class BtcHelper {
   btcDataSource: DataSource;
   btcTestnetType?: BTCTestnetType;
   btcService: BtcAssetsApi;
-  unisat: AbstractWallet;
+  wallet: AbstractWallet;
   networkType: NetworkType;
 
   constructor(
-    unisat: AbstractWallet,
+    wallet: AbstractWallet,
     networkType: NetworkType,
     btcTestnetType?: BTCTestnetType,
   ) {
@@ -115,7 +115,7 @@ export class BtcHelper {
     this.btcService = createBtcService(btcTestnetType);
 
     this.btcDataSource = new DataSource(this.btcService, networkType);
-    this.unisat = unisat;
+    this.wallet = wallet;
   }
 }
 

@@ -9,15 +9,17 @@ interface CreateIssueXudtTransactionParams {
 /**
  * Creates an unsigned transaction for issuing xUDT assets with a unique cell as the token info cell.
  *
- * @param xudtTotalAmount - The total amount of xUDT asset to be issued.
- * @param tokenInfo - The xUDT token information including decimal, name, and symbol.
- * @param ckbAddress - The CKB address for the transaction.
- * @param collector - The collector instance used to fetch cells and collect inputs.
- * @param isMainnet - A boolean indicating whether the network is mainnet or testnet.
- * @param feeRate - (Optional) The fee rate to be used for the transaction.
- * @param maxFee - (Optional) The maximum fee allowed for the transaction. Defaults to MAX_FEE.
+ * @param {CreateIssueXudtTransactionParams} params - An object containing the parameters for the transaction.
+ * @param {bigint} params.xudtTotalAmount - The total amount of xUDT asset to be issued.
+ * @param {RgbppTokenInfo} params.tokenInfo - The xUDT token information including decimal, name, and symbol.
+ * @param {string} params.ckbAddress - The CKB address for the transaction.
+ * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
+ * @param {boolean} params.isMainnet - A boolean indicating whether the network is mainnet or testnet.
+ * @param {bigint} [feeRate] - (Optional) The fee rate to be used for the transaction.
+ * @param {bigint} [maxFee=MAX_FEE] - (Optional) The maximum fee allowed for the transaction. Defaults to MAX_FEE.
+ * @param {number} [witnessLockPlaceholderSize] - (Optional) The size of the witness lock placeholder.
  *
- * @returns A promise that resolves to an unsigned transaction object.
+ * @returns {Promise<CKBComponents.RawTransactionToSign>} A promise that resolves to an unsigned transaction object.
  */
-export declare function createIssueXudtTransaction({ xudtTotalAmount, tokenInfo, ckbAddress, collector, isMainnet, }: CreateIssueXudtTransactionParams, feeRate?: bigint, maxFee?: bigint): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createIssueXudtTransaction({ xudtTotalAmount, tokenInfo, ckbAddress, collector, isMainnet, }: CreateIssueXudtTransactionParams, feeRate?: bigint, maxFee?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>;
 export {};

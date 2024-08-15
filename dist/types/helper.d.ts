@@ -34,9 +34,9 @@ export declare class BtcHelper {
     btcDataSource: DataSource;
     btcTestnetType?: BTCTestnetType;
     btcService: BtcAssetsApi;
-    unisat: AbstractWallet;
+    wallet: AbstractWallet;
     networkType: NetworkType;
-    constructor(unisat: AbstractWallet, networkType: NetworkType, btcTestnetType?: BTCTestnetType);
+    constructor(wallet: AbstractWallet, networkType: NetworkType, btcTestnetType?: BTCTestnetType);
 }
 export interface TxResult {
     btcTxId: string;

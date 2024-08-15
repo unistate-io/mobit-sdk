@@ -4,7 +4,7 @@ import { AbstractWallet } from "./helper";
 
 export async function signAndSendPsbt(
   psbt: bitcoin.Psbt,
-  unisat: AbstractWallet,
+  wallet: AbstractWallet,
   service: BtcAssetsApi,
 ): Promise<{
   txId: string;
@@ -16,7 +16,7 @@ export async function signAndSendPsbt(
 
   try {
     console.debug("test");
-    const signPbst = bitcoin.Psbt.fromHex(await unisat.signPsbt(psbt.toHex()));
+    const signPbst = bitcoin.Psbt.fromHex(await wallet.signPsbt(psbt.toHex()));
     console.debug("PSBT after signing:", signPbst.toBase64());
 
     const tx = signPbst.extractTransaction();

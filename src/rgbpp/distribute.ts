@@ -1,4 +1,4 @@
-import { DataSource, sendRgbppUtxos } from "@rgbpp-sdk/btc";
+import { bitcoin, DataSource, sendRgbppUtxos } from "@rgbpp-sdk/btc";
 import {
   BTCTestnetType,
   Collector,
@@ -9,7 +9,7 @@ import {
 } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi } from "rgbpp";
 import { AbstractWallet, TxResult } from "../helper";
-import { signAndSendPsbt } from "../unisat";
+import { signAndSendPsbt } from "../wallet";
 
 interface RgbppLockArgsListParams {
   xudtTypeArgs: string;
@@ -61,23 +61,26 @@ interface RgbppDistributeParams {
   isMainnet: boolean;
   fromBtcAccount: string;
   fromBtcAccountPubkey?: string;
-  unisat: AbstractWallet;
+  wallet: AbstractWallet;
   btcService: BtcAssetsApi;
 }
 
-const distribute = async ({
-  rgbppLockArgsList,
-  receivers,
-  xudtTypeArgs,
-  collector,
-  btcDataSource,
-  btcTestnetType,
-  isMainnet,
-  fromBtcAccount,
-  fromBtcAccountPubkey,
-  unisat,
-  btcService,
-}: RgbppDistributeParams, btcFeeRate?: number): Promise<TxResult> => {
+const distribute = async (
+  {
+    rgbppLockArgsList,
+    receivers,
+    xudtTypeArgs,
+    collector,
+    btcDataSource,
+    btcTestnetType,
+    isMainnet,
+    fromBtcAccount,
+    fromBtcAccountPubkey,
+    wallet,
+    btcService,
+  }: RgbppDistributeParams,
+  btcFeeRate?: number,
+): Promise<TxResult> => {
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
     args: xudtTypeArgs,
@@ -109,7 +112,7 @@ const distribute = async ({
 
   const { txId: btcTxId, rawTxHex: btcTxBytes } = await signAndSendPsbt(
     psbt,
-    unisat,
+    wallet,
     btcService,
   );
 
@@ -123,16 +126,14 @@ const distribute = async ({
   // TODO： 错误处理，不清楚前端怎么处理会更好一些
   try {
     const interval = setInterval(async () => {
-      const { state, failedReason } = await btcService.getRgbppTransactionState(
-        btcTxId,
-      );
+      const { state, failedReason } =
+        await btcService.getRgbppTransactionState(btcTxId);
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
-          const { txhash: txHash } = await btcService.getRgbppTransactionHash(
-            btcTxId,
-          );
+          const { txhash: txHash } =
+            await btcService.getRgbppTransactionHash(btcTxId);
           console.info(
             `Rgbpp asset has been transferred on BTC and the related CKB tx hash is ${txHash}`,
           );
@@ -160,7 +161,7 @@ interface RgbppDistributeCombinedParams {
   isMainnet: boolean;
   fromBtcAccount: string;
   fromBtcAccountPubkey?: string;
-  unisat: AbstractWallet;
+  wallet: AbstractWallet;
   filterRgbppArgslist: (argsList: string[]) => Promise<string[]>;
   btcService: BtcAssetsApi;
 }
@@ -177,25 +178,28 @@ interface RgbppDistributeCombinedParams {
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {string} params.fromBtcAccount - The BTC account from which the assets are being distributed.
  * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account (optional).
- * @param {AbstractWallet} params.unisat - The Unisat wallet instance used for signing and sending PSBT.
+ * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {(argsList: string[]) => Promise<string[]>} params.filterRgbppArgslist - A function to filter the RGBPP args list.
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @param {number} [btcFeeRate] - The fee rate for the BTC transaction (optional).
  * @returns {Promise<TxResult>} - The result of the transaction.
  */
-export const distributeCombined = async ({
-  xudtTypeArgs,
-  receivers,
-  collector,
-  btcDataSource,
-  btcTestnetType,
-  isMainnet,
-  fromBtcAccount,
-  fromBtcAccountPubkey,
-  unisat,
-  filterRgbppArgslist,
-  btcService,
-}: RgbppDistributeCombinedParams, btcFeeRate?: number): Promise<TxResult> => {
+export const distributeCombined = async (
+  {
+    xudtTypeArgs,
+    receivers,
+    collector,
+    btcDataSource,
+    btcTestnetType,
+    isMainnet,
+    fromBtcAccount,
+    fromBtcAccountPubkey,
+    wallet,
+    filterRgbppArgslist,
+    btcService,
+  }: RgbppDistributeCombinedParams,
+  btcFeeRate?: number,
+): Promise<TxResult> => {
   const lockArgsListResponse = await getRgbppLockArgsList({
     xudtTypeArgs,
     fromBtcAccount,
@@ -206,19 +210,96 @@ export const distributeCombined = async ({
     lockArgsListResponse.rgbppLockArgsList,
   );
 
-  const res = await distribute({
-    rgbppLockArgsList: filteredLockArgsList,
-    receivers,
-    xudtTypeArgs,
-    collector,
-    btcDataSource,
-    btcTestnetType,
-    isMainnet,
-    fromBtcAccount,
-    fromBtcAccountPubkey,
-    unisat,
-    btcService,
-  }, btcFeeRate);
+  const res = await distribute(
+    {
+      rgbppLockArgsList: filteredLockArgsList,
+      receivers,
+      xudtTypeArgs,
+      collector,
+      btcDataSource,
+      btcTestnetType,
+      isMainnet,
+      fromBtcAccount,
+      fromBtcAccountPubkey,
+      wallet,
+      btcService,
+    },
+    btcFeeRate,
+  );
 
   return res;
+};
+
+interface PrepareDistributeUnsignedPsbtParams {
+  rgbppLockArgsList: string[];
+  receivers: RgbppBtcAddressReceiver[];
+  xudtTypeArgs: string;
+  collector: Collector;
+  btcDataSource: DataSource;
+  btcTestnetType?: BTCTestnetType;
+  isMainnet: boolean;
+  fromBtcAccount: string;
+  fromBtcAccountPubkey?: string;
+  btcFeeRate?: number;
+}
+
+/**
+ * Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for distributing RGBPP assets.
+ * This function is used to estimate transaction fees before finalizing the transaction.
+ *
+ * @param {PrepareDistributeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
+ * @param {string[]} params.rgbppLockArgsList - List of RGBPP lock arguments.
+ * @param {RgbppBtcAddressReceiver[]} params.receivers - List of receivers for the RGBPP assets.
+ * @param {string} params.xudtTypeArgs - Type arguments for the XUDT type script.
+ * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
+ * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
+ * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
+ * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
+ * @param {string} params.fromBtcAccount - BTC account from which the assets will be distributed.
+ * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
+ * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
+ * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
+ */
+export const prepareDistributeUnsignedPsbt = async ({
+  rgbppLockArgsList,
+  receivers,
+  xudtTypeArgs,
+  collector,
+  btcDataSource,
+  btcTestnetType,
+  isMainnet,
+  fromBtcAccount,
+  fromBtcAccountPubkey,
+  btcFeeRate = 30,
+}: PrepareDistributeUnsignedPsbtParams): Promise<bitcoin.Psbt> => {
+  const xudtType: CKBComponents.Script = {
+    ...getXudtTypeScript(isMainnet),
+    args: xudtTypeArgs,
+  };
+
+  const ckbVirtualTxResult = await genBtcBatchTransferCkbVirtualTx({
+    collector,
+    rgbppLockArgsList,
+    xudtTypeBytes: serializeScript(xudtType),
+    rgbppReceivers: receivers,
+    isMainnet,
+    btcTestnetType,
+  });
+
+  const { commitment, ckbRawTx, needPaymasterCell } = ckbVirtualTxResult;
+
+  // Generate unsigned PSBT
+  const psbt = await sendRgbppUtxos({
+    ckbVirtualTx: ckbRawTx,
+    commitment,
+    tos: receivers.map((receiver) => receiver.toBtcAddress),
+    needPaymaster: needPaymasterCell,
+    ckbCollector: collector,
+    from: fromBtcAccount,
+    fromPubkey: fromBtcAccountPubkey,
+    source: btcDataSource,
+    feeRate: btcFeeRate,
+  });
+
+  return psbt;
 };

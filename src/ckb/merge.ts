@@ -31,14 +31,16 @@ interface CreateMergeXudtTransactionParams {
 
 /**
  * Merges multiple xUDT cells into a single xUDT cell and returns the remaining capacity as a separate cell.
- * @param xudtArgs - The xUDT type script args
- * @param ckbAddresses - The CKB addresses involved in the transaction
- * @param collector - The collector instance used to fetch cells and collect inputs
- * @param isMainnet - A boolean indicating whether the transaction is for the mainnet or testnet
- * @param ckbAddress - The address for the output cell, defaulting to the first address in the input address set
- * @param feeRate - The fee rate for the transaction, optional
- * @param maxFee - The maximum fee for the transaction, defaulting to MAX_FEE
- * @returns An unsigned transaction object
+ * @param {CreateMergeXudtTransactionParams} params - The parameters object.
+ * @param {string} params.xudtArgs - The xUDT type script args.
+ * @param {string[]} params.ckbAddresses - The CKB addresses involved in the transaction.
+ * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
+ * @param {boolean} params.isMainnet - A boolean indicating whether the transaction is for the mainnet or testnet.
+ * @param {string} [ckbAddress=params.ckbAddresses[0]] - The address for the output cell, defaulting to the first address in the input address set.
+ * @param {bigint} [feeRate] - The fee rate for the transaction, optional.
+ * @param {bigint} [maxFee=MAX_FEE] - The maximum fee for the transaction, defaulting to MAX_FEE.
+ * @param {number} [witnessLockPlaceholderSize] - The size of the witness lock placeholder, optional.
+ * @returns {Promise<CKBComponents.RawTransactionToSign>} An unsigned transaction object.
  */
 export async function createMergeXudtTransaction(
   {
@@ -47,12 +49,11 @@ export async function createMergeXudtTransaction(
     collector,
     isMainnet,
   }: CreateMergeXudtTransactionParams,
-  ckbAddress = ckbAddresses[0],
+  ckbAddress: string = ckbAddresses[0],
   feeRate?: bigint,
   maxFee: bigint = MAX_FEE,
-): Promise<
-  CKBComponents.RawTransactionToSign
-> {
+  witnessLockPlaceholderSize?: number,
+): Promise<CKBComponents.RawTransactionToSign> {
   const fromLock = addressToScript(ckbAddress);
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
@@ -123,7 +124,9 @@ export async function createMergeXudtTransaction(
   console.debug("Updated Outputs Data:", outputsData);
 
   const emptyWitness = { lock: "", inputType: "", outputType: "" };
-  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
+  const witnesses = inputs.map((_, index) =>
+    index === 0 ? emptyWitness : "0x",
+  );
 
   const cellDeps = [
     ...(await getAddressCellDeps(isMainnet, ckbAddresses)),
@@ -143,8 +146,10 @@ export async function createMergeXudtTransaction(
   console.debug("Unsigned transaction:", unsignedTx);
 
   if (txFee === maxFee) {
-    const txSize = getTransactionSize(unsignedTx) +
-      calculateWitnessSize(ckbAddress, isMainnet);
+    const txSize =
+      getTransactionSize(unsignedTx) +
+      (witnessLockPlaceholderSize ??
+        calculateWitnessSize(ckbAddress, isMainnet));
     const estimatedTxFee = calculateTransactionFee(txSize, feeRate);
     changeCapacity -= estimatedTxFee;
     unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(

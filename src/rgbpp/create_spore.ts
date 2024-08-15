@@ -13,7 +13,8 @@ import {
 } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi, DataSource, sendRgbppUtxos } from "rgbpp";
 import { AbstractWallet, signAndSendTransaction, TxResult } from "../helper";
-import { signAndSendPsbt } from "../unisat";
+import { signAndSendPsbt } from "../wallet";
+import { bitcoin } from "@rgbpp-sdk/btc";
 
 interface SporeCreateParams {
   clusterRgbppLockArgs: Hex;
@@ -27,27 +28,32 @@ interface SporeCreateParams {
   fromBtcAccount: string;
   fromBtcAccountPubkey?: string;
   btcDataSource: DataSource;
-  unisat: AbstractWallet;
+  wallet: AbstractWallet;
   ckbAddress: string;
   btcService: BtcAssetsApi;
   cccSigner: ccc.Signer;
 }
 
-// Warning: Before runing this file for the first time, please run 2-prepare-cluster.ts
-const createSpores = async ({
-  clusterRgbppLockArgs,
-  receivers,
-  collector,
-  isMainnet,
-  btcTestnetType,
-  fromBtcAccount,
-  fromBtcAccountPubkey,
-  btcDataSource,
-  unisat,
-  btcService,
-  ckbAddress,
-  cccSigner,
-}: SporeCreateParams, btcFeeRate = 120): Promise<TxResult> => {
+// Warning: Before running this file for the first time, please run 2-prepare-cluster.ts
+const createSpores = async (
+  {
+    clusterRgbppLockArgs,
+    receivers,
+    collector,
+    isMainnet,
+    btcTestnetType,
+    fromBtcAccount,
+    fromBtcAccountPubkey,
+    btcDataSource,
+    wallet,
+    btcService,
+    ckbAddress,
+    cccSigner,
+  }: SporeCreateParams,
+  btcFeeRate = 120,
+  ckbFeeRate?: bigint,
+  witnessLockPlaceholderSize?: number,
+): Promise<TxResult> => {
   const ckbVirtualTxResult = await genCreateSporeCkbVirtualTx({
     collector,
     sporeDataList: receivers.map((receiver) => receiver.sporeData),
@@ -85,7 +91,7 @@ const createSpores = async ({
 
   const { txId: btcTxId, rawTxHex: btcTxBytes } = await signAndSendPsbt(
     psbt,
-    unisat,
+    wallet,
     btcService,
   );
   console.log("BTC TxId: ", btcTxId);
@@ -140,6 +146,8 @@ const createSpores = async ({
         ckbRawTx: ckbTx,
         collector,
         sumInputsCapacity,
+        ckbFeeRate,
+        witnessLockPlaceholderSize,
       });
 
       const txHash = await signAndSendTransaction(
@@ -172,7 +180,7 @@ interface SporeCreateCombinedParams {
   fromBtcAccount: string;
   fromBtcAccountPubkey?: string;
   btcDataSource: DataSource;
-  unisat: AbstractWallet;
+  wallet: AbstractWallet;
   ckbAddress: string;
   btcService: BtcAssetsApi;
   cccSigner: ccc.Signer;
@@ -190,11 +198,12 @@ interface SporeCreateCombinedParams {
  * @param {string} params.fromBtcAccount - The BTC account from which the spores are being created.
  * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account (optional).
  * @param {DataSource} params.btcDataSource - The data source for BTC.
- * @param {AbstractWallet} params.unisat - The Unisat wallet instance.
+ * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {string} params.ckbAddress - The CKB address.
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @param {ccc.Signer} params.cccSigner - The CCC signer instance.
  * @param {number} [btcFeeRate=120] - The fee rate for BTC transactions (default is 120).
+ * @param {number} [witnessLockPlaceholderSize] - The size of the witness lock placeholder (optional). This parameter is used to estimate the transaction size when the witness lock placeholder size is known.
  * @returns {Promise<TxResult>} - The result of the transaction.
  */
 export const createSporesCombined = async (
@@ -207,12 +216,14 @@ export const createSporesCombined = async (
     fromBtcAccount,
     fromBtcAccountPubkey,
     btcDataSource,
-    unisat,
+    wallet,
     btcService,
     ckbAddress,
     cccSigner,
   }: SporeCreateCombinedParams,
   btcFeeRate: number = 120,
+  ckbFeeRate?: bigint,
+  witnessLockPlaceholderSize?: number,
 ): Promise<TxResult> => {
   const assets = await btcService.getRgbppAssetsByBtcAddress(fromBtcAccount, {
     type_script: encodeURIComponent(
@@ -233,20 +244,159 @@ export const createSporesCombined = async (
   // outIndexU32 + btcTxId
   const clusterRgbppLockArgs = assets[0].cellOutput.lock.args;
 
-  const res = await createSpores({
-    clusterRgbppLockArgs,
-    receivers,
-    collector,
-    isMainnet,
-    btcTestnetType,
-    fromBtcAccount,
-    fromBtcAccountPubkey,
-    btcDataSource,
-    unisat,
-    btcService,
-    ckbAddress,
-    cccSigner,
-  }, btcFeeRate);
+  const res = await createSpores(
+    {
+      clusterRgbppLockArgs,
+      receivers,
+      collector,
+      isMainnet,
+      btcTestnetType,
+      fromBtcAccount,
+      fromBtcAccountPubkey,
+      btcDataSource,
+      wallet,
+      btcService,
+      ckbAddress,
+      cccSigner,
+    },
+    btcFeeRate,
+    ckbFeeRate,
+    witnessLockPlaceholderSize,
+  );
 
   return res;
+};
+
+interface PrepareCreateSporeUnsignedTransactionParams {
+  clusterRgbppLockArgs: Hex;
+  receivers: {
+    toBtcAddress: string;
+    sporeData: RawSporeData;
+  }[];
+  collector: Collector;
+  isMainnet: boolean;
+  btcTestnetType?: BTCTestnetType;
+  ckbAddress: string;
+  ckbFeeRate?: bigint;
+  witnessLockPlaceholderSize?: number;
+}
+
+/**
+ * Prepares an unsigned CKB transaction for creating spores.
+ *
+ * @param {PrepareCreateSporeUnsignedTransactionParams} params - The parameters for preparing the unsigned CKB transaction.
+ * @param {Hex} params.clusterRgbppLockArgs - The arguments for the cluster RGBPP lock.
+ * @param {Array<{ toBtcAddress: string, sporeData: RawSporeData }>} params.receivers - The list of receivers with their BTC addresses and spore data.
+ * @param {Collector} params.collector - The collector instance.
+ * @param {boolean} params.isMainnet - Indicates if the operation is on mainnet.
+ * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
+ * @param {string} params.ckbAddress - The CKB address.
+ * @param {bigint} [params.ckbFeeRate] - The fee rate for CKB transactions (optional).
+ * @param {number} [params.witnessLockPlaceholderSize] - The size of the witness lock placeholder (optional). This parameter is used to estimate the transaction size when the witness lock placeholder size is known.
+ * @returns {Promise<CKBComponents.RawTransactionToSign>} - The unsigned CKB transaction.
+ */
+export const prepareCreateSporeUnsignedTransaction = async ({
+  clusterRgbppLockArgs,
+  receivers,
+  collector,
+  isMainnet,
+  btcTestnetType,
+  ckbAddress,
+  ckbFeeRate,
+  witnessLockPlaceholderSize,
+}: PrepareCreateSporeUnsignedTransactionParams): Promise<CKBComponents.RawTransactionToSign> => {
+  const ckbVirtualTxResult = await genCreateSporeCkbVirtualTx({
+    collector,
+    sporeDataList: receivers.map((receiver) => receiver.sporeData),
+    clusterRgbppLockArgs,
+    isMainnet,
+    ckbFeeRate: BigInt(2000),
+    btcTestnetType,
+  });
+
+  const { ckbRawTx, sumInputsCapacity } = ckbVirtualTxResult;
+
+  const unsignedTx = await buildAppendingIssuerCellToSporesCreateTx({
+    issuerAddress: ckbAddress,
+    ckbRawTx,
+    collector,
+    sumInputsCapacity,
+    ckbFeeRate,
+    witnessLockPlaceholderSize,
+  });
+
+  return unsignedTx;
+};
+
+interface PrepareCreateSporeUnsignedPsbtParams {
+  clusterRgbppLockArgs: Hex;
+  receivers: {
+    toBtcAddress: string;
+    sporeData: RawSporeData;
+  }[];
+  collector: Collector;
+  isMainnet: boolean;
+  btcTestnetType?: BTCTestnetType;
+  fromBtcAccount: string;
+  fromBtcAccountPubkey?: string;
+  btcDataSource: DataSource;
+  btcFeeRate?: number;
+}
+
+/**
+ * Prepares an unsigned BTC transaction for creating spores.
+ *
+ * @param {PrepareCreateSporeUnsignedPsbtParams} params - The parameters for preparing the unsigned BTC transaction.
+ * @param {Hex} params.clusterRgbppLockArgs - The arguments for the cluster RGBPP lock.
+ * @param {Array<{ toBtcAddress: string, sporeData: RawSporeData }>} params.receivers - The list of receivers with their BTC addresses and spore data.
+ * @param {Collector} params.collector - The collector instance.
+ * @param {boolean} params.isMainnet - Indicates if the operation is on mainnet.
+ * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
+ * @param {string} params.fromBtcAccount - The BTC account from which the spores are being created.
+ * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account (optional).
+ * @param {DataSource} params.btcDataSource - The data source for BTC.
+ * @param {number} [params.btcFeeRate] - The fee rate for BTC transactions (optional).
+ * @returns {Promise<bitcoin.Psbt>} - The unsigned BTC transaction in PSBT format.
+ */
+export const prepareCreateSporeUnsignedPsbt = async ({
+  clusterRgbppLockArgs,
+  receivers,
+  collector,
+  isMainnet,
+  btcTestnetType,
+  fromBtcAccount,
+  fromBtcAccountPubkey,
+  btcDataSource,
+  btcFeeRate,
+}: PrepareCreateSporeUnsignedPsbtParams): Promise<bitcoin.Psbt> => {
+  const ckbVirtualTxResult = await genCreateSporeCkbVirtualTx({
+    collector,
+    sporeDataList: receivers.map((receiver) => receiver.sporeData),
+    clusterRgbppLockArgs,
+    isMainnet,
+    ckbFeeRate: BigInt(2000),
+    btcTestnetType,
+  });
+
+  const { commitment, ckbRawTx, needPaymasterCell } = ckbVirtualTxResult;
+
+  // The first btc address is the owner of the cluster cell and the rest btc addresses are spore receivers
+  const btcTos = [
+    fromBtcAccount,
+    ...receivers.map((receiver) => receiver.toBtcAddress),
+  ];
+
+  const psbt = await sendRgbppUtxos({
+    ckbVirtualTx: ckbRawTx,
+    commitment,
+    tos: btcTos,
+    needPaymaster: needPaymasterCell,
+    ckbCollector: collector,
+    from: fromBtcAccount,
+    fromPubkey: fromBtcAccountPubkey,
+    source: btcDataSource,
+    feeRate: btcFeeRate,
+  });
+
+  return psbt;
 };

@@ -8,7 +8,8 @@ import {
 } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi, DataSource, sendRgbppUtxos } from "rgbpp";
 import { AbstractWallet } from "../helper";
-import { signAndSendPsbt } from "../unisat";
+import { signAndSendPsbt } from "../wallet";
+import { bitcoin } from "@rgbpp-sdk/btc";
 
 interface SporeTransferParams {
   sporeRgbppLockArgs: Hex;
@@ -20,23 +21,26 @@ interface SporeTransferParams {
   fromBtcAddress: string;
   fromBtcAddressPubkey?: string;
   btcDataSource: DataSource;
-  unisat: AbstractWallet;
+  wallet: AbstractWallet;
   btcService: BtcAssetsApi;
 }
 
-const transferSpore = async ({
-  sporeRgbppLockArgs,
-  toBtcAddress,
-  sporeTypeArgs,
-  collector,
-  isMainnet,
-  btcTestnetType,
-  fromBtcAddress,
-  fromBtcAddressPubkey,
-  btcDataSource,
-  btcService,
-  unisat,
-}: SporeTransferParams, btcFeeRate: number = 30) => {
+const transferSpore = async (
+  {
+    sporeRgbppLockArgs,
+    toBtcAddress,
+    sporeTypeArgs,
+    collector,
+    isMainnet,
+    btcTestnetType,
+    fromBtcAddress,
+    fromBtcAddressPubkey,
+    btcDataSource,
+    btcService,
+    wallet,
+  }: SporeTransferParams,
+  btcFeeRate: number = 30,
+) => {
   const sporeTypeBytes = serializeScript({
     ...getSporeTypeScript(isMainnet),
     args: sporeTypeArgs,
@@ -65,7 +69,7 @@ const transferSpore = async ({
     feeRate: btcFeeRate,
   });
 
-  const { txId: btcTxId } = await signAndSendPsbt(psbt, unisat, btcService);
+  const { txId: btcTxId } = await signAndSendPsbt(psbt, wallet, btcService);
   console.log("BTC TxId: ", btcTxId);
 
   await btcService.sendRgbppCkbTransaction({
@@ -75,16 +79,14 @@ const transferSpore = async ({
 
   try {
     const interval = setInterval(async () => {
-      const { state, failedReason } = await btcService.getRgbppTransactionState(
-        btcTxId,
-      );
+      const { state, failedReason } =
+        await btcService.getRgbppTransactionState(btcTxId);
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
-          const { txhash: txHash } = await btcService.getRgbppTransactionHash(
-            btcTxId,
-          );
+          const { txhash: txHash } =
+            await btcService.getRgbppTransactionHash(btcTxId);
           console.info(
             `Rgbpp spore has been transferred on BTC and the related CKB tx hash is ${txHash}`,
           );
@@ -123,7 +125,7 @@ interface SporeTransferCombinedParams {
   fromBtcAddress: string;
   fromBtcAddressPubkey?: string;
   btcDataSource: DataSource;
-  unisat: AbstractWallet;
+  wallet: AbstractWallet;
   btcService: BtcAssetsApi;
 }
 
@@ -139,32 +141,13 @@ interface SporeTransferCombinedParams {
  * @param {string} params.fromBtcAddress - The sender's BTC address.
  * @param {string} [params.fromBtcAddressPubkey] - The sender's BTC address public key (optional).
  * @param {DataSource} params.btcDataSource - The data source for BTC.
- * @param {AbstractWallet} params.unisat - The Unisat wallet object.
+ * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @param {number} [btcFeeRate=30] - The fee rate for the BTC transaction (optional, default is 30).
  * @returns {Promise<{ btcTxId: string }>} - The result of the spore transfer, including the BTC transaction ID.
  */
-export const transferSporeCombined = async ({
-  toBtcAddress,
-  sporeTypeArgs,
-  collector,
-  isMainnet,
-  btcTestnetType,
-  fromBtcAddress,
-  fromBtcAddressPubkey,
-  btcDataSource,
-  unisat,
-  btcService,
-}: SporeTransferCombinedParams, btcFeeRate: number = 30) => {
-  const sporeRgbppLockArgs = await getSporeRgbppLockArgs({
-    fromBtcAddress,
-    sporeTypeArgs,
-    isMainnet,
-    btcService,
-  });
-
-  const res = await transferSpore({
-    sporeRgbppLockArgs,
+export const transferSporeCombined = async (
+  {
     toBtcAddress,
     sporeTypeArgs,
     collector,
@@ -173,9 +156,34 @@ export const transferSporeCombined = async ({
     fromBtcAddress,
     fromBtcAddressPubkey,
     btcDataSource,
-    unisat,
+    wallet,
     btcService,
-  }, btcFeeRate);
+  }: SporeTransferCombinedParams,
+  btcFeeRate: number = 30,
+): Promise<{ btcTxId: string }> => {
+  const sporeRgbppLockArgs = await getSporeRgbppLockArgs({
+    fromBtcAddress,
+    sporeTypeArgs,
+    isMainnet,
+    btcService,
+  });
+
+  const res = await transferSpore(
+    {
+      sporeRgbppLockArgs,
+      toBtcAddress,
+      sporeTypeArgs,
+      collector,
+      isMainnet,
+      btcTestnetType,
+      fromBtcAddress,
+      fromBtcAddressPubkey,
+      btcDataSource,
+      wallet,
+      btcService,
+    },
+    btcFeeRate,
+  );
 
   return res;
 };
@@ -187,7 +195,7 @@ interface GetSporeRgbppLockArgsParams {
   btcService: BtcAssetsApi;
 }
 
-const getSporeRgbppLockArgs = async ({
+export const getSporeRgbppLockArgs = async ({
   fromBtcAddress,
   sporeTypeArgs,
   isMainnet,
@@ -222,4 +230,77 @@ const getSporeRgbppLockArgs = async ({
     console.error("Error fetching sporeRgbppLockArgs:", error);
     throw error;
   }
+};
+
+interface PrepareTransferSporeUnsignedPsbtParams {
+  sporeRgbppLockArgs: Hex;
+  toBtcAddress: string;
+  sporeTypeArgs: Hex;
+  collector: Collector;
+  isMainnet: boolean;
+  btcTestnetType?: BTCTestnetType;
+  fromBtcAddress: string;
+  fromBtcAddressPubkey?: string;
+  btcDataSource: DataSource;
+  btcFeeRate?: number;
+}
+
+/**
+ * Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for transferring a spore.
+ * This function is used to estimate transaction fees before finalizing the transaction.
+ *
+ * @param {PrepareTransferSporeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
+ * @param {Hex} params.sporeRgbppLockArgs - RGBPP lock arguments for the spore.
+ * @param {string} params.toBtcAddress - The recipient's BTC address.
+ * @param {Hex} params.sporeTypeArgs - Type arguments for the spore.
+ * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
+ * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
+ * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
+ * @param {string} params.fromBtcAddress - BTC address from which the spore will be transferred.
+ * @param {string} [params.fromBtcAddressPubkey] - Public key of the BTC address (optional).
+ * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
+ * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
+ * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
+ */
+export const prepareTransferSporeUnsignedPsbt = async ({
+  sporeRgbppLockArgs,
+  toBtcAddress,
+  sporeTypeArgs,
+  collector,
+  isMainnet,
+  btcTestnetType,
+  fromBtcAddress,
+  fromBtcAddressPubkey,
+  btcDataSource,
+  btcFeeRate = 30,
+}: PrepareTransferSporeUnsignedPsbtParams): Promise<bitcoin.Psbt> => {
+  const sporeTypeBytes = serializeScript({
+    ...getSporeTypeScript(isMainnet),
+    args: sporeTypeArgs,
+  });
+
+  const ckbVirtualTxResult = await genTransferSporeCkbVirtualTx({
+    collector,
+    sporeRgbppLockArgs,
+    sporeTypeBytes,
+    isMainnet,
+    btcTestnetType,
+  });
+
+  const { commitment, ckbRawTx, needPaymasterCell } = ckbVirtualTxResult;
+
+  // Generate unsigned PSBT
+  const psbt = await sendRgbppUtxos({
+    ckbVirtualTx: ckbRawTx,
+    commitment,
+    tos: [toBtcAddress],
+    needPaymaster: needPaymasterCell,
+    ckbCollector: collector,
+    from: fromBtcAddress,
+    fromPubkey: fromBtcAddressPubkey,
+    source: btcDataSource,
+    feeRate: btcFeeRate,
+  });
+
+  return psbt;
 };
