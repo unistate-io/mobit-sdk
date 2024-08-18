@@ -85,10 +85,6 @@ export declare const distributeCombined: ({ xudtTypeArgs, receivers, collector, 
  */
 export interface PrepareDistributeUnsignedPsbtParams {
     /**
-     * List of RGBPP lock arguments.
-     */
-    rgbppLockArgsList: string[];
-    /**
      * List of receivers for the RGBPP assets.
      */
     receivers: RgbppBtcAddressReceiver[];
@@ -124,13 +120,20 @@ export interface PrepareDistributeUnsignedPsbtParams {
      * Fee rate for the BTC transaction (optional, default is 30).
      */
     btcFeeRate?: number;
+    /**
+     * BTC assets API service.
+     */
+    btcService: BtcAssetsApi;
+    /**
+     * Function to filter the RGBPP args list.
+     */
+    filterRgbppArgslist: (argsList: string[]) => Promise<string[]>;
 }
 /**
  * Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for distributing RGBPP assets.
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
  * @param {PrepareDistributeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
- * @param {string[]} params.rgbppLockArgsList - List of RGBPP lock arguments.
  * @param {RgbppBtcAddressReceiver[]} params.receivers - List of receivers for the RGBPP assets.
  * @param {string} params.xudtTypeArgs - Type arguments for the XUDT type script.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
@@ -140,8 +143,10 @@ export interface PrepareDistributeUnsignedPsbtParams {
  * @param {string} params.fromBtcAccount - BTC account from which the assets will be distributed.
  * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
+ * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
+ * @param {(argsList: string[]) => Promise<string[]>} params.filterRgbppArgslist - A function to filter the RGBPP args list.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareDistributeUnsignedPsbt: ({ rgbppLockArgsList, receivers, xudtTypeArgs, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, }: PrepareDistributeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareDistributeUnsignedPsbt: ({ receivers, xudtTypeArgs, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, btcService, filterRgbppArgslist, }: PrepareDistributeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 export {};
 //# sourceMappingURL=distribute.d.ts.map

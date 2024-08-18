@@ -32,6 +32,8 @@ import {
   createClusterCombinedParams,
   prepareClusterCellTransaction,
   PrepareClusterCellTransactionParams,
+  prepareCreateClusterUnsignedPsbt,
+  PrepareCreateClusterUnsignedPsbtParams,
 } from "./rgbpp/create_cluster";
 import {
   createSporesCombined,
@@ -40,6 +42,7 @@ import {
   prepareCreateSporeUnsignedTransaction,
   PrepareCreateSporeUnsignedTransactionParams,
   SporeCreateCombinedParams,
+  fetchAndValidateAssets,
 } from "./rgbpp/create_spore";
 import {
   distributeCombined,
@@ -48,6 +51,7 @@ import {
   RgbppDistributeCombinedParams,
 } from "./rgbpp/distribute";
 import {
+  fetchAndFilterUtxos,
   launchCombined,
   prepareLaunchCellTransaction,
   PrepareLaunchCellTransactionParams,
@@ -92,12 +96,14 @@ export {
   createSporesCombined,
   createTransferXudtTransaction,
   distributeCombined,
+  fetchAndFilterUtxos,
   launchCombined,
   leapFromBtcToCkbCombined,
   leapFromCkbToBtcTransaction,
   leapSporeFromBtcToCkbCombined,
   leapSporeFromCkbToBtcTransaction,
   prepareClusterCellTransaction,
+  prepareCreateClusterUnsignedPsbt,
   prepareCreateSporeUnsignedPsbt,
   prepareCreateSporeUnsignedTransaction,
   prepareDistributeUnsignedPsbt,
@@ -110,6 +116,7 @@ export {
   RgbppSDK,
   transferCombined,
   transferSporeCombined,
+  fetchAndValidateAssets,
 };
 
 export type {
@@ -121,6 +128,7 @@ export type {
   LeapSporeToBtcTransactionParams,
   LeapToBtcTransactionParams,
   PrepareClusterCellTransactionParams,
+  PrepareCreateClusterUnsignedPsbtParams,
   PrepareCreateSporeUnsignedPsbtParams,
   PrepareCreateSporeUnsignedTransactionParams,
   PrepareDistributeUnsignedPsbtParams,

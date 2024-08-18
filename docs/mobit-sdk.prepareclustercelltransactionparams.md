@@ -37,25 +37,6 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-[btcService](./mobit-sdk.prepareclustercelltransactionparams.btcservice.md)
-
-
-</td><td>
-
-
-</td><td>
-
-BtcAssetsApi
-
-
-</td><td>
-
-BTC service instance for interacting with BTC assets.
-
-
-</td></tr>
-<tr><td>
-
 [btcTestnetType?](./mobit-sdk.prepareclustercelltransactionparams.btctestnettype.md)
 
 
@@ -70,6 +51,25 @@ BTCTestnetType
 </td><td>
 
 _(Optional)_ Type of BTC testnet (optional).
+
+
+</td></tr>
+<tr><td>
+
+[btcTxId](./mobit-sdk.prepareclustercelltransactionparams.btctxid.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+ID of the BTC transaction.
 
 
 </td></tr>
@@ -132,44 +132,6 @@ Collector instance used to gather cells for the transaction.
 </td></tr>
 <tr><td>
 
-[filterUtxo](./mobit-sdk.prepareclustercelltransactionparams.filterutxo.md)
-
-
-</td><td>
-
-
-</td><td>
-
-(utxos: BtcApiUtxo\[\]) =&gt; Promise&lt;{ outIndex: number; btcTxId: string; }&gt;
-
-
-</td><td>
-
-Function to filter UTXOs for the BTC transaction.
-
-
-</td></tr>
-<tr><td>
-
-[fromBtcAccount](./mobit-sdk.prepareclustercelltransactionparams.frombtcaccount.md)
-
-
-</td><td>
-
-
-</td><td>
-
-string
-
-
-</td><td>
-
-BTC account from which the transaction will be initiated.
-
-
-</td></tr>
-<tr><td>
-
 [isMainnet](./mobit-sdk.prepareclustercelltransactionparams.ismainnet.md)
 
 
@@ -184,6 +146,25 @@ boolean
 </td><td>
 
 Indicates whether the operation is on the mainnet.
+
+
+</td></tr>
+<tr><td>
+
+[outIndex](./mobit-sdk.prepareclustercelltransactionparams.outindex.md)
+
+
+</td><td>
+
+
+</td><td>
+
+number
+
+
+</td><td>
+
+Output index of the BTC transaction.
 
 
 </td></tr>

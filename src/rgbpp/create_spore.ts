@@ -270,24 +270,12 @@ export const createSporesCombined = async (
   ckbFeeRate?: bigint,
   witnessLockPlaceholderSize?: number,
 ): Promise<TxResult> => {
-  const assets = await btcService.getRgbppAssetsByBtcAddress(fromBtcAccount, {
-    type_script: encodeURIComponent(
-      JSON.stringify({
-        ...getClusterTypeScript(isMainnet),
-        args: clusterTypeScriptArgs,
-      }),
-    ),
-  });
-
-  // 判断一下assets是否不为空，为空则报错
-  if (assets.length === 0) {
-    throw new Error(
-      "No assets found for the given BTC address and type script args.",
-    );
-  }
-
-  // outIndexU32 + btcTxId
-  const clusterRgbppLockArgs = assets[0].cellOutput.lock.args;
+  const clusterRgbppLockArgs = await fetchAndValidateAssets(
+    fromBtcAccount,
+    clusterTypeScriptArgs,
+    isMainnet,
+    btcService,
+  );
 
   const res = await createSpores(
     {
@@ -311,12 +299,23 @@ export const createSporesCombined = async (
 
   return res;
 };
+
 /**
  * Parameters for preparing an unsigned CKB transaction for creating spores.
  */
 export interface PrepareCreateSporeUnsignedTransactionParams {
   /**
    * The arguments for the cluster RGBPP lock.
+   * Note: This should be generated using the `fetchAndValidateAssets` function.
+   * Example:
+   * ```typescript
+   * const clusterRgbppLockArgs = await fetchAndValidateAssets(
+   *   fromBtcAccount,
+   *   clusterTypeScriptArgs,
+   *   isMainnet,
+   *   btcService,
+   * );
+   * ```
    */
   clusterRgbppLockArgs: Hex;
   /**
@@ -371,6 +370,17 @@ export interface PrepareCreateSporeUnsignedTransactionParams {
  * @param {bigint} [params.ckbFeeRate] - The fee rate for CKB transactions (optional).
  * @param {number} [params.witnessLockPlaceholderSize] - The size of the witness lock placeholder (optional). This parameter is used to estimate the transaction size when the witness lock placeholder size is known.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - The unsigned CKB transaction.
+ * --------------------------------------------------------------------------------
+ * Note: This example demonstrates how to fetch the corresponding parameters using the `fetchAndValidateAssets` function.
+ * Example:
+ * ```typescript
+ * const clusterRgbppLockArgs = await fetchAndValidateAssets(
+ *   fromBtcAccount,
+ *   clusterTypeScriptArgs,
+ *   isMainnet,
+ *   btcService,
+ * );
+ * ```
  */
 export const prepareCreateSporeUnsignedTransaction = async ({
   clusterRgbppLockArgs,
@@ -381,9 +391,7 @@ export const prepareCreateSporeUnsignedTransaction = async ({
   ckbAddress,
   ckbFeeRate,
   witnessLockPlaceholderSize,
-}: PrepareCreateSporeUnsignedTransactionParams): Promise<
-  CKBComponents.RawTransactionToSign
-> => {
+}: PrepareCreateSporeUnsignedTransactionParams): Promise<CKBComponents.RawTransactionToSign> => {
   const ckbVirtualTxResult = await genCreateSporeCkbVirtualTx({
     collector,
     sporeDataList: receivers.map((receiver) => receiver.sporeData),
@@ -413,6 +421,16 @@ export const prepareCreateSporeUnsignedTransaction = async ({
 export interface PrepareCreateSporeUnsignedPsbtParams {
   /**
    * The arguments for the cluster RGBPP lock.
+   * Note: This should be generated using the `fetchAndValidateAssets` function.
+   * Example:
+   * ```typescript
+   * const clusterRgbppLockArgs = await fetchAndValidateAssets(
+   *   fromBtcAccount,
+   *   clusterTypeScriptArgs,
+   *   isMainnet,
+   *   btcService,
+   * );
+   * ```
    */
   clusterRgbppLockArgs: Hex;
   /**
@@ -472,6 +490,18 @@ export interface PrepareCreateSporeUnsignedPsbtParams {
  * @param {DataSource} params.btcDataSource - The data source for BTC.
  * @param {number} [params.btcFeeRate] - The fee rate for BTC transactions (optional).
  * @returns {Promise<bitcoin.Psbt>} - The unsigned BTC transaction in PSBT format.
+ *
+ * --------------------------------------------------------------------------------
+ * Note: This example demonstrates how to fetch the corresponding parameters using the `fetchAndValidateAssets` function.
+ * Example:
+ * ```typescript
+ * const clusterRgbppLockArgs = await fetchAndValidateAssets(
+ *   fromBtcAccount,
+ *   clusterTypeScriptArgs,
+ *   isMainnet,
+ *   btcService,
+ * );
+ * ```
  */
 export const prepareCreateSporeUnsignedPsbt = async ({
   clusterRgbppLockArgs,
@@ -514,4 +544,38 @@ export const prepareCreateSporeUnsignedPsbt = async ({
   });
 
   return psbt;
+};
+
+/**
+ * Fetches RGBPP assets for a given BTC address and type script args, and validates the result.
+ *
+ * @param {string} fromBtcAccount - The BTC account from which the assets are being fetched.
+ * @param {string} clusterTypeScriptArgs - The arguments for the cluster type script.
+ * @param {boolean} isMainnet - Indicates if the operation is on mainnet.
+ * @param {BtcAssetsApi} btcService - The BTC assets API service.
+ * @returns {Promise<string>} - The cluster RGBPP lock args.
+ * @throws {Error} - Throws an error if no assets are found for the given BTC address and type script args.
+ */
+export const fetchAndValidateAssets = async (
+  fromBtcAccount: string,
+  clusterTypeScriptArgs: string,
+  isMainnet: boolean,
+  btcService: BtcAssetsApi,
+): Promise<string> => {
+  const assets = await btcService.getRgbppAssetsByBtcAddress(fromBtcAccount, {
+    type_script: encodeURIComponent(
+      JSON.stringify({
+        ...getClusterTypeScript(isMainnet),
+        args: clusterTypeScriptArgs,
+      }),
+    ),
+  });
+
+  if (assets.length === 0) {
+    throw new Error(
+      "No assets found for the given BTC address and type script args.",
+    );
+  }
+
+  return assets[0].cellOutput.lock.args;
 };

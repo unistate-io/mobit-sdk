@@ -82,16 +82,14 @@ const leapFromBtcToCKB = async (
 
   try {
     const interval = setInterval(async () => {
-      const { state, failedReason } = await btcService.getRgbppTransactionState(
-        btcTxId,
-      );
+      const { state, failedReason } =
+        await btcService.getRgbppTransactionState(btcTxId);
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
-          const { txhash: txHash } = await btcService.getRgbppTransactionHash(
-            btcTxId,
-          );
+          const { txhash: txHash } =
+            await btcService.getRgbppTransactionHash(btcTxId);
           console.info(
             `Rgbpp asset has been jumped from BTC to CKB and the related CKB tx hash is ${txHash}`,
           );
@@ -205,8 +203,8 @@ export const leapFromBtcToCkbCombined = async (
  * Parameters for preparing an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping RGBPP assets from Bitcoin to CKB.
  */
 export interface PrepareLeapUnsignedPsbtParams {
-  /** List of RGBPP lock arguments. */
-  rgbppLockArgsList: string[];
+  /** The BTC assets service instance. */
+  btcService: BtcAssetsApi;
   /** The destination CKB address. */
   toCkbAddress: string;
   /** Type arguments for the XUDT type script. */
@@ -234,7 +232,7 @@ export interface PrepareLeapUnsignedPsbtParams {
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
  * @param {PrepareLeapUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
- * @param {string[]} params.rgbppLockArgsList - List of RGBPP lock arguments.
+ * @param {BtcAssetsApi} params.btcService - The BTC assets service instance.
  * @param {string} params.toCkbAddress - The destination CKB address.
  * @param {string} params.xudtTypeArgs - Type arguments for the XUDT type script.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
@@ -248,7 +246,7 @@ export interface PrepareLeapUnsignedPsbtParams {
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
 export const prepareLeapUnsignedPsbt = async ({
-  rgbppLockArgsList,
+  btcService,
   toCkbAddress,
   xudtTypeArgs,
   transferAmount,
@@ -260,6 +258,13 @@ export const prepareLeapUnsignedPsbt = async ({
   btcDataSource,
   btcFeeRate = 30,
 }: PrepareLeapUnsignedPsbtParams): Promise<bitcoin.Psbt> => {
+  const lockArgsListResponse = await getRgbppLockArgsList({
+    xudtTypeArgs,
+    fromBtcAccount,
+    isMainnet,
+    btcService,
+  });
+
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
     args: xudtTypeArgs,
@@ -267,7 +272,7 @@ export const prepareLeapUnsignedPsbt = async ({
 
   const ckbVirtualTxResult = await genBtcJumpCkbVirtualTx({
     collector,
-    rgbppLockArgsList,
+    rgbppLockArgsList: lockArgsListResponse.rgbppLockArgsList,
     xudtTypeBytes: serializeScript(xudtType),
     transferAmount,
     toCkbAddress,

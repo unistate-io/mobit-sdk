@@ -4,7 +4,16 @@
 
 ## PrepareCreateSporeUnsignedTransactionParams.clusterRgbppLockArgs property
 
-The arguments for the cluster RGBPP lock.
+The arguments for the cluster RGBPP lock. Note: This should be generated using the `fetchAndValidateAssets` function. Example:
+
+```typescript
+const clusterRgbppLockArgs = await fetchAndValidateAssets(
+  fromBtcAccount,
+  clusterTypeScriptArgs,
+  isMainnet,
+  btcService,
+);
+```
 
 **Signature:**
 

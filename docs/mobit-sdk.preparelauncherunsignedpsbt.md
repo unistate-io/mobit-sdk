@@ -9,7 +9,7 @@ Generates an unsigned PSBT for launching an RGB++ asset.
 **Signature:**
 
 ```typescript
-prepareLauncherUnsignedPsbt: ({ ownerRgbppLockArgs, rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, }: PrepareLauncherUnsignedPsbtParams, btcFeeRate?: number) => Promise<bitcoin.Psbt>
+prepareLauncherUnsignedPsbt: ({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, outIndex, btcTxId, }: PrepareLauncherUnsignedPsbtParams, btcFeeRate?: number) => Promise<bitcoin.Psbt>
 ```
 
 ## Parameters
@@ -32,7 +32,7 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-{ ownerRgbppLockArgs, rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, }
+{ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, outIndex, btcTxId, }
 
 
 </td><td>
@@ -66,4 +66,15 @@ _(Optional)_ (Optional) Fee rate for BTC transactions, as a number.
 Promise&lt;bitcoin.Psbt&gt;
 
 {<!-- -->Promise<!-- -->&lt;<!-- -->bitcoin.Psbt<!-- -->&gt;<!-- -->} A promise resolving to the unsigned PSBT.
+
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--- \*\*Note: Example of fetching and filtering UTXOs:\*\*
+
+```typescript
+const { outIndex, btcTxId } = await fetchAndFilterUtxos(
+  btcAccount,
+  filterUtxo,
+  btcService,
+);
+```
+This example demonstrates how to obtain the necessary parameters (`outIndex` and `btcTxId`<!-- -->) by fetching and filtering UTXOs.
 

@@ -75,6 +75,25 @@ _(Optional)_ Fee rate for the BTC transaction (optional, default is 30).
 </td></tr>
 <tr><td>
 
+[btcService](./mobit-sdk.preparetransfersporeunsignedpsbtparams.btcservice.md)
+
+
+</td><td>
+
+
+</td><td>
+
+BtcAssetsApi
+
+
+</td><td>
+
+The BTC assets API service.
+
+
+</td></tr>
+<tr><td>
+
 [btcTestnetType?](./mobit-sdk.preparetransfersporeunsignedpsbtparams.btctestnettype.md)
 
 
@@ -165,25 +184,6 @@ boolean
 </td><td>
 
 Indicates whether the operation is on the mainnet.
-
-
-</td></tr>
-<tr><td>
-
-[sporeRgbppLockArgs](./mobit-sdk.preparetransfersporeunsignedpsbtparams.sporergbpplockargs.md)
-
-
-</td><td>
-
-
-</td><td>
-
-Hex
-
-
-</td><td>
-
-RGBPP lock arguments for the spore.
 
 
 </td></tr>

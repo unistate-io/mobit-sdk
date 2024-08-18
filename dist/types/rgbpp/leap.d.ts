@@ -53,8 +53,8 @@ export declare const leapFromBtcToCkbCombined: ({ toCkbAddress, xudtTypeArgs, tr
  * Parameters for preparing an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping RGBPP assets from Bitcoin to CKB.
  */
 export interface PrepareLeapUnsignedPsbtParams {
-    /** List of RGBPP lock arguments. */
-    rgbppLockArgsList: string[];
+    /** The BTC assets service instance. */
+    btcService: BtcAssetsApi;
     /** The destination CKB address. */
     toCkbAddress: string;
     /** Type arguments for the XUDT type script. */
@@ -81,7 +81,7 @@ export interface PrepareLeapUnsignedPsbtParams {
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
  * @param {PrepareLeapUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
- * @param {string[]} params.rgbppLockArgsList - List of RGBPP lock arguments.
+ * @param {BtcAssetsApi} params.btcService - The BTC assets service instance.
  * @param {string} params.toCkbAddress - The destination CKB address.
  * @param {string} params.xudtTypeArgs - Type arguments for the XUDT type script.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
@@ -94,5 +94,5 @@ export interface PrepareLeapUnsignedPsbtParams {
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareLeapUnsignedPsbt: ({ rgbppLockArgsList, toCkbAddress, xudtTypeArgs, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate, }: PrepareLeapUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareLeapUnsignedPsbt: ({ btcService, toCkbAddress, xudtTypeArgs, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate, }: PrepareLeapUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 //# sourceMappingURL=leap.d.ts.map

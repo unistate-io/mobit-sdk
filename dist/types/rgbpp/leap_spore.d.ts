@@ -52,8 +52,6 @@ export declare const leapSporeFromBtcToCkbCombined: ({ toCkbAddress, sporeTypeAr
  * This interface is used to estimate transaction fees before finalizing the transaction.
  */
 export interface PrepareLeapSporeUnsignedPsbtParams {
-    /** RGBPP lock arguments for the spore. */
-    sporeRgbppLockArgs: Hex;
     /** The destination CKB address. */
     toCkbAddress: string;
     /** Type arguments for the spore. */
@@ -72,6 +70,8 @@ export interface PrepareLeapSporeUnsignedPsbtParams {
     btcDataSource: DataSource;
     /** Fee rate for the BTC transaction (optional, default is 30). */
     btcFeeRate?: number;
+    /** The BTC assets API service. */
+    btcService: BtcAssetsApi;
 }
 /**
  * Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping a spore from Bitcoin to CKB.
@@ -88,7 +88,8 @@ export interface PrepareLeapSporeUnsignedPsbtParams {
  * @param {string} [params.fromBtcAddressPubkey] - Public key of the BTC address (optional).
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
+ * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareLeapSporeUnsignedPsbt: ({ sporeRgbppLockArgs, toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, }: PrepareLeapSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareLeapSporeUnsignedPsbt: ({ toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, btcService, }: PrepareLeapSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 //# sourceMappingURL=leap_spore.d.ts.map

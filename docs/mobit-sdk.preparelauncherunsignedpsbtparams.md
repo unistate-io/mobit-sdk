@@ -113,6 +113,25 @@ _(Optional)_ (Optional) Type of BTC testnet to use.
 </td></tr>
 <tr><td>
 
+[btcTxId](./mobit-sdk.preparelauncherunsignedpsbtparams.btctxid.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+ID of the BTC transaction.
+
+
+</td></tr>
+<tr><td>
+
 [collector](./mobit-sdk.preparelauncherunsignedpsbtparams.collector.md)
 
 
@@ -170,7 +189,7 @@ Amount of the asset to be launched, as a bigint.
 </td></tr>
 <tr><td>
 
-[ownerRgbppLockArgs](./mobit-sdk.preparelauncherunsignedpsbtparams.ownerrgbpplockargs.md)
+[outIndex](./mobit-sdk.preparelauncherunsignedpsbtparams.outindex.md)
 
 
 </td><td>
@@ -178,12 +197,12 @@ Amount of the asset to be launched, as a bigint.
 
 </td><td>
 
-string
+number
 
 
 </td><td>
 
-Lock arguments for the owner of the RGB++ asset.
+Output index of the BTC transaction.
 
 
 </td></tr>

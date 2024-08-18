@@ -9,7 +9,7 @@ Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping a s
 **Signature:**
 
 ```typescript
-prepareLeapSporeUnsignedPsbt: ({ sporeRgbppLockArgs, toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, }: PrepareLeapSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>
+prepareLeapSporeUnsignedPsbt: ({ toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, btcService, }: PrepareLeapSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>
 ```
 
 ## Parameters
@@ -32,7 +32,7 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-{ sporeRgbppLockArgs, toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, }
+{ toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, btcService, }
 
 
 </td><td>

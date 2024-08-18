@@ -92,6 +92,16 @@ export declare const createSporesCombined: ({ clusterTypeScriptArgs, receivers, 
 export interface PrepareCreateSporeUnsignedTransactionParams {
     /**
      * The arguments for the cluster RGBPP lock.
+     * Note: This should be generated using the `fetchAndValidateAssets` function.
+     * Example:
+     * ```typescript
+     * const clusterRgbppLockArgs = await fetchAndValidateAssets(
+     *   fromBtcAccount,
+     *   clusterTypeScriptArgs,
+     *   isMainnet,
+     *   btcService,
+     * );
+     * ```
      */
     clusterRgbppLockArgs: Hex;
     /**
@@ -145,6 +155,17 @@ export interface PrepareCreateSporeUnsignedTransactionParams {
  * @param {bigint} [params.ckbFeeRate] - The fee rate for CKB transactions (optional).
  * @param {number} [params.witnessLockPlaceholderSize] - The size of the witness lock placeholder (optional). This parameter is used to estimate the transaction size when the witness lock placeholder size is known.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - The unsigned CKB transaction.
+ * --------------------------------------------------------------------------------
+ * Note: This example demonstrates how to fetch the corresponding parameters using the `fetchAndValidateAssets` function.
+ * Example:
+ * ```typescript
+ * const clusterRgbppLockArgs = await fetchAndValidateAssets(
+ *   fromBtcAccount,
+ *   clusterTypeScriptArgs,
+ *   isMainnet,
+ *   btcService,
+ * );
+ * ```
  */
 export declare const prepareCreateSporeUnsignedTransaction: ({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, ckbAddress, ckbFeeRate, witnessLockPlaceholderSize, }: PrepareCreateSporeUnsignedTransactionParams) => Promise<CKBComponents.RawTransactionToSign>;
 /**
@@ -153,6 +174,16 @@ export declare const prepareCreateSporeUnsignedTransaction: ({ clusterRgbppLockA
 export interface PrepareCreateSporeUnsignedPsbtParams {
     /**
      * The arguments for the cluster RGBPP lock.
+     * Note: This should be generated using the `fetchAndValidateAssets` function.
+     * Example:
+     * ```typescript
+     * const clusterRgbppLockArgs = await fetchAndValidateAssets(
+     *   fromBtcAccount,
+     *   clusterTypeScriptArgs,
+     *   isMainnet,
+     *   btcService,
+     * );
+     * ```
      */
     clusterRgbppLockArgs: Hex;
     /**
@@ -211,6 +242,29 @@ export interface PrepareCreateSporeUnsignedPsbtParams {
  * @param {DataSource} params.btcDataSource - The data source for BTC.
  * @param {number} [params.btcFeeRate] - The fee rate for BTC transactions (optional).
  * @returns {Promise<bitcoin.Psbt>} - The unsigned BTC transaction in PSBT format.
+ *
+ * --------------------------------------------------------------------------------
+ * Note: This example demonstrates how to fetch the corresponding parameters using the `fetchAndValidateAssets` function.
+ * Example:
+ * ```typescript
+ * const clusterRgbppLockArgs = await fetchAndValidateAssets(
+ *   fromBtcAccount,
+ *   clusterTypeScriptArgs,
+ *   isMainnet,
+ *   btcService,
+ * );
+ * ```
  */
 export declare const prepareCreateSporeUnsignedPsbt: ({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate, }: PrepareCreateSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+/**
+ * Fetches RGBPP assets for a given BTC address and type script args, and validates the result.
+ *
+ * @param {string} fromBtcAccount - The BTC account from which the assets are being fetched.
+ * @param {string} clusterTypeScriptArgs - The arguments for the cluster type script.
+ * @param {boolean} isMainnet - Indicates if the operation is on mainnet.
+ * @param {BtcAssetsApi} btcService - The BTC assets API service.
+ * @returns {Promise<string>} - The cluster RGBPP lock args.
+ * @throws {Error} - Throws an error if no assets are found for the given BTC address and type script args.
+ */
+export declare const fetchAndValidateAssets: (fromBtcAccount: string, clusterTypeScriptArgs: string, isMainnet: boolean, btcService: BtcAssetsApi) => Promise<string>;
 //# sourceMappingURL=create_spore.d.ts.map

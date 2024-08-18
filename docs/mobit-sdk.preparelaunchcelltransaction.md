@@ -4,12 +4,12 @@
 
 ## prepareLaunchCellTransaction() function
 
-Prepares a launch cell on the CKB network by filtering UTXOs and creating a transaction.
+Prepares a launch cell on the CKB network by creating a transaction.
 
 **Signature:**
 
 ```typescript
-prepareLaunchCellTransaction: ({ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcService, btcAccount, btcTestnetType, filterUtxo, }: PrepareLaunchCellTransactionParams, maxFee?: bigint, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>
+prepareLaunchCellTransaction: ({ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcTestnetType, outIndex, btcTxId, }: PrepareLaunchCellTransactionParams, maxFee?: bigint, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>
 ```
 
 ## Parameters
@@ -32,7 +32,7 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-{ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcService, btcAccount, btcTestnetType, filterUtxo, }
+{ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcTestnetType, outIndex, btcTxId, }
 
 
 </td><td>
@@ -98,4 +98,15 @@ _(Optional)_ Size of the witness lock placeholder (optional).
 Promise&lt;CKBComponents.RawTransactionToSign&gt;
 
 {<!-- -->Promise<!-- -->&lt;<!-- -->CKBComponents.RawTransactionToSign<!-- -->&gt;<!-- -->} - Promise that resolves to the prepared CKB transaction.
+
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--- \*\*Note: Example of fetching and filtering UTXOs:\*\*
+
+```typescript
+const { outIndex, btcTxId } = await fetchAndFilterUtxos(
+  btcAccount,
+  filterUtxo,
+  btcService,
+);
+```
+This example demonstrates how to obtain the necessary parameters (`outIndex` and `btcTxId`<!-- -->) by fetching and filtering UTXOs.
 

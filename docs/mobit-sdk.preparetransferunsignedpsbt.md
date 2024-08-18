@@ -9,7 +9,7 @@ Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for transferrin
 **Signature:**
 
 ```typescript
-prepareTransferUnsignedPsbt: ({ rgbppLockArgsList, toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, }: PrepareTransferUnsignedPsbtParams) => Promise<bitcoin.Psbt>
+prepareTransferUnsignedPsbt: ({ btcService, toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, }: PrepareTransferUnsignedPsbtParams) => Promise<bitcoin.Psbt>
 ```
 
 ## Parameters
@@ -32,7 +32,7 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-{ rgbppLockArgsList, toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, }
+{ btcService, toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, }
 
 
 </td><td>

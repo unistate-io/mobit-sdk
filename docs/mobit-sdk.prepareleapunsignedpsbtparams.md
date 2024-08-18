@@ -75,6 +75,25 @@ _(Optional)_ Fee rate for the BTC transaction (optional, default is 30).
 </td></tr>
 <tr><td>
 
+[btcService](./mobit-sdk.prepareleapunsignedpsbtparams.btcservice.md)
+
+
+</td><td>
+
+
+</td><td>
+
+BtcAssetsApi
+
+
+</td><td>
+
+The BTC assets service instance.
+
+
+</td></tr>
+<tr><td>
+
 [btcTestnetType?](./mobit-sdk.prepareleapunsignedpsbtparams.btctestnettype.md)
 
 
@@ -165,25 +184,6 @@ boolean
 </td><td>
 
 Indicates whether the operation is on the mainnet.
-
-
-</td></tr>
-<tr><td>
-
-[rgbppLockArgsList](./mobit-sdk.prepareleapunsignedpsbtparams.rgbpplockargslist.md)
-
-
-</td><td>
-
-
-</td><td>
-
-string\[\]
-
-
-</td><td>
-
-List of RGBPP lock arguments.
 
 
 </td></tr>

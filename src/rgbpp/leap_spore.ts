@@ -76,16 +76,14 @@ const leapSporeFromBtcToCkb = async (
   });
   try {
     const interval = setInterval(async () => {
-      const { state, failedReason } = await btcService.getRgbppTransactionState(
-        btcTxId,
-      );
+      const { state, failedReason } =
+        await btcService.getRgbppTransactionState(btcTxId);
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
-          const { txhash: txHash } = await btcService.getRgbppTransactionHash(
-            btcTxId,
-          );
+          const { txhash: txHash } =
+            await btcService.getRgbppTransactionHash(btcTxId);
           console.info(
             `Rgbpp spore has been leaped from BTC to CKB and the related CKB tx hash is ${txHash}`,
           );
@@ -197,8 +195,6 @@ export const leapSporeFromBtcToCkbCombined = async (
  * This interface is used to estimate transaction fees before finalizing the transaction.
  */
 export interface PrepareLeapSporeUnsignedPsbtParams {
-  /** RGBPP lock arguments for the spore. */
-  sporeRgbppLockArgs: Hex;
   /** The destination CKB address. */
   toCkbAddress: string;
   /** Type arguments for the spore. */
@@ -217,6 +213,8 @@ export interface PrepareLeapSporeUnsignedPsbtParams {
   btcDataSource: DataSource;
   /** Fee rate for the BTC transaction (optional, default is 30). */
   btcFeeRate?: number;
+  /** The BTC assets API service. */
+  btcService: BtcAssetsApi;
 }
 
 /**
@@ -234,10 +232,10 @@ export interface PrepareLeapSporeUnsignedPsbtParams {
  * @param {string} [params.fromBtcAddressPubkey] - Public key of the BTC address (optional).
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
+ * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
 export const prepareLeapSporeUnsignedPsbt = async ({
-  sporeRgbppLockArgs,
   toCkbAddress,
   sporeTypeArgs,
   collector,
@@ -247,7 +245,15 @@ export const prepareLeapSporeUnsignedPsbt = async ({
   fromBtcAddressPubkey,
   btcDataSource,
   btcFeeRate = 30,
+  btcService,
 }: PrepareLeapSporeUnsignedPsbtParams): Promise<bitcoin.Psbt> => {
+  const sporeRgbppLockArgs = await getSporeRgbppLockArgs({
+    fromBtcAddress,
+    sporeTypeArgs,
+    isMainnet,
+    btcService,
+  });
+
   const sporeTypeBytes = serializeScript({
     ...getSporeTypeScript(isMainnet),
     args: sporeTypeArgs,

@@ -126,16 +126,14 @@ const distribute = async (
   // TODO： 错误处理，不清楚前端怎么处理会更好一些
   try {
     const interval = setInterval(async () => {
-      const { state, failedReason } = await btcService.getRgbppTransactionState(
-        btcTxId,
-      );
+      const { state, failedReason } =
+        await btcService.getRgbppTransactionState(btcTxId);
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
-          const { txhash: txHash } = await btcService.getRgbppTransactionHash(
-            btcTxId,
-          );
+          const { txhash: txHash } =
+            await btcService.getRgbppTransactionHash(btcTxId);
           console.info(
             `Rgbpp asset has been transferred on BTC and the related CKB tx hash is ${txHash}`,
           );
@@ -267,14 +265,11 @@ export const distributeCombined = async (
 
   return res;
 };
+
 /**
  * Interface for parameters required to prepare an unsigned PSBT for distributing RGBPP assets.
  */
 export interface PrepareDistributeUnsignedPsbtParams {
-  /**
-   * List of RGBPP lock arguments.
-   */
-  rgbppLockArgsList: string[];
   /**
    * List of receivers for the RGBPP assets.
    */
@@ -311,6 +306,14 @@ export interface PrepareDistributeUnsignedPsbtParams {
    * Fee rate for the BTC transaction (optional, default is 30).
    */
   btcFeeRate?: number;
+  /**
+   * BTC assets API service.
+   */
+  btcService: BtcAssetsApi;
+  /**
+   * Function to filter the RGBPP args list.
+   */
+  filterRgbppArgslist: (argsList: string[]) => Promise<string[]>;
 }
 
 /**
@@ -318,7 +321,6 @@ export interface PrepareDistributeUnsignedPsbtParams {
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
  * @param {PrepareDistributeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
- * @param {string[]} params.rgbppLockArgsList - List of RGBPP lock arguments.
  * @param {RgbppBtcAddressReceiver[]} params.receivers - List of receivers for the RGBPP assets.
  * @param {string} params.xudtTypeArgs - Type arguments for the XUDT type script.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
@@ -328,10 +330,11 @@ export interface PrepareDistributeUnsignedPsbtParams {
  * @param {string} params.fromBtcAccount - BTC account from which the assets will be distributed.
  * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
+ * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
+ * @param {(argsList: string[]) => Promise<string[]>} params.filterRgbppArgslist - A function to filter the RGBPP args list.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
 export const prepareDistributeUnsignedPsbt = async ({
-  rgbppLockArgsList,
   receivers,
   xudtTypeArgs,
   collector,
@@ -341,7 +344,19 @@ export const prepareDistributeUnsignedPsbt = async ({
   fromBtcAccount,
   fromBtcAccountPubkey,
   btcFeeRate = 30,
+  btcService,
+  filterRgbppArgslist,
 }: PrepareDistributeUnsignedPsbtParams): Promise<bitcoin.Psbt> => {
+  const lockArgsListResponse = await getRgbppLockArgsList({
+    xudtTypeArgs,
+    fromBtcAccount,
+    isMainnet,
+    btcService,
+  });
+  const filteredLockArgsList = await filterRgbppArgslist(
+    lockArgsListResponse.rgbppLockArgsList,
+  );
+
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
     args: xudtTypeArgs,
@@ -349,7 +364,7 @@ export const prepareDistributeUnsignedPsbt = async ({
 
   const ckbVirtualTxResult = await genBtcBatchTransferCkbVirtualTx({
     collector,
-    rgbppLockArgsList,
+    rgbppLockArgsList: filteredLockArgsList,
     xudtTypeBytes: serializeScript(xudtType),
     rgbppReceivers: receivers,
     isMainnet,

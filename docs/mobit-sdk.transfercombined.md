@@ -65,5 +65,5 @@ _(Optional)_ (Optional) The fee rate to use for the Bitcoin transaction.
 
 Promise&lt;[TxResult](./mobit-sdk.txresult.md)<!-- -->&gt;
 
-A promise that resolves to the transaction result.
+{<!-- -->Promise<TxResult>} A promise that resolves to the transaction result.
 

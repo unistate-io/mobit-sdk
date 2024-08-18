@@ -492,6 +492,34 @@ export declare interface CreateTransferXudtTransactionParams {
 export declare const distributeCombined: ({ xudtTypeArgs, receivers, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, filterRgbppArgslist, btcService, }: RgbppDistributeCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
 
 /**
+ * Fetches the necessary UTXOs and filters them to get the output index and BTC transaction ID.
+ *
+ * @param {string} btcAccount - The BTC account address.
+ * @param {Function} filterUtxo - The function used to filter UTXOs.
+ * @param {BtcAssetsApi} btcService - The service instance for interacting with BTC assets.
+ * @returns {Promise<{ outIndex: number, btcTxId: string }>} - A promise that resolves to an object containing the output index and BTC transaction ID.
+ */
+export declare const fetchAndFilterUtxos: (btcAccount: string, filterUtxo: (utxos: BtcApiUtxo[]) => Promise<{
+    outIndex: number;
+    btcTxId: string;
+}>, btcService: BtcAssetsApi) => Promise<{
+    outIndex: number;
+    btcTxId: string;
+}>;
+
+/**
+ * Fetches RGBPP assets for a given BTC address and type script args, and validates the result.
+ *
+ * @param {string} fromBtcAccount - The BTC account from which the assets are being fetched.
+ * @param {string} clusterTypeScriptArgs - The arguments for the cluster type script.
+ * @param {boolean} isMainnet - Indicates if the operation is on mainnet.
+ * @param {BtcAssetsApi} btcService - The BTC assets API service.
+ * @returns {Promise<string>} - The cluster RGBPP lock args.
+ * @throws {Error} - Throws an error if no assets are found for the given BTC address and type script args.
+ */
+export declare const fetchAndValidateAssets: (fromBtcAccount: string, clusterTypeScriptArgs: string, isMainnet: boolean, btcService: BtcAssetsApi) => Promise<string>;
+
+/**
  * Represents information about an inscription, extending TokenInfo.
  */
 declare interface InscriptionInfo extends TokenInfo {
@@ -706,23 +734,32 @@ declare enum MintStatus {
 }
 
 /**
- * Prepares a cluster cell on the CKB network by filtering UTXOs and creating a transaction.
+ * Prepares a cluster cell on the CKB network by creating a transaction.
  *
  * @param {PrepareClusterCellTransactionParams} params - Parameters required to prepare the cluster cell.
  * @param {string} params.ckbAddress - CKB address where the cluster cell will be created.
  * @param {RawClusterData} params.clusterData - Raw data required to create the cluster.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
- * @param {BtcAssetsApi} params.btcService - BTC service instance for interacting with BTC assets.
- * @param {string} params.fromBtcAccount - BTC account from which the transaction will be initiated.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
- * @param {(utxos: BtcApiUtxo[]) => Promise<{ outIndex: number; btcTxId: string }>} params.filterUtxo - Function to filter UTXOs for the BTC transaction.
+ * @param {number} params.outIndex - Output index of the BTC transaction.
+ * @param {string} params.btcTxId - ID of the BTC transaction.
  * @param {bigint} [maxFee=MAX_FEE] - Maximum fee for the CKB transaction (default is MAX_FEE).
  * @param {bigint} [ckbFeeRate] - Fee rate for the CKB transaction (optional).
  * @param {number} [witnessLockPlaceholderSize] - Size of the witness lock placeholder (optional).
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - Promise that resolves to the prepared CKB transaction.
+ *--------------------------------------------
+ * **Note: Example of fetching and filtering UTXOs:**
+ * ```typescript
+ * const { outIndex, btcTxId } = await fetchAndFilterUtxos(
+ *   btcAccount,
+ *   filterUtxo,
+ *   btcService,
+ * );
+ * ```
+ * This example demonstrates how to obtain the necessary parameters (`outIndex` and `btcTxId`) by fetching and filtering UTXOs.
  */
-export declare const prepareClusterCellTransaction: ({ ckbAddress, clusterData, collector, isMainnet, btcService, btcTestnetType, fromBtcAccount, filterUtxo, }: PrepareClusterCellTransactionParams, maxFee?: bigint, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>;
+export declare const prepareClusterCellTransaction: ({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, outIndex, btcTxId, }: PrepareClusterCellTransactionParams, maxFee?: bigint, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>;
 
 /**
  * Parameters required to prepare a cluster cell transaction.
@@ -745,24 +782,93 @@ export declare interface PrepareClusterCellTransactionParams {
      */
     isMainnet: boolean;
     /**
-     * BTC service instance for interacting with BTC assets.
+     * Type of BTC testnet (optional).
      */
-    btcService: BtcAssetsApi;
+    btcTestnetType?: BTCTestnetType;
     /**
-     * BTC account from which the transaction will be initiated.
+     * Output index of the BTC transaction.
      */
-    fromBtcAccount: string;
+    outIndex: number;
+    /**
+     * ID of the BTC transaction.
+     */
+    btcTxId: string;
+}
+
+/**
+ * Generates an unsigned PSBT (Partially Signed Bitcoin Transaction) for creating a cluster.
+ * This function is used to estimate transaction fees before finalizing the transaction.
+ *
+ * @param {PrepareCreateClusterUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
+ * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
+ * @param {RawClusterData} params.clusterData - Raw data required to create the cluster.
+ * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
+ * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
+ * @param {string} params.fromBtcAccount - BTC account from which the transaction will be initiated.
+ * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
+ * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
+ * @param {number} params.outIndex - Output index of the BTC transaction.
+ * @param {string} params.btcTxId - ID of the BTC transaction.
+ * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
+ * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT in base64 format.
+ *--------------------------------------------
+ * **Note: Example of fetching and filtering UTXOs:**
+ * ```typescript
+ * const { outIndex, btcTxId } = await fetchAndFilterUtxos(
+ *   btcAccount,
+ *   filterUtxo,
+ *   btcService,
+ * );
+ * ```
+ * This example demonstrates how to obtain the necessary parameters (`outIndex` and `btcTxId`) by fetching and filtering UTXOs.
+ */
+export declare const prepareCreateClusterUnsignedPsbt: ({ collector, clusterData, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, outIndex, btcTxId, btcFeeRate, }: PrepareCreateClusterUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+
+/**
+ * Parameters required to generate an unsigned PSBT (Partially Signed Bitcoin Transaction) for creating a cluster.
+ * This interface is used to estimate transaction fees before finalizing the transaction.
+ */
+export declare interface PrepareCreateClusterUnsignedPsbtParams {
+    /**
+     * Collector instance used to gather cells for the transaction.
+     */
+    collector: Collector;
+    /**
+     * Raw data required to create the cluster.
+     */
+    clusterData: RawClusterData;
+    /**
+     * Indicates whether the operation is on the mainnet.
+     */
+    isMainnet: boolean;
     /**
      * Type of BTC testnet (optional).
      */
     btcTestnetType?: BTCTestnetType;
     /**
-     * Function to filter UTXOs for the BTC transaction.
+     * BTC account from which the transaction will be initiated.
      */
-    filterUtxo: (utxos: BtcApiUtxo[]) => Promise<{
-        outIndex: number;
-        btcTxId: string;
-    }>;
+    fromBtcAccount: string;
+    /**
+     * Public key of the BTC account (optional).
+     */
+    fromBtcAccountPubkey?: string;
+    /**
+     * Data source for BTC transactions.
+     */
+    btcDataSource: DataSource;
+    /**
+     * Output index of the BTC transaction.
+     */
+    outIndex: number;
+    /**
+     * ID of the BTC transaction.
+     */
+    btcTxId: string;
+    /**
+     * Fee rate for the BTC transaction (optional, default is 30).
+     */
+    btcFeeRate?: number;
 }
 
 /**
@@ -779,6 +885,18 @@ export declare interface PrepareClusterCellTransactionParams {
  * @param {DataSource} params.btcDataSource - The data source for BTC.
  * @param {number} [params.btcFeeRate] - The fee rate for BTC transactions (optional).
  * @returns {Promise<bitcoin.Psbt>} - The unsigned BTC transaction in PSBT format.
+ *
+ * --------------------------------------------------------------------------------
+ * Note: This example demonstrates how to fetch the corresponding parameters using the `fetchAndValidateAssets` function.
+ * Example:
+ * ```typescript
+ * const clusterRgbppLockArgs = await fetchAndValidateAssets(
+ *   fromBtcAccount,
+ *   clusterTypeScriptArgs,
+ *   isMainnet,
+ *   btcService,
+ * );
+ * ```
  */
 export declare const prepareCreateSporeUnsignedPsbt: ({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate, }: PrepareCreateSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 
@@ -788,6 +906,16 @@ export declare const prepareCreateSporeUnsignedPsbt: ({ clusterRgbppLockArgs, re
 export declare interface PrepareCreateSporeUnsignedPsbtParams {
     /**
      * The arguments for the cluster RGBPP lock.
+     * Note: This should be generated using the `fetchAndValidateAssets` function.
+     * Example:
+     * ```typescript
+     * const clusterRgbppLockArgs = await fetchAndValidateAssets(
+     *   fromBtcAccount,
+     *   clusterTypeScriptArgs,
+     *   isMainnet,
+     *   btcService,
+     * );
+     * ```
      */
     clusterRgbppLockArgs: Hex;
     /**
@@ -846,6 +974,17 @@ export declare interface PrepareCreateSporeUnsignedPsbtParams {
  * @param {bigint} [params.ckbFeeRate] - The fee rate for CKB transactions (optional).
  * @param {number} [params.witnessLockPlaceholderSize] - The size of the witness lock placeholder (optional). This parameter is used to estimate the transaction size when the witness lock placeholder size is known.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - The unsigned CKB transaction.
+ * --------------------------------------------------------------------------------
+ * Note: This example demonstrates how to fetch the corresponding parameters using the `fetchAndValidateAssets` function.
+ * Example:
+ * ```typescript
+ * const clusterRgbppLockArgs = await fetchAndValidateAssets(
+ *   fromBtcAccount,
+ *   clusterTypeScriptArgs,
+ *   isMainnet,
+ *   btcService,
+ * );
+ * ```
  */
 export declare const prepareCreateSporeUnsignedTransaction: ({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, ckbAddress, ckbFeeRate, witnessLockPlaceholderSize, }: PrepareCreateSporeUnsignedTransactionParams) => Promise<CKBComponents.RawTransactionToSign>;
 
@@ -855,6 +994,16 @@ export declare const prepareCreateSporeUnsignedTransaction: ({ clusterRgbppLockA
 export declare interface PrepareCreateSporeUnsignedTransactionParams {
     /**
      * The arguments for the cluster RGBPP lock.
+     * Note: This should be generated using the `fetchAndValidateAssets` function.
+     * Example:
+     * ```typescript
+     * const clusterRgbppLockArgs = await fetchAndValidateAssets(
+     *   fromBtcAccount,
+     *   clusterTypeScriptArgs,
+     *   isMainnet,
+     *   btcService,
+     * );
+     * ```
      */
     clusterRgbppLockArgs: Hex;
     /**
@@ -901,7 +1050,6 @@ export declare interface PrepareCreateSporeUnsignedTransactionParams {
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
  * @param {PrepareDistributeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
- * @param {string[]} params.rgbppLockArgsList - List of RGBPP lock arguments.
  * @param {RgbppBtcAddressReceiver[]} params.receivers - List of receivers for the RGBPP assets.
  * @param {string} params.xudtTypeArgs - Type arguments for the XUDT type script.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
@@ -911,18 +1059,16 @@ export declare interface PrepareCreateSporeUnsignedTransactionParams {
  * @param {string} params.fromBtcAccount - BTC account from which the assets will be distributed.
  * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
+ * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
+ * @param {(argsList: string[]) => Promise<string[]>} params.filterRgbppArgslist - A function to filter the RGBPP args list.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareDistributeUnsignedPsbt: ({ rgbppLockArgsList, receivers, xudtTypeArgs, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, }: PrepareDistributeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareDistributeUnsignedPsbt: ({ receivers, xudtTypeArgs, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, btcService, filterRgbppArgslist, }: PrepareDistributeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 
 /**
  * Interface for parameters required to prepare an unsigned PSBT for distributing RGBPP assets.
  */
 export declare interface PrepareDistributeUnsignedPsbtParams {
-    /**
-     * List of RGBPP lock arguments.
-     */
-    rgbppLockArgsList: string[];
     /**
      * List of receivers for the RGBPP assets.
      */
@@ -959,26 +1105,44 @@ export declare interface PrepareDistributeUnsignedPsbtParams {
      * Fee rate for the BTC transaction (optional, default is 30).
      */
     btcFeeRate?: number;
+    /**
+     * BTC assets API service.
+     */
+    btcService: BtcAssetsApi;
+    /**
+     * Function to filter the RGBPP args list.
+     */
+    filterRgbppArgslist: (argsList: string[]) => Promise<string[]>;
 }
 
 /**
- * Prepares a launch cell on the CKB network by filtering UTXOs and creating a transaction.
+ * Prepares a launch cell on the CKB network by creating a transaction.
  *
  * @param {PrepareLaunchCellTransactionParams} params - Parameters required to prepare the launch cell.
  * @param {string} params.ckbAddress - CKB address where the launch cell will be created.
  * @param {RgbppTokenInfo} params.rgbppTokenInfo - Information about the RGB++ token to be launched.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
- * @param {BtcAssetsApi} params.btcService - BTC service instance for interacting with BTC assets.
- * @param {string} params.btcAccount - BTC account from which the transaction will be initiated.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
- * @param {(utxos: BtcApiUtxo[]) => Promise<{ outIndex: number; btcTxId: string }>} params.filterUtxo - Function to filter UTXOs for the BTC transaction.
+ * @param {number} params.outIndex - Output index of the BTC transaction.
+ * @param {string} params.btcTxId - ID of the BTC transaction.
  * @param {bigint} [maxFee=MAX_FEE] - Maximum fee for the CKB transaction (default is MAX_FEE).
  * @param {bigint} [ckbFeeRate] - Fee rate for the CKB transaction (optional).
  * @param {number} [witnessLockPlaceholderSize] - Size of the witness lock placeholder (optional).
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - Promise that resolves to the prepared CKB transaction.
+ *
+ *--------------------------------------------
+ * **Note: Example of fetching and filtering UTXOs:**
+ * ```typescript
+ * const { outIndex, btcTxId } = await fetchAndFilterUtxos(
+ *   btcAccount,
+ *   filterUtxo,
+ *   btcService,
+ * );
+ * ```
+ * This example demonstrates how to obtain the necessary parameters (`outIndex` and `btcTxId`) by fetching and filtering UTXOs.
  */
-export declare const prepareLaunchCellTransaction: ({ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcService, btcAccount, btcTestnetType, filterUtxo, }: PrepareLaunchCellTransactionParams, maxFee?: bigint, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>;
+export declare const prepareLaunchCellTransaction: ({ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcTestnetType, outIndex, btcTxId, }: PrepareLaunchCellTransactionParams, maxFee?: bigint, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>;
 
 /**
  * Parameters required for preparing a launch cell transaction on the CKB network.
@@ -992,17 +1156,12 @@ export declare interface PrepareLaunchCellTransactionParams {
     collector: Collector;
     /** Indicates whether the operation is on the mainnet. */
     isMainnet: boolean;
-    /** BTC service instance for interacting with BTC assets. */
-    btcService: BtcAssetsApi;
-    /** BTC account from which the transaction will be initiated. */
-    btcAccount: string;
     /** Type of BTC testnet (optional). */
     btcTestnetType?: BTCTestnetType;
-    /** Function to filter UTXOs for the BTC transaction. */
-    filterUtxo: (utxos: BtcApiUtxo[]) => Promise<{
-        outIndex: number;
-        btcTxId: string;
-    }>;
+    /** Output index of the BTC transaction. */
+    outIndex: number;
+    /** ID of the BTC transaction. */
+    btcTxId: string;
 }
 
 /**
@@ -1017,12 +1176,24 @@ export declare interface PrepareLaunchCellTransactionParams {
  * @param {string} [params.btcAccountPubkey] - (Optional) Public key of the BTC account.
  * @param {DataSource} params.btcDataSource - Source for BTC transaction data.
  * @param {bigint} params.launchAmount - Amount of the asset to be launched, as a bigint.
- * @param {string} params.ownerRgbppLockArgs - Lock arguments for the owner of the RGB++ asset.
+ * @param {number} params.outIndex - Output index of the BTC transaction.
+ * @param {string} params.btcTxId - ID of the BTC transaction.
  * @param {number} [btcFeeRate] - (Optional) Fee rate for BTC transactions, as a number.
  *
  * @returns {Promise<bitcoin.Psbt>} A promise resolving to the unsigned PSBT.
+ *
+ *--------------------------------------------
+ * **Note: Example of fetching and filtering UTXOs:**
+ * ```typescript
+ * const { outIndex, btcTxId } = await fetchAndFilterUtxos(
+ *   btcAccount,
+ *   filterUtxo,
+ *   btcService,
+ * );
+ * ```
+ * This example demonstrates how to obtain the necessary parameters (`outIndex` and `btcTxId`) by fetching and filtering UTXOs.
  */
-export declare const prepareLauncherUnsignedPsbt: ({ ownerRgbppLockArgs, rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, }: PrepareLauncherUnsignedPsbtParams, btcFeeRate?: number) => Promise<bitcoin.Psbt>;
+export declare const prepareLauncherUnsignedPsbt: ({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, outIndex, btcTxId, }: PrepareLauncherUnsignedPsbtParams, btcFeeRate?: number) => Promise<bitcoin.Psbt>;
 
 /**
  * Parameters required for generating an unsigned PSBT for launching an RGB++ asset.
@@ -1044,8 +1215,10 @@ export declare interface PrepareLauncherUnsignedPsbtParams {
     btcDataSource: DataSource_2;
     /** Amount of the asset to be launched, as a bigint. */
     launchAmount: bigint;
-    /** Lock arguments for the owner of the RGB++ asset. */
-    ownerRgbppLockArgs: string;
+    /** Output index of the BTC transaction. */
+    outIndex: number;
+    /** ID of the BTC transaction. */
+    btcTxId: string;
 }
 
 /**
@@ -1063,17 +1236,16 @@ export declare interface PrepareLauncherUnsignedPsbtParams {
  * @param {string} [params.fromBtcAddressPubkey] - Public key of the BTC address (optional).
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
+ * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareLeapSporeUnsignedPsbt: ({ sporeRgbppLockArgs, toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, }: PrepareLeapSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareLeapSporeUnsignedPsbt: ({ toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, btcService, }: PrepareLeapSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 
 /**
  * Parameters required to generate an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping a spore from Bitcoin to CKB.
  * This interface is used to estimate transaction fees before finalizing the transaction.
  */
 export declare interface PrepareLeapSporeUnsignedPsbtParams {
-    /** RGBPP lock arguments for the spore. */
-    sporeRgbppLockArgs: Hex;
     /** The destination CKB address. */
     toCkbAddress: string;
     /** Type arguments for the spore. */
@@ -1092,6 +1264,8 @@ export declare interface PrepareLeapSporeUnsignedPsbtParams {
     btcDataSource: DataSource;
     /** Fee rate for the BTC transaction (optional, default is 30). */
     btcFeeRate?: number;
+    /** The BTC assets API service. */
+    btcService: BtcAssetsApi;
 }
 
 /**
@@ -1099,7 +1273,7 @@ export declare interface PrepareLeapSporeUnsignedPsbtParams {
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
  * @param {PrepareLeapUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
- * @param {string[]} params.rgbppLockArgsList - List of RGBPP lock arguments.
+ * @param {BtcAssetsApi} params.btcService - The BTC assets service instance.
  * @param {string} params.toCkbAddress - The destination CKB address.
  * @param {string} params.xudtTypeArgs - Type arguments for the XUDT type script.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
@@ -1112,14 +1286,14 @@ export declare interface PrepareLeapSporeUnsignedPsbtParams {
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareLeapUnsignedPsbt: ({ rgbppLockArgsList, toCkbAddress, xudtTypeArgs, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate, }: PrepareLeapUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareLeapUnsignedPsbt: ({ btcService, toCkbAddress, xudtTypeArgs, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate, }: PrepareLeapUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 
 /**
  * Parameters for preparing an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping RGBPP assets from Bitcoin to CKB.
  */
 export declare interface PrepareLeapUnsignedPsbtParams {
-    /** List of RGBPP lock arguments. */
-    rgbppLockArgsList: string[];
+    /** The BTC assets service instance. */
+    btcService: BtcAssetsApi;
     /** The destination CKB address. */
     toCkbAddress: string;
     /** Type arguments for the XUDT type script. */
@@ -1147,7 +1321,6 @@ export declare interface PrepareLeapUnsignedPsbtParams {
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
  * @param {PrepareTransferSporeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
- * @param {Hex} params.sporeRgbppLockArgs - RGBPP lock arguments for the spore.
  * @param {string} params.toBtcAddress - The recipient's BTC address.
  * @param {Hex} params.sporeTypeArgs - Type arguments for the spore.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
@@ -1157,16 +1330,15 @@ export declare interface PrepareLeapUnsignedPsbtParams {
  * @param {string} [params.fromBtcAddressPubkey] - Public key of the BTC address (optional).
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
+ * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareTransferSporeUnsignedPsbt: ({ sporeRgbppLockArgs, toBtcAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, }: PrepareTransferSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareTransferSporeUnsignedPsbt: ({ toBtcAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcService, btcFeeRate, }: PrepareTransferSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 
 /**
  * Interface for parameters required to prepare an unsigned PSBT for transferring a spore.
  */
 export declare interface PrepareTransferSporeUnsignedPsbtParams {
-    /** RGBPP lock arguments for the spore. */
-    sporeRgbppLockArgs: Hex;
     /** The recipient's BTC address. */
     toBtcAddress: string;
     /** Type arguments for the spore. */
@@ -1181,6 +1353,8 @@ export declare interface PrepareTransferSporeUnsignedPsbtParams {
     fromBtcAddress: string;
     /** Public key of the BTC address (optional). */
     fromBtcAddressPubkey?: string;
+    /** The BTC assets API service. */
+    btcService: BtcAssetsApi;
     /** Data source for BTC transactions. */
     btcDataSource: DataSource;
     /** Fee rate for the BTC transaction (optional, default is 30). */
@@ -1192,7 +1366,6 @@ export declare interface PrepareTransferSporeUnsignedPsbtParams {
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
  * @param {PrepareTransferUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
- * @param {string[]} params.rgbppLockArgsList - List of RGBPP lock arguments.
  * @param {string} params.toBtcAddress - The recipient's BTC address.
  * @param {string} params.xudtTypeArgs - Type arguments for the XUDT script.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
@@ -1203,17 +1376,16 @@ export declare interface PrepareTransferSporeUnsignedPsbtParams {
  * @param {string} params.fromBtcAccount - BTC account from which the assets will be transferred.
  * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
+ * @param {BtcAssetsApi} params.btcService - The service instance for interacting with Bitcoin assets.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareTransferUnsignedPsbt: ({ rgbppLockArgsList, toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, }: PrepareTransferUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareTransferUnsignedPsbt: ({ btcService, toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, }: PrepareTransferUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 
 /**
  * Parameters required to generate an unsigned PSBT (Partially Signed Bitcoin Transaction) for transferring RGBPP assets.
  * This interface is used to estimate transaction fees before finalizing the transaction.
  */
 export declare interface PrepareTransferUnsignedPsbtParams {
-    /** List of RGBPP lock arguments. */
-    rgbppLockArgsList: string[];
     /** The recipient's BTC address. */
     toBtcAddress: string;
     /** Type arguments for the XUDT script. */
@@ -1234,6 +1406,8 @@ export declare interface PrepareTransferUnsignedPsbtParams {
     fromBtcAccountPubkey?: string;
     /** Fee rate for the BTC transaction (optional, default is 30). */
     btcFeeRate?: number;
+    /** The service instance for interacting with Bitcoin assets. */
+    btcService: BtcAssetsApi;
 }
 
 /**
@@ -1710,19 +1884,20 @@ declare interface TokenInfo {
 /**
  * Combines the steps of getting the RGBPP lock arguments list and transferring RGBPP assets.
  *
- * @param toBtcAddress - The Bitcoin address to which the assets will be transferred.
- * @param xudtTypeArgs - The type arguments for the XUDT script.
- * @param transferAmount - The amount of assets to transfer, represented as a bigint.
- * @param collector - The collector instance used for collecting assets.
- * @param btcDataSource - The data source for Bitcoin transactions.
- * @param btcTestnetType - (Optional) The type of Bitcoin testnet to use.
- * @param isMainnet - A boolean indicating whether the operation is on the mainnet.
- * @param fromBtcAccount - The Bitcoin account from which the assets will be transferred.
- * @param fromBtcAccountPubkey - (Optional) The public key of the Bitcoin account.
+ * @param {RgbppTransferCombinedParams} params - Parameters for the transfer operation.
+ * @param {string} params.toBtcAddress - The Bitcoin address to which the assets will be transferred.
+ * @param {string} params.xudtTypeArgs - The type arguments for the XUDT script.
+ * @param {bigint} params.transferAmount - The amount of assets to transfer, represented as a bigint.
+ * @param {Collector} params.collector - The collector instance used for collecting assets.
+ * @param {DataSource} params.btcDataSource - The data source for Bitcoin transactions.
+ * @param {BTCTestnetType} [params.btcTestnetType] - (Optional) The type of Bitcoin testnet to use.
+ * @param {boolean} params.isMainnet - A boolean indicating whether the operation is on the mainnet.
+ * @param {string} params.fromBtcAccount - The Bitcoin account from which the assets will be transferred.
+ * @param {string} [params.fromBtcAccountPubkey] - (Optional) The public key of the Bitcoin account.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
- * @param btcService - The service instance for interacting with Bitcoin assets.
- * @param btcFeeRate - (Optional) The fee rate to use for the Bitcoin transaction.
- * @returns A promise that resolves to the transaction result.
+ * @param {BtcAssetsApi} params.btcService - The service instance for interacting with Bitcoin assets.
+ * @param {number} [btcFeeRate] - (Optional) The fee rate to use for the Bitcoin transaction.
+ * @returns {Promise<TxResult>} A promise that resolves to the transaction result.
  */
 export declare const transferCombined: ({ toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService, }: RgbppTransferCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
 

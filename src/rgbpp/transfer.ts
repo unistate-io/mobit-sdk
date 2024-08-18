@@ -69,16 +69,14 @@ const transfer = async (
 
   try {
     const interval = setInterval(async () => {
-      const { state, failedReason } = await btcService.getRgbppTransactionState(
-        btcTxId,
-      );
+      const { state, failedReason } =
+        await btcService.getRgbppTransactionState(btcTxId);
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
-          const { txhash: txHash } = await btcService.getRgbppTransactionHash(
-            btcTxId,
-          );
+          const { txhash: txHash } =
+            await btcService.getRgbppTransactionHash(btcTxId);
           console.info(
             `Rgbpp asset has been transferred on BTC and the related CKB tx hash is ${txHash}`,
           );
@@ -124,23 +122,23 @@ export interface RgbppTransferCombinedParams {
   /** The service instance for interacting with Bitcoin assets. */
   btcService: BtcAssetsApi;
 }
-
 /**
  * Combines the steps of getting the RGBPP lock arguments list and transferring RGBPP assets.
  *
- * @param toBtcAddress - The Bitcoin address to which the assets will be transferred.
- * @param xudtTypeArgs - The type arguments for the XUDT script.
- * @param transferAmount - The amount of assets to transfer, represented as a bigint.
- * @param collector - The collector instance used for collecting assets.
- * @param btcDataSource - The data source for Bitcoin transactions.
- * @param btcTestnetType - (Optional) The type of Bitcoin testnet to use.
- * @param isMainnet - A boolean indicating whether the operation is on the mainnet.
- * @param fromBtcAccount - The Bitcoin account from which the assets will be transferred.
- * @param fromBtcAccountPubkey - (Optional) The public key of the Bitcoin account.
+ * @param {RgbppTransferCombinedParams} params - Parameters for the transfer operation.
+ * @param {string} params.toBtcAddress - The Bitcoin address to which the assets will be transferred.
+ * @param {string} params.xudtTypeArgs - The type arguments for the XUDT script.
+ * @param {bigint} params.transferAmount - The amount of assets to transfer, represented as a bigint.
+ * @param {Collector} params.collector - The collector instance used for collecting assets.
+ * @param {DataSource} params.btcDataSource - The data source for Bitcoin transactions.
+ * @param {BTCTestnetType} [params.btcTestnetType] - (Optional) The type of Bitcoin testnet to use.
+ * @param {boolean} params.isMainnet - A boolean indicating whether the operation is on the mainnet.
+ * @param {string} params.fromBtcAccount - The Bitcoin account from which the assets will be transferred.
+ * @param {string} [params.fromBtcAccountPubkey] - (Optional) The public key of the Bitcoin account.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
- * @param btcService - The service instance for interacting with Bitcoin assets.
- * @param btcFeeRate - (Optional) The fee rate to use for the Bitcoin transaction.
- * @returns A promise that resolves to the transaction result.
+ * @param {BtcAssetsApi} params.btcService - The service instance for interacting with Bitcoin assets.
+ * @param {number} [btcFeeRate] - (Optional) The fee rate to use for the Bitcoin transaction.
+ * @returns {Promise<TxResult>} A promise that resolves to the transaction result.
  */
 export const transferCombined = async (
   {
@@ -191,8 +189,6 @@ export const transferCombined = async (
  * This interface is used to estimate transaction fees before finalizing the transaction.
  */
 export interface PrepareTransferUnsignedPsbtParams {
-  /** List of RGBPP lock arguments. */
-  rgbppLockArgsList: string[];
   /** The recipient's BTC address. */
   toBtcAddress: string;
   /** Type arguments for the XUDT script. */
@@ -213,6 +209,8 @@ export interface PrepareTransferUnsignedPsbtParams {
   fromBtcAccountPubkey?: string;
   /** Fee rate for the BTC transaction (optional, default is 30). */
   btcFeeRate?: number;
+  /** The service instance for interacting with Bitcoin assets. */
+  btcService: BtcAssetsApi;
 }
 
 /**
@@ -220,7 +218,6 @@ export interface PrepareTransferUnsignedPsbtParams {
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
  * @param {PrepareTransferUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
- * @param {string[]} params.rgbppLockArgsList - List of RGBPP lock arguments.
  * @param {string} params.toBtcAddress - The recipient's BTC address.
  * @param {string} params.xudtTypeArgs - Type arguments for the XUDT script.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
@@ -231,10 +228,11 @@ export interface PrepareTransferUnsignedPsbtParams {
  * @param {string} params.fromBtcAccount - BTC account from which the assets will be transferred.
  * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
+ * @param {BtcAssetsApi} params.btcService - The service instance for interacting with Bitcoin assets.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
 export const prepareTransferUnsignedPsbt = async ({
-  rgbppLockArgsList,
+  btcService,
   toBtcAddress,
   xudtTypeArgs,
   transferAmount,
@@ -246,11 +244,17 @@ export const prepareTransferUnsignedPsbt = async ({
   fromBtcAccountPubkey,
   btcFeeRate = 30,
 }: PrepareTransferUnsignedPsbtParams): Promise<bitcoin.Psbt> => {
+  const lockArgsListResponse = await getRgbppLockArgsList({
+    xudtTypeArgs,
+    fromBtcAccount,
+    isMainnet,
+    btcService,
+  });
   const { btcPsbtHex } = await buildRgbppTransferTx({
     ckb: {
       collector,
       xudtTypeArgs,
-      rgbppLockArgsList,
+      rgbppLockArgsList: lockArgsListResponse.rgbppLockArgsList,
       transferAmount,
     },
     btc: {

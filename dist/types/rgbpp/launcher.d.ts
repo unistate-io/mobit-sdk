@@ -75,36 +75,41 @@ export interface PrepareLaunchCellTransactionParams {
     collector: Collector;
     /** Indicates whether the operation is on the mainnet. */
     isMainnet: boolean;
-    /** BTC service instance for interacting with BTC assets. */
-    btcService: BtcAssetsApi;
-    /** BTC account from which the transaction will be initiated. */
-    btcAccount: string;
     /** Type of BTC testnet (optional). */
     btcTestnetType?: BTCTestnetType;
-    /** Function to filter UTXOs for the BTC transaction. */
-    filterUtxo: (utxos: BtcApiUtxo[]) => Promise<{
-        outIndex: number;
-        btcTxId: string;
-    }>;
+    /** Output index of the BTC transaction. */
+    outIndex: number;
+    /** ID of the BTC transaction. */
+    btcTxId: string;
 }
 /**
- * Prepares a launch cell on the CKB network by filtering UTXOs and creating a transaction.
+ * Prepares a launch cell on the CKB network by creating a transaction.
  *
  * @param {PrepareLaunchCellTransactionParams} params - Parameters required to prepare the launch cell.
  * @param {string} params.ckbAddress - CKB address where the launch cell will be created.
  * @param {RgbppTokenInfo} params.rgbppTokenInfo - Information about the RGB++ token to be launched.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
- * @param {BtcAssetsApi} params.btcService - BTC service instance for interacting with BTC assets.
- * @param {string} params.btcAccount - BTC account from which the transaction will be initiated.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
- * @param {(utxos: BtcApiUtxo[]) => Promise<{ outIndex: number; btcTxId: string }>} params.filterUtxo - Function to filter UTXOs for the BTC transaction.
+ * @param {number} params.outIndex - Output index of the BTC transaction.
+ * @param {string} params.btcTxId - ID of the BTC transaction.
  * @param {bigint} [maxFee=MAX_FEE] - Maximum fee for the CKB transaction (default is MAX_FEE).
  * @param {bigint} [ckbFeeRate] - Fee rate for the CKB transaction (optional).
  * @param {number} [witnessLockPlaceholderSize] - Size of the witness lock placeholder (optional).
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - Promise that resolves to the prepared CKB transaction.
+ *
+ *--------------------------------------------
+ * **Note: Example of fetching and filtering UTXOs:**
+ * ```typescript
+ * const { outIndex, btcTxId } = await fetchAndFilterUtxos(
+ *   btcAccount,
+ *   filterUtxo,
+ *   btcService,
+ * );
+ * ```
+ * This example demonstrates how to obtain the necessary parameters (`outIndex` and `btcTxId`) by fetching and filtering UTXOs.
  */
-export declare const prepareLaunchCellTransaction: ({ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcService, btcAccount, btcTestnetType, filterUtxo, }: PrepareLaunchCellTransactionParams, maxFee?: bigint, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>;
+export declare const prepareLaunchCellTransaction: ({ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcTestnetType, outIndex, btcTxId, }: PrepareLaunchCellTransactionParams, maxFee?: bigint, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>;
 /**
  * Parameters required for generating an unsigned PSBT for launching an RGB++ asset.
  */
@@ -125,8 +130,10 @@ export interface PrepareLauncherUnsignedPsbtParams {
     btcDataSource: DataSource;
     /** Amount of the asset to be launched, as a bigint. */
     launchAmount: bigint;
-    /** Lock arguments for the owner of the RGB++ asset. */
-    ownerRgbppLockArgs: string;
+    /** Output index of the BTC transaction. */
+    outIndex: number;
+    /** ID of the BTC transaction. */
+    btcTxId: string;
 }
 /**
  * Generates an unsigned PSBT for launching an RGB++ asset.
@@ -140,10 +147,37 @@ export interface PrepareLauncherUnsignedPsbtParams {
  * @param {string} [params.btcAccountPubkey] - (Optional) Public key of the BTC account.
  * @param {DataSource} params.btcDataSource - Source for BTC transaction data.
  * @param {bigint} params.launchAmount - Amount of the asset to be launched, as a bigint.
- * @param {string} params.ownerRgbppLockArgs - Lock arguments for the owner of the RGB++ asset.
+ * @param {number} params.outIndex - Output index of the BTC transaction.
+ * @param {string} params.btcTxId - ID of the BTC transaction.
  * @param {number} [btcFeeRate] - (Optional) Fee rate for BTC transactions, as a number.
  *
  * @returns {Promise<bitcoin.Psbt>} A promise resolving to the unsigned PSBT.
+ *
+ *--------------------------------------------
+ * **Note: Example of fetching and filtering UTXOs:**
+ * ```typescript
+ * const { outIndex, btcTxId } = await fetchAndFilterUtxos(
+ *   btcAccount,
+ *   filterUtxo,
+ *   btcService,
+ * );
+ * ```
+ * This example demonstrates how to obtain the necessary parameters (`outIndex` and `btcTxId`) by fetching and filtering UTXOs.
  */
-export declare const prepareLauncherUnsignedPsbt: ({ ownerRgbppLockArgs, rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, }: PrepareLauncherUnsignedPsbtParams, btcFeeRate?: number) => Promise<bitcoin.Psbt>;
+export declare const prepareLauncherUnsignedPsbt: ({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, outIndex, btcTxId, }: PrepareLauncherUnsignedPsbtParams, btcFeeRate?: number) => Promise<bitcoin.Psbt>;
+/**
+ * Fetches the necessary UTXOs and filters them to get the output index and BTC transaction ID.
+ *
+ * @param {string} btcAccount - The BTC account address.
+ * @param {Function} filterUtxo - The function used to filter UTXOs.
+ * @param {BtcAssetsApi} btcService - The service instance for interacting with BTC assets.
+ * @returns {Promise<{ outIndex: number, btcTxId: string }>} - A promise that resolves to an object containing the output index and BTC transaction ID.
+ */
+export declare const fetchAndFilterUtxos: (btcAccount: string, filterUtxo: (utxos: BtcApiUtxo[]) => Promise<{
+    outIndex: number;
+    btcTxId: string;
+}>, btcService: BtcAssetsApi) => Promise<{
+    outIndex: number;
+    btcTxId: string;
+}>;
 //# sourceMappingURL=launcher.d.ts.map

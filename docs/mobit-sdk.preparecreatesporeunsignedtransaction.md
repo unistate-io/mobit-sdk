@@ -49,5 +49,14 @@ Description
 
 Promise&lt;CKBComponents.RawTransactionToSign&gt;
 
-{<!-- -->Promise<!-- -->&lt;<!-- -->CKBComponents.RawTransactionToSign<!-- -->&gt;<!-- -->} - The unsigned CKB transaction.
+{<!-- -->Promise<!-- -->&lt;<!-- -->CKBComponents.RawTransactionToSign<!-- -->&gt;<!-- -->} - The unsigned CKB transaction. \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--- Note: This example demonstrates how to fetch the corresponding parameters using the `fetchAndValidateAssets` function. Example:
+
+```typescript
+const clusterRgbppLockArgs = await fetchAndValidateAssets(
+  fromBtcAccount,
+  clusterTypeScriptArgs,
+  isMainnet,
+  btcService,
+);
+```
 

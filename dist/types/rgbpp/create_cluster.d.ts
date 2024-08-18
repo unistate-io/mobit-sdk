@@ -103,52 +103,50 @@ export interface PrepareClusterCellTransactionParams {
      */
     isMainnet: boolean;
     /**
-     * BTC service instance for interacting with BTC assets.
-     */
-    btcService: BtcAssetsApi;
-    /**
-     * BTC account from which the transaction will be initiated.
-     */
-    fromBtcAccount: string;
-    /**
      * Type of BTC testnet (optional).
      */
     btcTestnetType?: BTCTestnetType;
     /**
-     * Function to filter UTXOs for the BTC transaction.
+     * Output index of the BTC transaction.
      */
-    filterUtxo: (utxos: BtcApiUtxo[]) => Promise<{
-        outIndex: number;
-        btcTxId: string;
-    }>;
+    outIndex: number;
+    /**
+     * ID of the BTC transaction.
+     */
+    btcTxId: string;
 }
 /**
- * Prepares a cluster cell on the CKB network by filtering UTXOs and creating a transaction.
+ * Prepares a cluster cell on the CKB network by creating a transaction.
  *
  * @param {PrepareClusterCellTransactionParams} params - Parameters required to prepare the cluster cell.
  * @param {string} params.ckbAddress - CKB address where the cluster cell will be created.
  * @param {RawClusterData} params.clusterData - Raw data required to create the cluster.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
- * @param {BtcAssetsApi} params.btcService - BTC service instance for interacting with BTC assets.
- * @param {string} params.fromBtcAccount - BTC account from which the transaction will be initiated.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
- * @param {(utxos: BtcApiUtxo[]) => Promise<{ outIndex: number; btcTxId: string }>} params.filterUtxo - Function to filter UTXOs for the BTC transaction.
+ * @param {number} params.outIndex - Output index of the BTC transaction.
+ * @param {string} params.btcTxId - ID of the BTC transaction.
  * @param {bigint} [maxFee=MAX_FEE] - Maximum fee for the CKB transaction (default is MAX_FEE).
  * @param {bigint} [ckbFeeRate] - Fee rate for the CKB transaction (optional).
  * @param {number} [witnessLockPlaceholderSize] - Size of the witness lock placeholder (optional).
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - Promise that resolves to the prepared CKB transaction.
+ *--------------------------------------------
+ * **Note: Example of fetching and filtering UTXOs:**
+ * ```typescript
+ * const { outIndex, btcTxId } = await fetchAndFilterUtxos(
+ *   btcAccount,
+ *   filterUtxo,
+ *   btcService,
+ * );
+ * ```
+ * This example demonstrates how to obtain the necessary parameters (`outIndex` and `btcTxId`) by fetching and filtering UTXOs.
  */
-export declare const prepareClusterCellTransaction: ({ ckbAddress, clusterData, collector, isMainnet, btcService, btcTestnetType, fromBtcAccount, filterUtxo, }: PrepareClusterCellTransactionParams, maxFee?: bigint, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>;
+export declare const prepareClusterCellTransaction: ({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, outIndex, btcTxId, }: PrepareClusterCellTransactionParams, maxFee?: bigint, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>;
 /**
  * Parameters required to generate an unsigned PSBT (Partially Signed Bitcoin Transaction) for creating a cluster.
  * This interface is used to estimate transaction fees before finalizing the transaction.
  */
-export interface GenerateCreateClusterUnsignedPsbtParams {
-    /**
-     * RGB++ lock arguments for the owner.
-     */
-    ownerRgbppLockArgs: string;
+export interface PrepareCreateClusterUnsignedPsbtParams {
     /**
      * Collector instance used to gather cells for the transaction.
      */
@@ -178,9 +176,13 @@ export interface GenerateCreateClusterUnsignedPsbtParams {
      */
     btcDataSource: DataSource;
     /**
-     * BTC service instance for interacting with BTC assets.
+     * Output index of the BTC transaction.
      */
-    btcService: BtcAssetsApi;
+    outIndex: number;
+    /**
+     * ID of the BTC transaction.
+     */
+    btcTxId: string;
     /**
      * Fee rate for the BTC transaction (optional, default is 30).
      */
@@ -190,8 +192,7 @@ export interface GenerateCreateClusterUnsignedPsbtParams {
  * Generates an unsigned PSBT (Partially Signed Bitcoin Transaction) for creating a cluster.
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
- * @param {GenerateCreateClusterUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
- * @param {string} params.ownerRgbppLockArgs - RGB++ lock arguments for the owner.
+ * @param {PrepareCreateClusterUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {RawClusterData} params.clusterData - Raw data required to create the cluster.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
@@ -199,9 +200,20 @@ export interface GenerateCreateClusterUnsignedPsbtParams {
  * @param {string} params.fromBtcAccount - BTC account from which the transaction will be initiated.
  * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
- * @param {BtcAssetsApi} params.btcService - BTC service instance for interacting with BTC assets.
+ * @param {number} params.outIndex - Output index of the BTC transaction.
+ * @param {string} params.btcTxId - ID of the BTC transaction.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT in base64 format.
+ *--------------------------------------------
+ * **Note: Example of fetching and filtering UTXOs:**
+ * ```typescript
+ * const { outIndex, btcTxId } = await fetchAndFilterUtxos(
+ *   btcAccount,
+ *   filterUtxo,
+ *   btcService,
+ * );
+ * ```
+ * This example demonstrates how to obtain the necessary parameters (`outIndex` and `btcTxId`) by fetching and filtering UTXOs.
  */
-export declare const generateCreateClusterUnsignedPsbt: ({ ownerRgbppLockArgs, collector, clusterData, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcService, btcFeeRate, }: GenerateCreateClusterUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareCreateClusterUnsignedPsbt: ({ collector, clusterData, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, outIndex, btcTxId, btcFeeRate, }: PrepareCreateClusterUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 //# sourceMappingURL=create_cluster.d.ts.map

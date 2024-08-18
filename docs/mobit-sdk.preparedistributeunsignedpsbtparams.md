@@ -75,6 +75,25 @@ _(Optional)_ Fee rate for the BTC transaction (optional, default is 30).
 </td></tr>
 <tr><td>
 
+[btcService](./mobit-sdk.preparedistributeunsignedpsbtparams.btcservice.md)
+
+
+</td><td>
+
+
+</td><td>
+
+BtcAssetsApi
+
+
+</td><td>
+
+BTC assets API service.
+
+
+</td></tr>
+<tr><td>
+
 [btcTestnetType?](./mobit-sdk.preparedistributeunsignedpsbtparams.btctestnettype.md)
 
 
@@ -108,6 +127,25 @@ Collector
 </td><td>
 
 Collector instance used to gather cells for the transaction.
+
+
+</td></tr>
+<tr><td>
+
+[filterRgbppArgslist](./mobit-sdk.preparedistributeunsignedpsbtparams.filterrgbppargslist.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(argsList: string\[\]) =&gt; Promise&lt;string\[\]&gt;
+
+
+</td><td>
+
+Function to filter the RGBPP args list.
 
 
 </td></tr>
@@ -184,25 +222,6 @@ RgbppBtcAddressReceiver\[\]
 </td><td>
 
 List of receivers for the RGBPP assets.
-
-
-</td></tr>
-<tr><td>
-
-[rgbppLockArgsList](./mobit-sdk.preparedistributeunsignedpsbtparams.rgbpplockargslist.md)
-
-
-</td><td>
-
-
-</td><td>
-
-string\[\]
-
-
-</td><td>
-
-List of RGBPP lock arguments.
 
 
 </td></tr>

@@ -157,6 +157,28 @@ Distributes RGBPP assets to multiple receivers.
 </td></tr>
 <tr><td>
 
+[fetchAndFilterUtxos(btcAccount, filterUtxo, btcService)](./mobit-sdk.fetchandfilterutxos.md)
+
+
+</td><td>
+
+Fetches the necessary UTXOs and filters them to get the output index and BTC transaction ID.
+
+
+</td></tr>
+<tr><td>
+
+[fetchAndValidateAssets(fromBtcAccount, clusterTypeScriptArgs, isMainnet, btcService)](./mobit-sdk.fetchandvalidateassets.md)
+
+
+</td><td>
+
+Fetches RGBPP assets for a given BTC address and type script args, and validates the result.
+
+
+</td></tr>
+<tr><td>
+
 [launchCombined({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, ckbAddress, filterUtxo, btcService, wallet, cccSigner, }, ckbFeeRate, maxFee, btcFeeRate, witnessLockPlaceholderSize)](./mobit-sdk.launchcombined.md)
 
 
@@ -214,12 +236,23 @@ Leap a spore from CKB to BTC.
 </td></tr>
 <tr><td>
 
-[prepareClusterCellTransaction({ ckbAddress, clusterData, collector, isMainnet, btcService, btcTestnetType, fromBtcAccount, filterUtxo, }, maxFee, ckbFeeRate, witnessLockPlaceholderSize)](./mobit-sdk.prepareclustercelltransaction.md)
+[prepareClusterCellTransaction({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, outIndex, btcTxId, }, maxFee, ckbFeeRate, witnessLockPlaceholderSize)](./mobit-sdk.prepareclustercelltransaction.md)
 
 
 </td><td>
 
-Prepares a cluster cell on the CKB network by filtering UTXOs and creating a transaction.
+Prepares a cluster cell on the CKB network by creating a transaction.
+
+
+</td></tr>
+<tr><td>
+
+[prepareCreateClusterUnsignedPsbt({ collector, clusterData, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, outIndex, btcTxId, btcFeeRate, })](./mobit-sdk.preparecreateclusterunsignedpsbt.md)
+
+
+</td><td>
+
+Generates an unsigned PSBT (Partially Signed Bitcoin Transaction) for creating a cluster. This function is used to estimate transaction fees before finalizing the transaction.
 
 
 </td></tr>
@@ -247,7 +280,7 @@ Prepares an unsigned CKB transaction for creating spores.
 </td></tr>
 <tr><td>
 
-[prepareDistributeUnsignedPsbt({ rgbppLockArgsList, receivers, xudtTypeArgs, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, })](./mobit-sdk.preparedistributeunsignedpsbt.md)
+[prepareDistributeUnsignedPsbt({ receivers, xudtTypeArgs, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, btcService, filterRgbppArgslist, })](./mobit-sdk.preparedistributeunsignedpsbt.md)
 
 
 </td><td>
@@ -258,18 +291,18 @@ Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for distributin
 </td></tr>
 <tr><td>
 
-[prepareLaunchCellTransaction({ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcService, btcAccount, btcTestnetType, filterUtxo, }, maxFee, ckbFeeRate, witnessLockPlaceholderSize)](./mobit-sdk.preparelaunchcelltransaction.md)
+[prepareLaunchCellTransaction({ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcTestnetType, outIndex, btcTxId, }, maxFee, ckbFeeRate, witnessLockPlaceholderSize)](./mobit-sdk.preparelaunchcelltransaction.md)
 
 
 </td><td>
 
-Prepares a launch cell on the CKB network by filtering UTXOs and creating a transaction.
+Prepares a launch cell on the CKB network by creating a transaction.
 
 
 </td></tr>
 <tr><td>
 
-[prepareLauncherUnsignedPsbt({ ownerRgbppLockArgs, rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, }, btcFeeRate)](./mobit-sdk.preparelauncherunsignedpsbt.md)
+[prepareLauncherUnsignedPsbt({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, outIndex, btcTxId, }, btcFeeRate)](./mobit-sdk.preparelauncherunsignedpsbt.md)
 
 
 </td><td>
@@ -280,7 +313,7 @@ Generates an unsigned PSBT for launching an RGB++ asset.
 </td></tr>
 <tr><td>
 
-[prepareLeapSporeUnsignedPsbt({ sporeRgbppLockArgs, toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, })](./mobit-sdk.prepareleapsporeunsignedpsbt.md)
+[prepareLeapSporeUnsignedPsbt({ toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, btcService, })](./mobit-sdk.prepareleapsporeunsignedpsbt.md)
 
 
 </td><td>
@@ -291,7 +324,7 @@ Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping a s
 </td></tr>
 <tr><td>
 
-[prepareLeapUnsignedPsbt({ rgbppLockArgsList, toCkbAddress, xudtTypeArgs, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate, })](./mobit-sdk.prepareleapunsignedpsbt.md)
+[prepareLeapUnsignedPsbt({ btcService, toCkbAddress, xudtTypeArgs, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate, })](./mobit-sdk.prepareleapunsignedpsbt.md)
 
 
 </td><td>
@@ -302,7 +335,7 @@ Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping RGB
 </td></tr>
 <tr><td>
 
-[prepareTransferSporeUnsignedPsbt({ sporeRgbppLockArgs, toBtcAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, })](./mobit-sdk.preparetransfersporeunsignedpsbt.md)
+[prepareTransferSporeUnsignedPsbt({ toBtcAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcService, btcFeeRate, })](./mobit-sdk.preparetransfersporeunsignedpsbt.md)
 
 
 </td><td>
@@ -313,7 +346,7 @@ Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for transferrin
 </td></tr>
 <tr><td>
 
-[prepareTransferUnsignedPsbt({ rgbppLockArgsList, toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, })](./mobit-sdk.preparetransferunsignedpsbt.md)
+[prepareTransferUnsignedPsbt({ btcService, toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, })](./mobit-sdk.preparetransferunsignedpsbt.md)
 
 
 </td><td>
@@ -455,6 +488,17 @@ Interface for parameters required for the leap from CKB to BTC transaction.
 </td><td>
 
 Parameters required to prepare a cluster cell transaction.
+
+
+</td></tr>
+<tr><td>
+
+[PrepareCreateClusterUnsignedPsbtParams](./mobit-sdk.preparecreateclusterunsignedpsbtparams.md)
+
+
+</td><td>
+
+Parameters required to generate an unsigned PSBT (Partially Signed Bitcoin Transaction) for creating a cluster. This interface is used to estimate transaction fees before finalizing the transaction.
 
 
 </td></tr>

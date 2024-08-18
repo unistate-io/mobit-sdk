@@ -79,16 +79,14 @@ const transferSpore = async (
 
   try {
     const interval = setInterval(async () => {
-      const { state, failedReason } = await btcService.getRgbppTransactionState(
-        btcTxId,
-      );
+      const { state, failedReason } =
+        await btcService.getRgbppTransactionState(btcTxId);
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
-          const { txhash: txHash } = await btcService.getRgbppTransactionHash(
-            btcTxId,
-          );
+          const { txhash: txHash } =
+            await btcService.getRgbppTransactionHash(btcTxId);
           console.info(
             `Rgbpp spore has been transferred on BTC and the related CKB tx hash is ${txHash}`,
           );
@@ -267,8 +265,6 @@ export const getSporeRgbppLockArgs = async ({
  * Interface for parameters required to prepare an unsigned PSBT for transferring a spore.
  */
 export interface PrepareTransferSporeUnsignedPsbtParams {
-  /** RGBPP lock arguments for the spore. */
-  sporeRgbppLockArgs: Hex;
   /** The recipient's BTC address. */
   toBtcAddress: string;
   /** Type arguments for the spore. */
@@ -283,6 +279,8 @@ export interface PrepareTransferSporeUnsignedPsbtParams {
   fromBtcAddress: string;
   /** Public key of the BTC address (optional). */
   fromBtcAddressPubkey?: string;
+  /** The BTC assets API service. */
+  btcService: BtcAssetsApi;
   /** Data source for BTC transactions. */
   btcDataSource: DataSource;
   /** Fee rate for the BTC transaction (optional, default is 30). */
@@ -294,7 +292,6 @@ export interface PrepareTransferSporeUnsignedPsbtParams {
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
  * @param {PrepareTransferSporeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
- * @param {Hex} params.sporeRgbppLockArgs - RGBPP lock arguments for the spore.
  * @param {string} params.toBtcAddress - The recipient's BTC address.
  * @param {Hex} params.sporeTypeArgs - Type arguments for the spore.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
@@ -304,10 +301,10 @@ export interface PrepareTransferSporeUnsignedPsbtParams {
  * @param {string} [params.fromBtcAddressPubkey] - Public key of the BTC address (optional).
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
+ * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
 export const prepareTransferSporeUnsignedPsbt = async ({
-  sporeRgbppLockArgs,
   toBtcAddress,
   sporeTypeArgs,
   collector,
@@ -316,8 +313,16 @@ export const prepareTransferSporeUnsignedPsbt = async ({
   fromBtcAddress,
   fromBtcAddressPubkey,
   btcDataSource,
+  btcService,
   btcFeeRate = 30,
 }: PrepareTransferSporeUnsignedPsbtParams): Promise<bitcoin.Psbt> => {
+  const sporeRgbppLockArgs = await getSporeRgbppLockArgs({
+    fromBtcAddress,
+    sporeTypeArgs,
+    isMainnet,
+    btcService,
+  });
+
   const sporeTypeBytes = serializeScript({
     ...getSporeTypeScript(isMainnet),
     args: sporeTypeArgs,

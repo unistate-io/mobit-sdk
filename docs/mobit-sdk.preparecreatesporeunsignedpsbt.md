@@ -51,3 +51,14 @@ Promise&lt;bitcoin.Psbt&gt;
 
 {<!-- -->Promise<!-- -->&lt;<!-- -->bitcoin.Psbt<!-- -->&gt;<!-- -->} - The unsigned BTC transaction in PSBT format.
 
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--- Note: This example demonstrates how to fetch the corresponding parameters using the `fetchAndValidateAssets` function. Example:
+
+```typescript
+const clusterRgbppLockArgs = await fetchAndValidateAssets(
+  fromBtcAccount,
+  clusterTypeScriptArgs,
+  isMainnet,
+  btcService,
+);
+```
+
