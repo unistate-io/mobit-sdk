@@ -748,7 +748,7 @@ declare enum MintStatus {
  * @param {bigint} [ckbFeeRate] - Fee rate for the CKB transaction (optional).
  * @param {number} [witnessLockPlaceholderSize] - Size of the witness lock placeholder (optional).
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - Promise that resolves to the prepared CKB transaction.
- *--------------------------------------------
+ * --------------------------------------------
  * **Note: Example of fetching and filtering UTXOs:**
  * ```typescript
  * const { outIndex, btcTxId } = await fetchAndFilterUtxos(
@@ -811,7 +811,7 @@ export declare interface PrepareClusterCellTransactionParams {
  * @param {string} params.btcTxId - ID of the BTC transaction.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT in base64 format.
- *--------------------------------------------
+ * --------------------------------------------
  * **Note: Example of fetching and filtering UTXOs:**
  * ```typescript
  * const { outIndex, btcTxId } = await fetchAndFilterUtxos(
@@ -1131,7 +1131,7 @@ export declare interface PrepareDistributeUnsignedPsbtParams {
  * @param {number} [witnessLockPlaceholderSize] - Size of the witness lock placeholder (optional).
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - Promise that resolves to the prepared CKB transaction.
  *
- *--------------------------------------------
+ * --------------------------------------------
  * **Note: Example of fetching and filtering UTXOs:**
  * ```typescript
  * const { outIndex, btcTxId } = await fetchAndFilterUtxos(
@@ -1182,7 +1182,7 @@ export declare interface PrepareLaunchCellTransactionParams {
  *
  * @returns {Promise<bitcoin.Psbt>} A promise resolving to the unsigned PSBT.
  *
- *--------------------------------------------
+ * --------------------------------------------
  * **Note: Example of fetching and filtering UTXOs:**
  * ```typescript
  * const { outIndex, btcTxId } = await fetchAndFilterUtxos(

@@ -62,71 +62,75 @@ const btcHelper = new BtcHelper(wallet, networkType, btcTestnetType);
 
 The SDK provides several functions to create different types of transactions.
 For detailed usage and parameters, refer to the
-[API Documentation](./docs/mobit-sdk.md).
+[API Documentation on GitHub](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.md).
 
 #### XUDT Transactions
 
 - **Burn XUDT Tokens**:
-  [Documentation](./docs/mobit-sdk.createburnxudttransaction.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.createburnxudttransaction.md)
 - **Issue XUDT Tokens**:
-  [Documentation](./docs/mobit-sdk.createissuexudttransaction.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.createissuexudttransaction.md)
 - **Merge XUDT Tokens**:
-  [Documentation](./docs/mobit-sdk.createmergexudttransaction.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.createmergexudttransaction.md)
 - **Transfer XUDT Tokens**:
-  [Documentation](./docs/mobit-sdk.createtransferxudttransaction.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.createtransferxudttransaction.md)
 
 #### Leap Transactions
 
 - **Leap from CKB to BTC**:
-  [Documentation](./docs/mobit-sdk.leapfromckbtobtctransaction.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.leapfromckbtobtctransaction.md)
 - **Leap Spore from CKB to BTC**:
-  [Documentation](./docs/mobit-sdk.leapsporefromckbtobtctransaction.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.leapsporefromckbtobtctransaction.md)
 - **Leap from BTC to CKB**:
-  [Documentation](./docs/mobit-sdk.leapfrombtctockbcombined.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.leapfrombtctockbcombined.md)
 - **Leap Spore from BTC to CKB**:
-  [Documentation](./docs/mobit-sdk.leapsporefrombtctockbcombined.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.leapsporefrombtctockbcombined.md)
 
 ### RGBPP Functions
 
 - **Distribute RGBPP Assets**:
-  [Documentation](./docs/mobit-sdk.distributecombined.md)
-- **Launch RGBPP Assets**: [Documentation](./docs/mobit-sdk.launchcombined.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.distributecombined.md)
+- **Launch RGBPP Assets**:
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.launchcombined.md)
 - **Transfer RGBPP Assets**:
-  [Documentation](./docs/mobit-sdk.transfercombined.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.transfercombined.md)
 
 ### Spore Functions
 
-- **Create Cluster**: [Documentation](./docs/mobit-sdk.createclustercombined.md)
-- **Create Spores**: [Documentation](./docs/mobit-sdk.createsporescombined.md)
+- **Create Cluster**:
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.createclustercombined.md)
+- **Create Spores**:
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.createsporescombined.md)
 - **Transfer Spores**:
-  [Documentation](./docs/mobit-sdk.transfersporecombined.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.transfersporecombined.md)
 
 ### Preparing Transactions
 
 The SDK also provides functions to prepare unsigned transactions and PSBTs
 (Partially Signed Bitcoin Transactions). For detailed usage and parameters,
-refer to the [API Documentation](./docs/mobit-sdk.md).
+refer to the
+[API Documentation on GitHub](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.md).
 
 - **Prepare Cluster Cell Transaction**:
-  [Documentation](./docs/mobit-sdk.prepareclustercelltransaction.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.prepareclustercelltransaction.md)
 - **Prepare Create Spore Unsigned PSBT**:
-  [Documentation](./docs/mobit-sdk.preparecreatesporeunsignedpsbt.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.preparecreatesporeunsignedpsbt.md)
 - **Prepare Create Spore Unsigned Transaction**:
-  [Documentation](./docs/mobit-sdk.preparecreatesporeunsignedtransaction.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.preparecreatesporeunsignedtransaction.md)
 - **Prepare Distribute Unsigned PSBT**:
-  [Documentation](./docs/mobit-sdk.preparedistributeunsignedpsbt.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.preparedistributeunsignedpsbt.md)
 - **Prepare Launch Cell Transaction**:
-  [Documentation](./docs/mobit-sdk.preparelaunchcelltransaction.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.preparelaunchcelltransaction.md)
 - **Prepare Launcher Unsigned PSBT**:
-  [Documentation](./docs/mobit-sdk.preparelauncherunsignedpsbt.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.preparelauncherunsignedpsbt.md)
 - **Prepare Leap Unsigned PSBT**:
-  [Documentation](./docs/mobit-sdk.prepareleapunsignedpsbt.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.prepareleapunsignedpsbt.md)
 - **Prepare Leap Spore Unsigned PSBT**:
-  [Documentation](./docs/mobit-sdk.prepareleapsporeunsignedpsbt.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.prepareleapsporeunsignedpsbt.md)
 - **Prepare Transfer Unsigned PSBT**:
-  [Documentation](./docs/mobit-sdk.preparetransferunsignedpsbt.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.preparetransferunsignedpsbt.md)
 - **Prepare Transfer Spore Unsigned PSBT**:
-  [Documentation](./docs/mobit-sdk.preparetransfersporeunsignedpsbt.md)
+  [Documentation](https://github.com/sociallayer-im/mobit-sdk/blob/main/docs/mobit-sdk.preparetransfersporeunsignedpsbt.md)
 
 ## Contributing
 

@@ -98,7 +98,7 @@ export interface PrepareLaunchCellTransactionParams {
  * @param {number} [witnessLockPlaceholderSize] - Size of the witness lock placeholder (optional).
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - Promise that resolves to the prepared CKB transaction.
  *
- *--------------------------------------------
+ * --------------------------------------------
  * **Note: Example of fetching and filtering UTXOs:**
  * ```typescript
  * const { outIndex, btcTxId } = await fetchAndFilterUtxos(
@@ -153,7 +153,7 @@ export interface PrepareLauncherUnsignedPsbtParams {
  *
  * @returns {Promise<bitcoin.Psbt>} A promise resolving to the unsigned PSBT.
  *
- *--------------------------------------------
+ * --------------------------------------------
  * **Note: Example of fetching and filtering UTXOs:**
  * ```typescript
  * const { outIndex, btcTxId } = await fetchAndFilterUtxos(

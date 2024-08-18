@@ -37,12 +37,12 @@ import {
 } from "./rgbpp/create_cluster";
 import {
   createSporesCombined,
+  fetchAndValidateAssets,
   prepareCreateSporeUnsignedPsbt,
   PrepareCreateSporeUnsignedPsbtParams,
   prepareCreateSporeUnsignedTransaction,
   PrepareCreateSporeUnsignedTransactionParams,
   SporeCreateCombinedParams,
-  fetchAndValidateAssets,
 } from "./rgbpp/create_spore";
 import {
   distributeCombined,
@@ -97,6 +97,7 @@ export {
   createTransferXudtTransaction,
   distributeCombined,
   fetchAndFilterUtxos,
+  fetchAndValidateAssets,
   launchCombined,
   leapFromBtcToCkbCombined,
   leapFromCkbToBtcTransaction,
@@ -116,7 +117,6 @@ export {
   RgbppSDK,
   transferCombined,
   transferSporeCombined,
-  fetchAndValidateAssets,
 };
 
 export type {
