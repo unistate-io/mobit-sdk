@@ -56,7 +56,7 @@ Address of the BTC account.
 </td></tr>
 <tr><td>
 
-[btcAccountPubkey?](./mobit-sdk.preparelauncherunsignedpsbtparams.btcaccountpubkey.md)
+[btcAccountPubkey](./mobit-sdk.preparelauncherunsignedpsbtparams.btcaccountpubkey.md)
 
 
 </td><td>
@@ -69,7 +69,7 @@ string
 
 </td><td>
 
-_(Optional)_ (Optional) Public key of the BTC account.
+Public key of the BTC account.
 
 
 </td></tr>

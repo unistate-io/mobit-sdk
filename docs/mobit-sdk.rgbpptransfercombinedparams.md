@@ -132,7 +132,7 @@ The Bitcoin account from which the assets will be transferred.
 </td></tr>
 <tr><td>
 
-[fromBtcAccountPubkey?](./mobit-sdk.rgbpptransfercombinedparams.frombtcaccountpubkey.md)
+[fromBtcAccountPubkey](./mobit-sdk.rgbpptransfercombinedparams.frombtcaccountpubkey.md)
 
 
 </td><td>
@@ -145,7 +145,7 @@ string
 
 </td><td>
 
-_(Optional)_ (Optional) The public key of the Bitcoin account.
+The public key of the Bitcoin account.
 
 
 </td></tr>

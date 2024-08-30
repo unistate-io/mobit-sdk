@@ -132,7 +132,7 @@ BTC address from which the spore will be transferred.
 </td></tr>
 <tr><td>
 
-[fromBtcAddressPubkey?](./mobit-sdk.sporetransfercombinedparams.frombtcaddresspubkey.md)
+[fromBtcAddressPubkey](./mobit-sdk.sporetransfercombinedparams.frombtcaddresspubkey.md)
 
 
 </td><td>
@@ -145,7 +145,7 @@ string
 
 </td><td>
 
-_(Optional)_ Public key of the BTC address (optional).
+Public key of the BTC address.
 
 
 </td></tr>

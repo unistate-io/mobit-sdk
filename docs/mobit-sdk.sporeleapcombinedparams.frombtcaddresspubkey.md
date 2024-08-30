@@ -4,10 +4,10 @@
 
 ## SporeLeapCombinedParams.fromBtcAddressPubkey property
 
-The public key of the BTC address (optional).
+The public key of the BTC address.
 
 **Signature:**
 
 ```typescript
-fromBtcAddressPubkey?: string;
+fromBtcAddressPubkey: string;
 ```

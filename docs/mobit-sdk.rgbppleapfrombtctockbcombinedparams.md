@@ -132,7 +132,7 @@ The source BTC account.
 </td></tr>
 <tr><td>
 
-[fromBtcAccountPubkey?](./mobit-sdk.rgbppleapfrombtctockbcombinedparams.frombtcaccountpubkey.md)
+[fromBtcAccountPubkey](./mobit-sdk.rgbppleapfrombtctockbcombinedparams.frombtcaccountpubkey.md)
 
 
 </td><td>
@@ -145,7 +145,7 @@ string
 
 </td><td>
 
-_(Optional)_ The public key of the source BTC account (optional).
+The public key of the source BTC account.
 
 
 </td></tr>

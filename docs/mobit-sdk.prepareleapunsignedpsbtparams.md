@@ -151,7 +151,7 @@ BTC account from which the assets will be leaped.
 </td></tr>
 <tr><td>
 
-[fromBtcAccountPubkey?](./mobit-sdk.prepareleapunsignedpsbtparams.frombtcaccountpubkey.md)
+[fromBtcAccountPubkey](./mobit-sdk.prepareleapunsignedpsbtparams.frombtcaccountpubkey.md)
 
 
 </td><td>
@@ -164,7 +164,7 @@ string
 
 </td><td>
 
-_(Optional)_ Public key of the BTC account (optional).
+Public key of the BTC account.
 
 
 </td></tr>

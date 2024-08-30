@@ -4,10 +4,10 @@
 
 ## RgbppTransferCombinedParams.fromBtcAccountPubkey property
 
-(Optional) The public key of the Bitcoin account.
+The public key of the Bitcoin account.
 
 **Signature:**
 
 ```typescript
-fromBtcAccountPubkey?: string;
+fromBtcAccountPubkey: string;
 ```

@@ -4,10 +4,10 @@
 
 ## PrepareCreateSporeUnsignedPsbtParams.fromBtcAccountPubkey property
 
-The public key of the BTC account (optional).
+The public key of the BTC account.
 
 **Signature:**
 
 ```typescript
-fromBtcAccountPubkey?: string;
+fromBtcAccountPubkey: string;
 ```

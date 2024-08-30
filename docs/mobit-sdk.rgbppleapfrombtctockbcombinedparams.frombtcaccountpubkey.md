@@ -4,10 +4,10 @@
 
 ## RgbppLeapFromBtcToCkbCombinedParams.fromBtcAccountPubkey property
 
-The public key of the source BTC account (optional).
+The public key of the source BTC account.
 
 **Signature:**
 
 ```typescript
-fromBtcAccountPubkey?: string;
+fromBtcAccountPubkey: string;
 ```

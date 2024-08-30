@@ -4,10 +4,10 @@
 
 ## RgbppLauncerCombinedParams.btcAccountPubkey property
 
-(Optional) Public key of the BTC account.
+Public key of the BTC account.
 
 **Signature:**
 
 ```typescript
-btcAccountPubkey?: string;
+btcAccountPubkey: string;
 ```

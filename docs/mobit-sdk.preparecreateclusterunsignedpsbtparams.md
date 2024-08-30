@@ -170,7 +170,7 @@ BTC account from which the transaction will be initiated.
 </td></tr>
 <tr><td>
 
-[fromBtcAccountPubkey?](./mobit-sdk.preparecreateclusterunsignedpsbtparams.frombtcaccountpubkey.md)
+[fromBtcAccountPubkey](./mobit-sdk.preparecreateclusterunsignedpsbtparams.frombtcaccountpubkey.md)
 
 
 </td><td>
@@ -183,7 +183,7 @@ string
 
 </td><td>
 
-_(Optional)_ Public key of the BTC account (optional).
+Public key of the BTC account.
 
 
 </td></tr>

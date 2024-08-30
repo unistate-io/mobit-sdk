@@ -151,7 +151,7 @@ BTC account from which the assets will be distributed.
 </td></tr>
 <tr><td>
 
-[fromBtcAccountPubkey?](./mobit-sdk.rgbppdistributecombinedparams.frombtcaccountpubkey.md)
+[fromBtcAccountPubkey](./mobit-sdk.rgbppdistributecombinedparams.frombtcaccountpubkey.md)
 
 
 </td><td>
@@ -164,7 +164,7 @@ string
 
 </td><td>
 
-_(Optional)_ Public key of the BTC account (optional).
+Public key of the BTC account.
 
 
 </td></tr>

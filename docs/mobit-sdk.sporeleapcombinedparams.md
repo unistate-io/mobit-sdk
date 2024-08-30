@@ -132,7 +132,7 @@ The BTC address from which the spore will be sent.
 </td></tr>
 <tr><td>
 
-[fromBtcAddressPubkey?](./mobit-sdk.sporeleapcombinedparams.frombtcaddresspubkey.md)
+[fromBtcAddressPubkey](./mobit-sdk.sporeleapcombinedparams.frombtcaddresspubkey.md)
 
 
 </td><td>
@@ -145,7 +145,7 @@ string
 
 </td><td>
 
-_(Optional)_ The public key of the BTC address (optional).
+The public key of the BTC address.
 
 
 </td></tr>

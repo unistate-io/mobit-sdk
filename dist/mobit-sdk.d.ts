@@ -256,7 +256,7 @@ export declare interface CreateBurnXudtTransactionParams {
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {string} params.fromBtcAccount - BTC account from which the transaction will be initiated.
- * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {BtcAssetsApi} params.btcService - BTC service instance for interacting with BTC assets.
@@ -298,9 +298,9 @@ export declare interface createClusterCombinedParams {
      */
     fromBtcAccount: string;
     /**
-     * Public key of the BTC account (optional).
+     * Public key of the BTC account.
      */
-    fromBtcAccountPubkey?: string;
+    fromBtcAccountPubkey: string;
     /**
      * Data source for BTC transactions.
      */
@@ -416,7 +416,7 @@ export declare interface CreateMergeXudtTransactionParams {
  * @param {boolean} params.isMainnet - Indicates if the operation is on mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
  * @param {string} params.fromBtcAccount - The BTC account from which the spores are being created.
- * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account.
  * @param {DataSource} params.btcDataSource - The data source for BTC.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {string} params.ckbAddress - The CKB address.
@@ -489,7 +489,7 @@ export declare interface CreateTransferXudtTransactionParams {
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {string} params.fromBtcAccount - The BTC account from which the assets are being distributed.
- * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {(argsList: string[]) => Promise<string[]>} params.filterRgbppArgslist - A function to filter the RGBPP args list.
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
@@ -557,7 +557,7 @@ declare interface InscriptionInfo extends TokenInfo {
  * @param {boolean} params.isMainnet - A boolean indicating whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - (Optional) The type of BTC testnet to use.
  * @param {string} params.btcAccount - The BTC account address.
- * @param {string} [params.btcAccountPubkey] - (Optional) The public key of the BTC account.
+ * @param {string} [params.btcAccountPubkey] - The public key of the BTC account.
  * @param {DataSource} params.btcDataSource - The data source for BTC transactions.
  * @param {bigint} params.launchAmount - The amount of the asset to be launched, represented as a bigint.
  * @param {BtcAssetsApi} params.btcService - The service instance for interacting with BTC assets.
@@ -586,7 +586,7 @@ export declare const launchCombined: ({ rgbppTokenInfo, collector, isMainnet, bt
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
  * @param {boolean} params.isMainnet - Indicates if the operation is on mainnet.
  * @param {string} params.fromBtcAccount - The source BTC account.
- * @param {string} [params.fromBtcAccountPubkey] - The public key of the source BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - The public key of the source BTC account.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {BtcAssetsApi} params.btcService - The BTC assets service instance.
  * @param {number} [btcFeeRate] - The fee rate for the BTC transaction (optional).
@@ -630,7 +630,7 @@ export declare const leapFromCkbToBtcTransaction: ({ outIndex, btcTxId, xudtType
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
  * @param {string} params.fromBtcAddress - The BTC address from which the spore will be sent.
- * @param {string} [params.fromBtcAddressPubkey] - The public key of the BTC address (optional).
+ * @param {string} [params.fromBtcAddressPubkey] - The public key of the BTC address.
  * @param {DataSource} params.btcDataSource - The data source for BTC transactions.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
@@ -812,7 +812,7 @@ export declare interface PrepareClusterCellTransactionParams {
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {string} params.fromBtcAccount - BTC account from which the transaction will be initiated.
- * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {number} params.outIndex - Output index of the BTC transaction.
  * @param {string} params.btcTxId - ID of the BTC transaction.
@@ -857,9 +857,9 @@ export declare interface PrepareCreateClusterUnsignedPsbtParams {
      */
     fromBtcAccount: string;
     /**
-     * Public key of the BTC account (optional).
+     * Public key of the BTC account.
      */
-    fromBtcAccountPubkey?: string;
+    fromBtcAccountPubkey: string;
     /**
      * Data source for BTC transactions.
      */
@@ -888,7 +888,7 @@ export declare interface PrepareCreateClusterUnsignedPsbtParams {
  * @param {boolean} params.isMainnet - Indicates if the operation is on mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
  * @param {string} params.fromBtcAccount - The BTC account from which the spores are being created.
- * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account.
  * @param {DataSource} params.btcDataSource - The data source for BTC.
  * @param {number} [params.btcFeeRate] - The fee rate for BTC transactions (optional).
  * @returns {Promise<bitcoin.Psbt>} - The unsigned BTC transaction in PSBT format.
@@ -955,9 +955,9 @@ export declare interface PrepareCreateSporeUnsignedPsbtParams {
      */
     fromBtcAccount: string;
     /**
-     * The public key of the BTC account (optional).
+     * The public key of the BTC account.
      */
-    fromBtcAccountPubkey?: string;
+    fromBtcAccountPubkey: string;
     /**
      * The data source for BTC.
      */
@@ -1064,7 +1064,7 @@ export declare interface PrepareCreateSporeUnsignedTransactionParams {
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {string} params.fromBtcAccount - BTC account from which the assets will be distributed.
- * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @param {(argsList: string[]) => Promise<string[]>} params.filterRgbppArgslist - A function to filter the RGBPP args list.
@@ -1105,9 +1105,9 @@ export declare interface PrepareDistributeUnsignedPsbtParams {
      */
     fromBtcAccount: string;
     /**
-     * Public key of the BTC account (optional).
+     * Public key of the BTC account.
      */
-    fromBtcAccountPubkey?: string;
+    fromBtcAccountPubkey: string;
     /**
      * Fee rate for the BTC transaction (optional, default is 30).
      */
@@ -1180,7 +1180,7 @@ export declare interface PrepareLaunchCellTransactionParams {
  * @param {boolean} params.isMainnet - Indicates if the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - (Optional) Type of BTC testnet to use.
  * @param {string} params.btcAccount - Address of the BTC account.
- * @param {string} [params.btcAccountPubkey] - (Optional) Public key of the BTC account.
+ * @param {string} [params.btcAccountPubkey] - Public key of the BTC account.
  * @param {DataSource} params.btcDataSource - Source for BTC transaction data.
  * @param {bigint} params.launchAmount - Amount of the asset to be launched, as a bigint.
  * @param {number} params.outIndex - Output index of the BTC transaction.
@@ -1216,8 +1216,8 @@ export declare interface PrepareLauncherUnsignedPsbtParams {
     btcTestnetType?: BTCTestnetType;
     /** Address of the BTC account. */
     btcAccount: string;
-    /** (Optional) Public key of the BTC account. */
-    btcAccountPubkey?: string;
+    /** Public key of the BTC account. */
+    btcAccountPubkey: string;
     /** Source for BTC transaction data. */
     btcDataSource: DataSource_2;
     /** Amount of the asset to be launched, as a bigint. */
@@ -1240,7 +1240,7 @@ export declare interface PrepareLauncherUnsignedPsbtParams {
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {string} params.fromBtcAddress - BTC address from which the spore will be leaped.
- * @param {string} [params.fromBtcAddressPubkey] - Public key of the BTC address (optional).
+ * @param {string} [params.fromBtcAddressPubkey] - Public key of the BTC address.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
@@ -1265,8 +1265,8 @@ export declare interface PrepareLeapSporeUnsignedPsbtParams {
     btcTestnetType?: BTCTestnetType;
     /** BTC address from which the spore will be leaped. */
     fromBtcAddress: string;
-    /** Public key of the BTC address (optional). */
-    fromBtcAddressPubkey?: string;
+    /** Public key of the BTC address. */
+    fromBtcAddressPubkey: string;
     /** Data source for BTC transactions. */
     btcDataSource: DataSource;
     /** Fee rate for the BTC transaction (optional, default is 30). */
@@ -1288,7 +1288,7 @@ export declare interface PrepareLeapSporeUnsignedPsbtParams {
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {string} params.fromBtcAccount - BTC account from which the assets will be leaped.
- * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
@@ -1315,8 +1315,8 @@ export declare interface PrepareLeapUnsignedPsbtParams {
     btcTestnetType?: BTCTestnetType;
     /** BTC account from which the assets will be leaped. */
     fromBtcAccount: string;
-    /** Public key of the BTC account (optional). */
-    fromBtcAccountPubkey?: string;
+    /** Public key of the BTC account. */
+    fromBtcAccountPubkey: string;
     /** Data source for BTC transactions. */
     btcDataSource: DataSource;
     /** Fee rate for the BTC transaction (optional, default is 30). */
@@ -1334,7 +1334,7 @@ export declare interface PrepareLeapUnsignedPsbtParams {
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {string} params.fromBtcAddress - BTC address from which the spore will be transferred.
- * @param {string} [params.fromBtcAddressPubkey] - Public key of the BTC address (optional).
+ * @param {string} [params.fromBtcAddressPubkey] - Public key of the BTC address.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
@@ -1358,8 +1358,8 @@ export declare interface PrepareTransferSporeUnsignedPsbtParams {
     btcTestnetType?: BTCTestnetType;
     /** BTC address from which the spore will be transferred. */
     fromBtcAddress: string;
-    /** Public key of the BTC address (optional). */
-    fromBtcAddressPubkey?: string;
+    /** Public key of the BTC address. */
+    fromBtcAddressPubkey: string;
     /** The BTC assets API service. */
     btcService: BtcAssetsApi;
     /** Data source for BTC transactions. */
@@ -1381,7 +1381,7 @@ export declare interface PrepareTransferSporeUnsignedPsbtParams {
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {string} params.fromBtcAccount - BTC account from which the assets will be transferred.
- * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @param {BtcAssetsApi} params.btcService - The service instance for interacting with Bitcoin assets.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
@@ -1409,8 +1409,8 @@ export declare interface PrepareTransferUnsignedPsbtParams {
     isMainnet: boolean;
     /** BTC account from which the assets will be transferred. */
     fromBtcAccount: string;
-    /** Public key of the BTC account (optional). */
-    fromBtcAccountPubkey?: string;
+    /** Public key of the BTC account. */
+    fromBtcAccountPubkey: string;
     /** Fee rate for the BTC transaction (optional, default is 30). */
     btcFeeRate?: number;
     /** The service instance for interacting with Bitcoin assets. */
@@ -1499,9 +1499,9 @@ export declare interface RgbppDistributeCombinedParams {
      */
     fromBtcAccount: string;
     /**
-     * Public key of the BTC account (optional).
+     * Public key of the BTC account.
      */
-    fromBtcAccountPubkey?: string;
+    fromBtcAccountPubkey: string;
     /**
      * Wallet instance used for signing BTC transactions.
      */
@@ -1530,8 +1530,8 @@ export declare interface RgbppLauncerCombinedParams {
     btcTestnetType?: BTCTestnetType;
     /** BTC account address. */
     btcAccount: string;
-    /** (Optional) Public key of the BTC account. */
-    btcAccountPubkey?: string;
+    /** Public key of the BTC account. */
+    btcAccountPubkey: string;
     /** Data source for BTC transactions. */
     btcDataSource: DataSource_2;
     /** Amount of the asset to be launched, represented as a bigint. */
@@ -1571,8 +1571,8 @@ export declare interface RgbppLeapFromBtcToCkbCombinedParams {
     isMainnet: boolean;
     /** The source BTC account. */
     fromBtcAccount: string;
-    /** The public key of the source BTC account (optional). */
-    fromBtcAccountPubkey?: string;
+    /** The public key of the source BTC account. */
+    fromBtcAccountPubkey: string;
     /** Wallet instance used for signing BTC transactions. */
     wallet: AbstractWallet;
     /** The BTC assets service instance. */
@@ -1678,8 +1678,8 @@ export declare interface RgbppTransferCombinedParams {
     isMainnet: boolean;
     /** The Bitcoin account from which the assets will be transferred. */
     fromBtcAccount: string;
-    /** (Optional) The public key of the Bitcoin account. */
-    fromBtcAccountPubkey?: string;
+    /** The public key of the Bitcoin account. */
+    fromBtcAccountPubkey: string;
     /** Wallet instance used for signing BTC transactions. */
     wallet: AbstractWallet;
     /** The service instance for interacting with Bitcoin assets. */
@@ -1738,9 +1738,9 @@ export declare interface SporeCreateCombinedParams {
      */
     fromBtcAccount: string;
     /**
-     * The public key of the BTC account (optional).
+     * The public key of the BTC account.
      */
-    fromBtcAccountPubkey?: string;
+    fromBtcAccountPubkey: string;
     /**
      * The data source for BTC.
      */
@@ -1834,8 +1834,8 @@ export declare interface SporeLeapCombinedParams {
     btcTestnetType?: BTCTestnetType;
     /** The BTC address from which the spore will be sent. */
     fromBtcAddress: string;
-    /** The public key of the BTC address (optional). */
-    fromBtcAddressPubkey?: string;
+    /** The public key of the BTC address. */
+    fromBtcAddressPubkey: string;
     /** The data source for BTC transactions. */
     btcDataSource: DataSource;
     /** Wallet instance used for signing BTC transactions. */
@@ -1860,8 +1860,8 @@ export declare interface SporeTransferCombinedParams {
     btcTestnetType?: BTCTestnetType;
     /** BTC address from which the spore will be transferred. */
     fromBtcAddress: string;
-    /** Public key of the BTC address (optional). */
-    fromBtcAddressPubkey?: string;
+    /** Public key of the BTC address. */
+    fromBtcAddressPubkey: string;
     /** Data source for BTC transactions. */
     btcDataSource: DataSource;
     /** Wallet instance used for signing BTC transactions. */
@@ -1900,7 +1900,7 @@ declare interface TokenInfo {
  * @param {BTCTestnetType} [params.btcTestnetType] - (Optional) The type of Bitcoin testnet to use.
  * @param {boolean} params.isMainnet - A boolean indicating whether the operation is on the mainnet.
  * @param {string} params.fromBtcAccount - The Bitcoin account from which the assets will be transferred.
- * @param {string} [params.fromBtcAccountPubkey] - (Optional) The public key of the Bitcoin account.
+ * @param {string} [params.fromBtcAccountPubkey] - The public key of the Bitcoin account.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {BtcAssetsApi} params.btcService - The service instance for interacting with Bitcoin assets.
  * @param {number} [btcFeeRate] - (Optional) The fee rate to use for the Bitcoin transaction.
@@ -1918,7 +1918,7 @@ export declare const transferCombined: ({ toBtcAddress, xudtTypeArgs, transferAm
  * @param {boolean} params.isMainnet - Indicates if the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
  * @param {string} params.fromBtcAddress - The sender's BTC address.
- * @param {string} [params.fromBtcAddressPubkey] - The sender's BTC address public key (optional).
+ * @param {string} [params.fromBtcAddressPubkey] - The sender's BTC address public key.
  * @param {DataSource} params.btcDataSource - The data source for BTC.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.

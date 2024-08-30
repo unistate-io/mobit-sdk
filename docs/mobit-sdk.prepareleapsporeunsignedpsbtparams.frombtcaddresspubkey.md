@@ -4,10 +4,10 @@
 
 ## PrepareLeapSporeUnsignedPsbtParams.fromBtcAddressPubkey property
 
-Public key of the BTC address (optional).
+Public key of the BTC address.
 
 **Signature:**
 
 ```typescript
-fromBtcAddressPubkey?: string;
+fromBtcAddressPubkey: string;
 ```

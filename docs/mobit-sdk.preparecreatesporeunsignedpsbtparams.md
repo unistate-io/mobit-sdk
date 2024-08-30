@@ -160,7 +160,7 @@ The BTC account from which the spores are being created.
 </td></tr>
 <tr><td>
 
-[fromBtcAccountPubkey?](./mobit-sdk.preparecreatesporeunsignedpsbtparams.frombtcaccountpubkey.md)
+[fromBtcAccountPubkey](./mobit-sdk.preparecreatesporeunsignedpsbtparams.frombtcaccountpubkey.md)
 
 
 </td><td>
@@ -173,7 +173,7 @@ string
 
 </td><td>
 
-_(Optional)_ The public key of the BTC account (optional).
+The public key of the BTC account.
 
 
 </td></tr>
