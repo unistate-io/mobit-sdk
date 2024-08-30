@@ -20,7 +20,7 @@ interface LeapToCkbParams {
   collector: Collector;
   btcTestnetType?: BTCTestnetType;
   fromBtcAccount: string;
-  fromBtcAccountPubkey?: string;
+  fromBtcAccountPubkey: string;
   btcDataSource: DataSource;
   btcService: BtcAssetsApi;
   wallet: AbstractWallet;
@@ -82,16 +82,14 @@ const leapFromBtcToCKB = async (
 
   try {
     const interval = setInterval(async () => {
-      const { state, failedReason } = await btcService.getRgbppTransactionState(
-        btcTxId,
-      );
+      const { state, failedReason } =
+        await btcService.getRgbppTransactionState(btcTxId);
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
-          const { txhash: txHash } = await btcService.getRgbppTransactionHash(
-            btcTxId,
-          );
+          const { txhash: txHash } =
+            await btcService.getRgbppTransactionHash(btcTxId);
           console.info(
             `Rgbpp asset has been jumped from BTC to CKB and the related CKB tx hash is ${txHash}`,
           );
@@ -130,8 +128,8 @@ export interface RgbppLeapFromBtcToCkbCombinedParams {
   isMainnet: boolean;
   /** The source BTC account. */
   fromBtcAccount: string;
-  /** The public key of the source BTC account (optional). */
-  fromBtcAccountPubkey?: string;
+  /** The public key of the source BTC account. */
+  fromBtcAccountPubkey: string;
   /** Wallet instance used for signing BTC transactions. */
   wallet: AbstractWallet;
   /** The BTC assets service instance. */
@@ -150,7 +148,7 @@ export interface RgbppLeapFromBtcToCkbCombinedParams {
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
  * @param {boolean} params.isMainnet - Indicates if the operation is on mainnet.
  * @param {string} params.fromBtcAccount - The source BTC account.
- * @param {string} [params.fromBtcAccountPubkey] - The public key of the source BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - The public key of the source BTC account.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {BtcAssetsApi} params.btcService - The BTC assets service instance.
  * @param {number} [btcFeeRate] - The fee rate for the BTC transaction (optional).
@@ -221,8 +219,8 @@ export interface PrepareLeapUnsignedPsbtParams {
   btcTestnetType?: BTCTestnetType;
   /** BTC account from which the assets will be leaped. */
   fromBtcAccount: string;
-  /** Public key of the BTC account (optional). */
-  fromBtcAccountPubkey?: string;
+  /** Public key of the BTC account. */
+  fromBtcAccountPubkey: string;
   /** Data source for BTC transactions. */
   btcDataSource: DataSource;
   /** Fee rate for the BTC transaction (optional, default is 30). */
@@ -242,7 +240,7 @@ export interface PrepareLeapUnsignedPsbtParams {
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {string} params.fromBtcAccount - BTC account from which the assets will be leaped.
- * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.

@@ -19,7 +19,7 @@ interface SporeTransferParams {
   isMainnet: boolean;
   btcTestnetType?: BTCTestnetType;
   fromBtcAddress: string;
-  fromBtcAddressPubkey?: string;
+  fromBtcAddressPubkey: string;
   btcDataSource: DataSource;
   wallet: AbstractWallet;
   btcService: BtcAssetsApi;
@@ -79,16 +79,14 @@ const transferSpore = async (
 
   try {
     const interval = setInterval(async () => {
-      const { state, failedReason } = await btcService.getRgbppTransactionState(
-        btcTxId,
-      );
+      const { state, failedReason } =
+        await btcService.getRgbppTransactionState(btcTxId);
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
-          const { txhash: txHash } = await btcService.getRgbppTransactionHash(
-            btcTxId,
-          );
+          const { txhash: txHash } =
+            await btcService.getRgbppTransactionHash(btcTxId);
           console.info(
             `Rgbpp spore has been transferred on BTC and the related CKB tx hash is ${txHash}`,
           );
@@ -134,8 +132,8 @@ export interface SporeTransferCombinedParams {
   btcTestnetType?: BTCTestnetType;
   /** BTC address from which the spore will be transferred. */
   fromBtcAddress: string;
-  /** Public key of the BTC address (optional). */
-  fromBtcAddressPubkey?: string;
+  /** Public key of the BTC address. */
+  fromBtcAddressPubkey: string;
   /** Data source for BTC transactions. */
   btcDataSource: DataSource;
   /** Wallet instance used for signing BTC transactions. */
@@ -154,7 +152,7 @@ export interface SporeTransferCombinedParams {
  * @param {boolean} params.isMainnet - Indicates if the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
  * @param {string} params.fromBtcAddress - The sender's BTC address.
- * @param {string} [params.fromBtcAddressPubkey] - The sender's BTC address public key (optional).
+ * @param {string} [params.fromBtcAddressPubkey] - The sender's BTC address public key.
  * @param {DataSource} params.btcDataSource - The data source for BTC.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
@@ -279,8 +277,8 @@ export interface PrepareTransferSporeUnsignedPsbtParams {
   btcTestnetType?: BTCTestnetType;
   /** BTC address from which the spore will be transferred. */
   fromBtcAddress: string;
-  /** Public key of the BTC address (optional). */
-  fromBtcAddressPubkey?: string;
+  /** Public key of the BTC address. */
+  fromBtcAddressPubkey: string;
   /** The BTC assets API service. */
   btcService: BtcAssetsApi;
   /** Data source for BTC transactions. */
@@ -300,7 +298,7 @@ export interface PrepareTransferSporeUnsignedPsbtParams {
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {string} params.fromBtcAddress - BTC address from which the spore will be transferred.
- * @param {string} [params.fromBtcAddressPubkey] - Public key of the BTC address (optional).
+ * @param {string} [params.fromBtcAddressPubkey] - Public key of the BTC address.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.

@@ -195,6 +195,13 @@ declare interface ClusterInfo {
 export declare function convertToTxSkeleton(rawTransaction: CKBComponents.RawTransactionToSign, collector: Collector): Promise<TransactionSkeletonType>;
 
 /**
+ * Creates a BTC service instance.
+ * @param {BTCTestnetType} btcTestnetType - The type of BTC testnet.
+ * @returns {BtcAssetsApi} A BtcAssetsApi instance.
+ */
+export declare const createBtcService: (btcTestnetType?: BTCTestnetType) => BtcAssetsApi;
+
+/**
  * Creates an unsigned transaction for burning xUDT assets.
  *
  * This function constructs a transaction that burns a specified amount of xUDT tokens from a given CKB address.

@@ -60,7 +60,7 @@ interface RgbppDistributeParams {
   btcTestnetType?: BTCTestnetType;
   isMainnet: boolean;
   fromBtcAccount: string;
-  fromBtcAccountPubkey?: string;
+  fromBtcAccountPubkey: string;
   wallet: AbstractWallet;
   btcService: BtcAssetsApi;
 }
@@ -126,16 +126,14 @@ const distribute = async (
   // TODO： 错误处理，不清楚前端怎么处理会更好一些
   try {
     const interval = setInterval(async () => {
-      const { state, failedReason } = await btcService.getRgbppTransactionState(
-        btcTxId,
-      );
+      const { state, failedReason } =
+        await btcService.getRgbppTransactionState(btcTxId);
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
-          const { txhash: txHash } = await btcService.getRgbppTransactionHash(
-            btcTxId,
-          );
+          const { txhash: txHash } =
+            await btcService.getRgbppTransactionHash(btcTxId);
           console.info(
             `Rgbpp asset has been transferred on BTC and the related CKB tx hash is ${txHash}`,
           );
@@ -187,9 +185,9 @@ export interface RgbppDistributeCombinedParams {
    */
   fromBtcAccount: string;
   /**
-   * Public key of the BTC account (optional).
+   * Public key of the BTC account.
    */
-  fromBtcAccountPubkey?: string;
+  fromBtcAccountPubkey: string;
   /**
    * Wallet instance used for signing BTC transactions.
    */
@@ -215,7 +213,7 @@ export interface RgbppDistributeCombinedParams {
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {string} params.fromBtcAccount - The BTC account from which the assets are being distributed.
- * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {(argsList: string[]) => Promise<string[]>} params.filterRgbppArgslist - A function to filter the RGBPP args list.
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
@@ -301,9 +299,9 @@ export interface PrepareDistributeUnsignedPsbtParams {
    */
   fromBtcAccount: string;
   /**
-   * Public key of the BTC account (optional).
+   * Public key of the BTC account.
    */
-  fromBtcAccountPubkey?: string;
+  fromBtcAccountPubkey: string;
   /**
    * Fee rate for the BTC transaction (optional, default is 30).
    */
@@ -330,7 +328,7 @@ export interface PrepareDistributeUnsignedPsbtParams {
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {string} params.fromBtcAccount - BTC account from which the assets will be distributed.
- * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @param {(argsList: string[]) => Promise<string[]>} params.filterRgbppArgslist - A function to filter the RGBPP args list.

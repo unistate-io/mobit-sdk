@@ -15,7 +15,7 @@ interface RgbppTransferParams {
   btcTestnetType?: BTCTestnetType;
   isMainnet: boolean;
   fromBtcAccount: string;
-  fromBtcAccountPubkey?: string;
+  fromBtcAccountPubkey: string;
   wallet: AbstractWallet;
   btcService: BtcAssetsApi;
 }
@@ -69,16 +69,14 @@ const transfer = async (
 
   try {
     const interval = setInterval(async () => {
-      const { state, failedReason } = await btcService.getRgbppTransactionState(
-        btcTxId,
-      );
+      const { state, failedReason } =
+        await btcService.getRgbppTransactionState(btcTxId);
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
-          const { txhash: txHash } = await btcService.getRgbppTransactionHash(
-            btcTxId,
-          );
+          const { txhash: txHash } =
+            await btcService.getRgbppTransactionHash(btcTxId);
           console.info(
             `Rgbpp asset has been transferred on BTC and the related CKB tx hash is ${txHash}`,
           );
@@ -117,8 +115,8 @@ export interface RgbppTransferCombinedParams {
   isMainnet: boolean;
   /** The Bitcoin account from which the assets will be transferred. */
   fromBtcAccount: string;
-  /** (Optional) The public key of the Bitcoin account. */
-  fromBtcAccountPubkey?: string;
+  /** The public key of the Bitcoin account. */
+  fromBtcAccountPubkey: string;
   /** Wallet instance used for signing BTC transactions. */
   wallet: AbstractWallet;
   /** The service instance for interacting with Bitcoin assets. */
@@ -136,7 +134,7 @@ export interface RgbppTransferCombinedParams {
  * @param {BTCTestnetType} [params.btcTestnetType] - (Optional) The type of Bitcoin testnet to use.
  * @param {boolean} params.isMainnet - A boolean indicating whether the operation is on the mainnet.
  * @param {string} params.fromBtcAccount - The Bitcoin account from which the assets will be transferred.
- * @param {string} [params.fromBtcAccountPubkey] - (Optional) The public key of the Bitcoin account.
+ * @param {string} [params.fromBtcAccountPubkey] - The public key of the Bitcoin account.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {BtcAssetsApi} params.btcService - The service instance for interacting with Bitcoin assets.
  * @param {number} [btcFeeRate] - (Optional) The fee rate to use for the Bitcoin transaction.
@@ -207,8 +205,8 @@ export interface PrepareTransferUnsignedPsbtParams {
   isMainnet: boolean;
   /** BTC account from which the assets will be transferred. */
   fromBtcAccount: string;
-  /** Public key of the BTC account (optional). */
-  fromBtcAccountPubkey?: string;
+  /** Public key of the BTC account. */
+  fromBtcAccountPubkey: string;
   /** Fee rate for the BTC transaction (optional, default is 30). */
   btcFeeRate?: number;
   /** The service instance for interacting with Bitcoin assets. */
@@ -228,7 +226,7 @@ export interface PrepareTransferUnsignedPsbtParams {
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {string} params.fromBtcAccount - BTC account from which the assets will be transferred.
- * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @param {BtcAssetsApi} params.btcService - The service instance for interacting with Bitcoin assets.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.

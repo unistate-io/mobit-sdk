@@ -96,7 +96,9 @@ const prepareClusterCell = async (
   const outputsData = ["0x", "0x"];
 
   const emptyWitness = { lock: "", inputType: "", outputType: "" };
-  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
+  const witnesses = inputs.map((_, index) =>
+    index === 0 ? emptyWitness : "0x",
+  );
 
   const cellDeps = [...(await getAddressCellDeps(isMainnet, [ckbAddress]))];
 
@@ -110,7 +112,8 @@ const prepareClusterCell = async (
     witnesses,
   };
 
-  const txSize = getTransactionSize(unsignedTx) +
+  const txSize =
+    getTransactionSize(unsignedTx) +
     (witnessLockPlaceholderSize ?? calculateWitnessSize(ckbAddress, isMainnet));
   const estimatedTxFee = calculateTransactionFee(txSize, ckbFeeRate);
   changeCapacity -= estimatedTxFee;
@@ -128,7 +131,7 @@ interface createClusterParams {
   isMainnet: boolean;
   btcTestnetType?: BTCTestnetType;
   fromBtcAccount: string;
-  fromBtcAccountPubkey?: string;
+  fromBtcAccountPubkey: string;
   btcDataSource: DataSource;
   wallet: AbstractWallet;
   btcService: BtcAssetsApi;
@@ -257,9 +260,9 @@ export interface createClusterCombinedParams {
   fromBtcAccount: string;
 
   /**
-   * Public key of the BTC account (optional).
+   * Public key of the BTC account.
    */
-  fromBtcAccountPubkey?: string;
+  fromBtcAccountPubkey: string;
 
   /**
    * Data source for BTC transactions.
@@ -299,7 +302,7 @@ export interface createClusterCombinedParams {
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {string} params.fromBtcAccount - BTC account from which the transaction will be initiated.
- * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {BtcAssetsApi} params.btcService - BTC service instance for interacting with BTC assets.
@@ -513,9 +516,9 @@ export interface PrepareCreateClusterUnsignedPsbtParams {
   fromBtcAccount: string;
 
   /**
-   * Public key of the BTC account (optional).
+   * Public key of the BTC account.
    */
-  fromBtcAccountPubkey?: string;
+  fromBtcAccountPubkey: string;
 
   /**
    * Data source for BTC transactions.
@@ -548,7 +551,7 @@ export interface PrepareCreateClusterUnsignedPsbtParams {
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {string} params.fromBtcAccount - BTC account from which the transaction will be initiated.
- * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - Public key of the BTC account.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {number} params.outIndex - Output index of the BTC transaction.
  * @param {string} params.btcTxId - ID of the BTC transaction.

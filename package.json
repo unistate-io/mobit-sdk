@@ -1,17 +1,23 @@
 {
   "name": "mobit-sdk",
-  "version": "1.7.2",
+  "version": "1.8.0",
   "description": "",
-  "main": "dist/sdk.js",
-  "types": "dist/types/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.mjs",
+  "types": "./dist/cjs/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/cjs/index.d.ts"
+    }
+  },
   "files": [
     "dist",
     "docs"
   ],
   "scripts": {
     "fmt": "deno fmt --ignore=dist/,docs/",
-    "build-dev": "npx webpack --config webpack.config.cjs",
-    "build": "npx webpack --config webpack.config.cjs --mode production",
     "update-docs": "npx api-extractor run --local && npx api-documenter markdown -i ./temp -o ./docs",
     "update-rgbpp": "yarn add @rgbpp-sdk/btc@snap @rgbpp-sdk/ckb@snap @rgbpp-sdk/service@snap rgbpp@snap",
     "update-rgbpp-latest": "yarn add @rgbpp-sdk/btc@latest @rgbpp-sdk/ckb@latest @rgbpp-sdk/service@latest rgbpp@latest"
@@ -21,23 +27,12 @@
   "author": "cupnfish",
   "license": "MIT",
   "devDependencies": {
-    "@microsoft/api-documenter": "^7.25.11",
-    "@microsoft/api-extractor": "^7.47.6",
+    "@microsoft/api-documenter": "^7.25.12",
+    "@microsoft/api-extractor": "^7.47.7",
+    "@rslib/core": "^0.0.4",
     "@types/elliptic": "^6.4.18",
-    "assert": "^2.1.0",
-    "buffer": "^6.0.3",
-    "crypto-browserify": "^3.12.0",
     "graphql": "^16.9.0",
-    "html-webpack-plugin": "^5.6.0",
-    "process": "^0.11.10",
-    "stream-browserify": "^3.0.0",
-    "terser-webpack-plugin": "^5.3.10",
-    "ts-loader": "^9.5.1",
-    "typescript": "^5.5.4",
-    "url": "^0.11.4",
-    "vm-browserify": "^1.1.2",
-    "webpack": "^5.93.0",
-    "webpack-cli": "^5.1.4"
+    "typescript": "^5.5.4"
   },
   "dependencies": {
     "@apollo/client": "^3.11.4",
@@ -48,9 +43,9 @@
     "@ckb-lumos/helpers": "0.0.0-canary-d279b87-20240624101315",
     "@ckb-lumos/lumos": "0.0.0-canary-d279b87-20240624101315",
     "@nervosnetwork/ckb-sdk-utils": "^0.109.3",
-    "@rgbpp-sdk/btc": "^0.5.0",
-    "@rgbpp-sdk/ckb": "^0.5.0",
-    "@rgbpp-sdk/service": "^0.5.0",
-    "rgbpp": "^0.5.0"
+    "@rgbpp-sdk/btc": "^0.6.0",
+    "@rgbpp-sdk/ckb": "^0.6.0",
+    "@rgbpp-sdk/service": "^0.6.0",
+    "rgbpp": "^0.6.0"
   }
 }

@@ -26,7 +26,7 @@ interface SporeCreateParams {
   isMainnet: boolean;
   btcTestnetType?: BTCTestnetType;
   fromBtcAccount: string;
-  fromBtcAccountPubkey?: string;
+  fromBtcAccountPubkey: string;
   btcDataSource: DataSource;
   wallet: AbstractWallet;
   ckbAddress: string;
@@ -206,9 +206,9 @@ export interface SporeCreateCombinedParams {
    */
   fromBtcAccount: string;
   /**
-   * The public key of the BTC account (optional).
+   * The public key of the BTC account.
    */
-  fromBtcAccountPubkey?: string;
+  fromBtcAccountPubkey: string;
   /**
    * The data source for BTC.
    */
@@ -241,7 +241,7 @@ export interface SporeCreateCombinedParams {
  * @param {boolean} params.isMainnet - Indicates if the operation is on mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
  * @param {string} params.fromBtcAccount - The BTC account from which the spores are being created.
- * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account.
  * @param {DataSource} params.btcDataSource - The data source for BTC.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {string} params.ckbAddress - The CKB address.
@@ -391,9 +391,7 @@ export const prepareCreateSporeUnsignedTransaction = async ({
   ckbAddress,
   ckbFeeRate,
   witnessLockPlaceholderSize,
-}: PrepareCreateSporeUnsignedTransactionParams): Promise<
-  CKBComponents.RawTransactionToSign
-> => {
+}: PrepareCreateSporeUnsignedTransactionParams): Promise<CKBComponents.RawTransactionToSign> => {
   const ckbVirtualTxResult = await genCreateSporeCkbVirtualTx({
     collector,
     sporeDataList: receivers.map((receiver) => receiver.sporeData),
@@ -465,9 +463,9 @@ export interface PrepareCreateSporeUnsignedPsbtParams {
    */
   fromBtcAccount: string;
   /**
-   * The public key of the BTC account (optional).
+   * The public key of the BTC account.
    */
-  fromBtcAccountPubkey?: string;
+  fromBtcAccountPubkey: string;
   /**
    * The data source for BTC.
    */
@@ -488,7 +486,7 @@ export interface PrepareCreateSporeUnsignedPsbtParams {
  * @param {boolean} params.isMainnet - Indicates if the operation is on mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
  * @param {string} params.fromBtcAccount - The BTC account from which the spores are being created.
- * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account (optional).
+ * @param {string} [params.fromBtcAccountPubkey] - The public key of the BTC account.
  * @param {DataSource} params.btcDataSource - The data source for BTC.
  * @param {number} [params.btcFeeRate] - The fee rate for BTC transactions (optional).
  * @returns {Promise<bitcoin.Psbt>} - The unsigned BTC transaction in PSBT format.

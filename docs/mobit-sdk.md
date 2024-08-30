@@ -78,6 +78,17 @@ Converts a raw transaction to a transaction skeleton.
 </td></tr>
 <tr><td>
 
+[createBtcService(btcTestnetType)](./mobit-sdk.createbtcservice.md)
+
+
+</td><td>
+
+Creates a BTC service instance.
+
+
+</td></tr>
+<tr><td>
+
 [createBurnXudtTransaction({ xudtArgs, burnAmount, ckbAddress, collector, isMainnet, }, feeRate, maxFee, witnessLockPlaceholderSize)](./mobit-sdk.createburnxudttransaction.md)
 
 

@@ -1,4 +1,10 @@
-import { AbstractWallet, BtcHelper, CkbHelper, TxResult } from "./helper";
+import {
+  AbstractWallet,
+  BtcHelper,
+  CkbHelper,
+  TxResult,
+  createBtcService,
+} from "./helper";
 import { QueryResult, RgbppSDK } from "./sdk";
 
 import {
@@ -85,10 +91,10 @@ import {
 } from "./rgbpp/transfer_spore";
 
 export {
-  AbstractWallet,
   BtcHelper,
   CkbHelper,
   convertToTxSkeleton,
+  createBtcService,
   createBurnXudtTransaction,
   createClusterCombined,
   createIssueXudtTransaction,
@@ -120,6 +126,7 @@ export {
 };
 
 export type {
+  AbstractWallet,
   CreateBurnXudtTransactionParams,
   createClusterCombinedParams,
   CreateIssueXudtTransactionParams,

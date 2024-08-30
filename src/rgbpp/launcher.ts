@@ -60,7 +60,8 @@ const prepareLaunchCell = async (
   console.log("ckb address: ", ckbAddress);
 
   // The capacity required to launch cells is determined by the token info cell capacity, and transaction fee.
-  const launchCellCapacity = calculateRgbppCellCapacity() +
+  const launchCellCapacity =
+    calculateRgbppCellCapacity() +
     calculateRgbppTokenInfoCellCapacity(rgbppTokenInfo, isMainnet);
 
   let emptyCells = await collector.getCells({
@@ -96,7 +97,9 @@ const prepareLaunchCell = async (
   });
   const outputsData = ["0x", "0x"];
   const emptyWitness = { lock: "", inputType: "", outputType: "" };
-  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
+  const witnesses = inputs.map((_, index) =>
+    index === 0 ? emptyWitness : "0x",
+  );
 
   const cellDeps = [...(await getAddressCellDeps(isMainnet, [ckbAddress]))];
 
@@ -109,7 +112,8 @@ const prepareLaunchCell = async (
     outputsData,
     witnesses,
   };
-  const txSize = getTransactionSize(unsignedTx) +
+  const txSize =
+    getTransactionSize(unsignedTx) +
     (witnessLockPlaceholderSize ?? calculateWitnessSize(ckbAddress, isMainnet));
   const estimatedTxFee = calculateTransactionFee(txSize, ckbFeeRate);
   changeCapacity -= estimatedTxFee;
@@ -126,7 +130,7 @@ interface RgbppLauncerParams {
   isMainnet: boolean;
   btcTestnetType?: BTCTestnetType;
   btcAccount: string;
-  btcAccountPubkey?: string;
+  btcAccountPubkey: string;
   btcDataSource: DataSource;
   launchAmount: bigint;
   btcService: BtcAssetsApi;
@@ -228,8 +232,8 @@ export interface RgbppLauncerCombinedParams {
   btcTestnetType?: BTCTestnetType;
   /** BTC account address. */
   btcAccount: string;
-  /** (Optional) Public key of the BTC account. */
-  btcAccountPubkey?: string;
+  /** Public key of the BTC account. */
+  btcAccountPubkey: string;
   /** Data source for BTC transactions. */
   btcDataSource: DataSource;
   /** Amount of the asset to be launched, represented as a bigint. */
@@ -257,7 +261,7 @@ export interface RgbppLauncerCombinedParams {
  * @param {boolean} params.isMainnet - A boolean indicating whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - (Optional) The type of BTC testnet to use.
  * @param {string} params.btcAccount - The BTC account address.
- * @param {string} [params.btcAccountPubkey] - (Optional) The public key of the BTC account.
+ * @param {string} [params.btcAccountPubkey] - The public key of the BTC account.
  * @param {DataSource} params.btcDataSource - The data source for BTC transactions.
  * @param {bigint} params.launchAmount - The amount of the asset to be launched, represented as a bigint.
  * @param {BtcAssetsApi} params.btcService - The service instance for interacting with BTC assets.
@@ -439,8 +443,8 @@ export interface PrepareLauncherUnsignedPsbtParams {
   btcTestnetType?: BTCTestnetType;
   /** Address of the BTC account. */
   btcAccount: string;
-  /** (Optional) Public key of the BTC account. */
-  btcAccountPubkey?: string;
+  /** Public key of the BTC account. */
+  btcAccountPubkey: string;
   /** Source for BTC transaction data. */
   btcDataSource: DataSource;
   /** Amount of the asset to be launched, as a bigint. */
@@ -460,7 +464,7 @@ export interface PrepareLauncherUnsignedPsbtParams {
  * @param {boolean} params.isMainnet - Indicates if the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - (Optional) Type of BTC testnet to use.
  * @param {string} params.btcAccount - Address of the BTC account.
- * @param {string} [params.btcAccountPubkey] - (Optional) Public key of the BTC account.
+ * @param {string} [params.btcAccountPubkey] - Public key of the BTC account.
  * @param {DataSource} params.btcDataSource - Source for BTC transaction data.
  * @param {bigint} params.launchAmount - Amount of the asset to be launched, as a bigint.
  * @param {number} params.outIndex - Output index of the BTC transaction.
