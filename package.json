@@ -1,6 +1,6 @@
 {
   "name": "mobit-sdk",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.mjs",
@@ -29,7 +29,7 @@
   "devDependencies": {
     "@microsoft/api-documenter": "^7.25.12",
     "@microsoft/api-extractor": "^7.47.7",
-    "@rslib/core": "^0.0.4",
+    "@rslib/core": "^0.0.5",
     "@types/elliptic": "^6.4.18",
     "graphql": "^16.9.0",
     "typescript": "^5.5.4"
