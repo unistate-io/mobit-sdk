@@ -12,9 +12,10 @@ import {
   updateCkbTxWithRealBtcTxId,
 } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi, DataSource, sendRgbppUtxos } from "rgbpp";
-import { AbstractWallet, signAndSendTransaction, TxResult } from "../helper";
+import { AbstractWallet, TxResult } from "../helper";
 import { signAndSendPsbt } from "../wallet";
 import { bitcoin } from "@rgbpp-sdk/btc";
+import { convertToTransaction } from "../convert";
 
 interface SporeCreateParams {
   clusterRgbppLockArgs: Hex;
@@ -52,7 +53,6 @@ const createSpores = async (
   }: SporeCreateParams,
   btcFeeRate = 120,
   ckbFeeRate?: bigint,
-  witnessLockPlaceholderSize?: number,
 ): Promise<TxResult> => {
   const ckbVirtualTxResult = await genCreateSporeCkbVirtualTx({
     collector,
@@ -141,20 +141,20 @@ const createSpores = async (
 
       // console.log('ckbTx: ', JSON.stringify(ckbTx));
 
-      const unsignedTx = await buildAppendingIssuerCellToSporesCreateTx({
-        issuerAddress: ckbAddress,
-        ckbRawTx: ckbTx,
-        collector,
-        sumInputsCapacity,
-        ckbFeeRate,
-        witnessLockPlaceholderSize,
-      });
-
-      const txHash = await signAndSendTransaction(
-        unsignedTx,
-        collector,
-        cccSigner,
+      const unsignedTx = convertToTransaction(
+        await buildAppendingIssuerCellToSporesCreateTx({
+          issuerAddress: ckbAddress,
+          ckbRawTx: ckbTx,
+          collector,
+          sumInputsCapacity,
+          ckbFeeRate: BigInt(0),
+          witnessLockPlaceholderSize: 0,
+        }),
       );
+
+      await unsignedTx.completeFeeBy(cccSigner, ckbFeeRate);
+
+      const txHash = await cccSigner.sendTransaction(unsignedTx);
 
       console.info(`RGB++ Spore has been created and tx hash is ${txHash}`);
     } catch (error) {
@@ -248,7 +248,6 @@ export interface SporeCreateCombinedParams {
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @param {ccc.Signer} params.cccSigner - The CCC signer instance.
  * @param {number} [btcFeeRate=120] - The fee rate for BTC transactions (default is 120).
- * @param {number} [witnessLockPlaceholderSize] - The size of the witness lock placeholder (optional). This parameter is used to estimate the transaction size when the witness lock placeholder size is known.
  * @returns {Promise<TxResult>} - The result of the transaction.
  */
 export const createSporesCombined = async (
@@ -268,7 +267,6 @@ export const createSporesCombined = async (
   }: SporeCreateCombinedParams,
   btcFeeRate: number = 120,
   ckbFeeRate?: bigint,
-  witnessLockPlaceholderSize?: number,
 ): Promise<TxResult> => {
   const clusterRgbppLockArgs = await fetchAndValidateAssets(
     fromBtcAccount,
@@ -294,7 +292,6 @@ export const createSporesCombined = async (
     },
     btcFeeRate,
     ckbFeeRate,
-    witnessLockPlaceholderSize,
   );
 
   return res;
@@ -351,10 +348,6 @@ export interface PrepareCreateSporeUnsignedTransactionParams {
    * The fee rate for CKB transactions (optional).
    */
   ckbFeeRate?: bigint;
-  /**
-   * The size of the witness lock placeholder (optional). This parameter is used to estimate the transaction size when the witness lock placeholder size is known.
-   */
-  witnessLockPlaceholderSize?: number;
 }
 
 /**
@@ -390,7 +383,6 @@ export const prepareCreateSporeUnsignedTransaction = async ({
   btcTestnetType,
   ckbAddress,
   ckbFeeRate,
-  witnessLockPlaceholderSize,
 }: PrepareCreateSporeUnsignedTransactionParams): Promise<CKBComponents.RawTransactionToSign> => {
   const ckbVirtualTxResult = await genCreateSporeCkbVirtualTx({
     collector,
@@ -409,7 +401,6 @@ export const prepareCreateSporeUnsignedTransaction = async ({
     collector,
     sumInputsCapacity,
     ckbFeeRate,
-    witnessLockPlaceholderSize,
   });
 
   return unsignedTx;

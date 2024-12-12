@@ -1,21 +1,16 @@
-import {
-  addressToScript,
-  getTransactionSize,
-} from "@nervosnetwork/ckb-sdk-utils";
+import { addressToScript } from "@nervosnetwork/ckb-sdk-utils";
 import {
   append0x,
-  calculateTransactionFee,
   calculateUdtCellCapacity,
   Collector,
   fetchTypeIdCellDeps,
   getXudtTypeScript,
-  MAX_FEE,
   MIN_CAPACITY,
   NoLiveCellError,
   NoXudtLiveCellError,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
-import { calculateWitnessSize, getAddressCellDeps } from "../helper";
+import { getAddressCellDeps } from "../helper";
 
 /**
  * Interface for parameters required to create a burn transaction for xUDT assets.
@@ -59,23 +54,15 @@ export interface CreateBurnXudtTransactionParams {
  * @param {string} params.ckbAddress - The CKB address for the transaction, from which the tokens will be burned.
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs, responsible for gathering the necessary cells to construct the transaction.
  * @param {boolean} params.isMainnet - A boolean indicating whether the network is mainnet or testnet, affecting the type script and cell dependencies.
- * @param {bigint} [feeRate] - An optional parameter specifying the fee rate for the transaction. If not provided, a default fee rate will be used.
- * @param {bigint} [maxFee=MAX_FEE] - An optional parameter specifying the maximum fee for the transaction. Defaults to MAX_FEE if not provided.
- * @param {number} [witnessLockPlaceholderSize] - An optional parameter specifying the size of the witness lock placeholder.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - An unsigned transaction object that can be signed and submitted to the network.
  */
-export async function createBurnXudtTransaction(
-  {
-    xudtArgs,
-    burnAmount,
-    ckbAddress,
-    collector,
-    isMainnet,
-  }: CreateBurnXudtTransactionParams,
-  feeRate?: bigint,
-  maxFee: bigint = MAX_FEE,
-  witnessLockPlaceholderSize?: number,
-): Promise<CKBComponents.RawTransactionToSign> {
+export async function createBurnXudtTransaction({
+  xudtArgs,
+  burnAmount,
+  ckbAddress,
+  collector,
+  isMainnet,
+}: CreateBurnXudtTransactionParams): Promise<CKBComponents.RawTransactionToSign> {
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
     args: xudtArgs,
@@ -102,7 +89,6 @@ export async function createBurnXudtTransaction(
     needAmount: burnAmount,
   });
 
-  let actualInputsCapacity = sumInputsCapacity;
   let inputs = udtInputs;
 
   console.debug("Collected inputs:", inputs);
@@ -133,47 +119,6 @@ export async function createBurnXudtTransaction(
     console.debug("Updated outputs data:", outputsData);
   }
 
-  const txFee = maxFee;
-  if (sumInputsCapacity <= sumXudtOutputCapacity) {
-    let emptyCells = await collector.getCells({
-      lock: fromLock,
-    });
-
-    console.debug("Fetched Empty Cells:", emptyCells);
-
-    emptyCells = emptyCells.filter((cell) => !cell.output.type);
-
-    if (!emptyCells || emptyCells.length === 0) {
-      throw new NoLiveCellError("The address has no empty cells");
-    }
-
-    const needCapacity = sumXudtOutputCapacity - sumInputsCapacity;
-    const { inputs: emptyInputs, sumInputsCapacity: sumEmptyCapacity } =
-      collector.collectInputs(emptyCells, needCapacity, txFee, {
-        minCapacity: MIN_CAPACITY,
-      });
-    inputs = [...inputs, ...emptyInputs];
-    actualInputsCapacity += sumEmptyCapacity;
-
-    console.debug("Need Capacity:", needCapacity);
-    console.debug("Empty Inputs:", emptyInputs);
-    console.debug("Sum Empty Capacity:", sumEmptyCapacity);
-  }
-
-  let changeCapacity = actualInputsCapacity - sumXudtOutputCapacity;
-  outputs.push({
-    lock: fromLock,
-    capacity: append0x(changeCapacity.toString(16)),
-  });
-  outputsData.push("0x");
-
-  console.debug("Change Capacity:", changeCapacity);
-  console.debug("Updated Outputs:", outputs);
-  console.debug("Updated Outputs Data:", outputsData);
-
-  const emptyWitness = { lock: "", inputType: "", outputType: "" };
-  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
-
   const cellDeps = [
     ...(await getAddressCellDeps(isMainnet, [ckbAddress])),
     ...(await fetchTypeIdCellDeps(isMainnet, { xudt: true })),
@@ -186,26 +131,10 @@ export async function createBurnXudtTransaction(
     inputs,
     outputs,
     outputsData,
-    witnesses,
+    witnesses: [],
   };
 
   console.debug("Unsigned transaction:", unsignedTx);
-
-  if (txFee === maxFee) {
-    const txSize = getTransactionSize(unsignedTx) +
-      (witnessLockPlaceholderSize ??
-        calculateWitnessSize(ckbAddress, isMainnet));
-    const estimatedTxFee = calculateTransactionFee(txSize, feeRate);
-    changeCapacity -= estimatedTxFee;
-    unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
-      changeCapacity.toString(16),
-    );
-
-    console.debug("Transaction size:", txSize);
-    console.debug("Estimated transaction fee:", estimatedTxFee);
-    console.debug("Updated change capacity:", changeCapacity);
-    console.debug("Updated unsigned transaction:", unsignedTx);
-  }
 
   return unsignedTx;
 }

@@ -36,14 +36,14 @@ __webpack_require__.d(__webpack_exports__, {
     leapFromBtcToCkbCombined: ()=>/* reexport */ leapFromBtcToCkbCombined,
     transferSporeCombined: ()=>/* reexport */ transferSporeCombined,
     prepareDistributeUnsignedPsbt: ()=>/* reexport */ prepareDistributeUnsignedPsbt,
-    prepareLeapSporeUnsignedPsbt: ()=>/* reexport */ prepareLeapSporeUnsignedPsbt,
     prepareClusterCellTransaction: ()=>/* reexport */ prepareClusterCellTransaction,
     fetchAndFilterUtxos: ()=>/* reexport */ fetchAndFilterUtxos,
+    prepareCreateClusterUnsignedPsbt: ()=>/* reexport */ prepareCreateClusterUnsignedPsbt,
     CkbHelper: ()=>/* reexport */ CkbHelper,
     createClusterCombined: ()=>/* reexport */ createClusterCombined,
     fetchAndValidateAssets: ()=>/* reexport */ fetchAndValidateAssets,
     createBtcService: ()=>/* reexport */ createBtcService,
-    prepareCreateClusterUnsignedPsbt: ()=>/* reexport */ prepareCreateClusterUnsignedPsbt,
+    prepareLeapSporeUnsignedPsbt: ()=>/* reexport */ prepareLeapSporeUnsignedPsbt,
     transferCombined: ()=>/* reexport */ transferCombined,
     BtcHelper: ()=>/* reexport */ BtcHelper,
     distributeCombined: ()=>/* reexport */ distributeCombined,
@@ -60,223 +60,18 @@ __webpack_require__.d(__webpack_exports__, {
     prepareLauncherUnsignedPsbt: ()=>/* reexport */ prepareLauncherUnsignedPsbt,
     createIssueXudtTransaction: ()=>/* reexport */ createIssueXudtTransaction,
     prepareTransferSporeUnsignedPsbt: ()=>/* reexport */ prepareTransferSporeUnsignedPsbt,
+    convertToTransaction: ()=>/* reexport */ convertToTransaction,
     RgbppSDK: ()=>/* reexport */ RgbppSDK,
     prepareLeapUnsignedPsbt: ()=>/* reexport */ prepareLeapUnsignedPsbt,
     createMergeXudtTransaction: ()=>/* reexport */ createMergeXudtTransaction,
-    leapSporeFromBtcToCkbCombined: ()=>/* reexport */ leapSporeFromBtcToCkbCombined,
-    convertToTxSkeleton: ()=>/* reexport */ convertToTxSkeleton
+    leapSporeFromBtcToCkbCombined: ()=>/* reexport */ leapSporeFromBtcToCkbCombined
 });
-var core_namespaceObject = require("@ckb-ccc/core");
-var helper_namespaceObject = require("@ckb-lumos/common-scripts/lib/helper");
-var config_namespaceObject = require("@ckb-lumos/lumos/config");
-var ckb_sdk_utils_namespaceObject = require("@nervosnetwork/ckb-sdk-utils");
-var ckb_namespaceObject = require("@rgbpp-sdk/ckb");
-var external_rgbpp_namespaceObject = require("rgbpp");
-var base_namespaceObject = require("@ckb-lumos/base");
-var codec_namespaceObject = require("@ckb-lumos/codec");
-var helpers_namespaceObject = require("@ckb-lumos/helpers");
+const helper_namespaceObject = require("@ckb-lumos/common-scripts/lib/helper");
+const config_namespaceObject = require("@ckb-lumos/lumos/config");
+const ckb_sdk_utils_namespaceObject = require("@nervosnetwork/ckb-sdk-utils");
+const ckb_namespaceObject = require("@rgbpp-sdk/ckb");
+const external_rgbpp_namespaceObject = require("rgbpp");
 /**
- * Converts a CKBComponents.CellDep to BaseComponents.CellDep.
- * @param {CKBComponents.CellDep} cellDep - The cell dependency to convert.
- * @returns {BaseComponents.CellDep} The converted cell dependency.
- */ function convertCellDep(cellDep) {
-    if (!cellDep.outPoint) throw new Error("CellDep outPoint is required but was not provided.");
-    return {
-        outPoint: cellDep.outPoint,
-        depType: cellDep.depType
-    };
-}
-/**
- * Converts a CKBComponents.CellOutput to BaseComponents.Output.
- * @param {CKBComponents.CellOutput} cellOutput - The cell output to convert.
- * @returns {BaseComponents.Output} The converted cell output.
- */ function convertCellOutput(cellOutput) {
-    return {
-        capacity: cellOutput.capacity,
-        lock: cellOutput.lock,
-        type: cellOutput.type ? cellOutput.type : void 0
-    };
-}
-/**
- * Converts a CKBComponents.CellInput to BaseComponents.Input.
- * @param {CKBComponents.CellInput} cellInput - The cell input to convert.
- * @returns {BaseComponents.Input} The converted cell input.
- */ function convertCellInput(cellInput) {
-    if (!cellInput.previousOutput) throw new Error("CellInput previousOutput is required but was not provided.");
-    return {
-        previousOutput: cellInput.previousOutput,
-        since: cellInput.since
-    };
-}
-/**
- * Converts a CKBComponents.LiveCell to BaseComponents.Cell.
- * @param {CKBComponents.LiveCell} liveCell - The live cell to convert.
- * @param {BaseComponents.OutPoint} outPoint - The outpoint of the live cell.
- * @returns {BaseComponents.Cell} The converted live cell.
- */ function convertLiveCell(liveCell, outPoint) {
-    return {
-        cellOutput: convertCellOutput(liveCell.output),
-        data: liveCell.data ? liveCell.data.content : "",
-        outPoint
-    };
-}
-const { table, option: convert_option, vector, byteVecOf } = codec_namespaceObject.molecule;
-const { Uint8 } = codec_namespaceObject.number;
-const { bytify, hexify } = codec_namespaceObject.bytes;
-/**
- * Creates a fixed hex bytes codec.
- * @param {number} byteLength - The length of the bytes.
- * @returns {FixedBytesCodec<string, BytesLike>} The fixed bytes codec.
- */ function createFixedHexBytesCodec(byteLength) {
-    return (0, codec_namespaceObject.createFixedBytesCodec)({
-        byteLength,
-        pack: (hex)=>bytify(hex),
-        unpack: (buf)=>hexify(buf)
-    });
-}
-const Bytes = byteVecOf({
-    pack: bytify,
-    unpack: hexify
-});
-const BytesOpt = convert_option(Bytes);
-const Byte32 = createFixedHexBytesCodec(32);
-const Script = table({
-    codeHash: Byte32,
-    hashType: Uint8,
-    args: Bytes
-}, [
-    "codeHash",
-    "hashType",
-    "args"
-]);
-const ScriptOpt = convert_option(Script);
-const ScriptVecOpt = convert_option(vector(Script));
-const xudtWitnessType = table({
-    owner_script: ScriptOpt,
-    owner_signature: BytesOpt,
-    raw_extension_data: ScriptVecOpt,
-    extension_data: vector(Bytes)
-}, [
-    "owner_script",
-    "owner_signature",
-    "raw_extension_data",
-    "extension_data"
-]);
-const EMPTY_WITNESS = (()=>{
-    /* 65-byte zeros in hex */ const lockWitness = "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-    const inputTypeWitness = xudtWitnessType.pack({
-        extension_data: []
-    });
-    const outputTypeWitness = xudtWitnessType.pack({
-        extension_data: []
-    });
-    const witnessArgs = base_namespaceObject.blockchain.WitnessArgs.pack({
-        lock: lockWitness,
-        inputType: inputTypeWitness,
-        outputType: outputTypeWitness
-    });
-    return codec_namespaceObject.bytes.hexify(witnessArgs);
-})();
-/**
- * Converts a raw transaction to a transaction skeleton.
- * @param {CKBComponents.RawTransactionToSign} rawTransaction - The raw transaction to convert.
- * @param {Collector} collector - The collector instance.
- * @returns {Promise<TransactionSkeletonType>} The transaction skeleton.
- */ async function convertToTxSkeleton(rawTransaction, collector) {
-    console.debug("Starting conversion to TransactionSkeleton");
-    console.debug("Mapping rawTransaction to transaction object");
-    const transaction = {
-        ...rawTransaction,
-        witnesses: rawTransaction.witnesses.map((witness)=>{
-            console.debug(`Processing witness: ${"string" == typeof witness ? witness : "non-string witness"}`);
-            return "string" == typeof witness ? witness : EMPTY_WITNESS;
-        }),
-        inputs: rawTransaction.inputs.map((input)=>{
-            console.debug(`Converting cell input: ${JSON.stringify(input)}`);
-            return convertCellInput(input);
-        }),
-        outputs: rawTransaction.outputs.map((output)=>{
-            console.debug(`Converting cell output: ${JSON.stringify(output)}`);
-            return convertCellOutput(output);
-        }),
-        cellDeps: rawTransaction.cellDeps.map((cellDep)=>{
-            console.debug(`Converting cell dep: ${JSON.stringify(cellDep)}`);
-            return convertCellDep(cellDep);
-        })
-    };
-    console.debug("Initializing TransactionSkeleton");
-    let txSkeleton = (0, helpers_namespaceObject.TransactionSkeleton)();
-    console.debug("Updating cellDeps and headerDeps in TransactionSkeleton");
-    txSkeleton = txSkeleton.update("cellDeps", (cellDeps)=>{
-        console.debug(`Adding cellDeps: ${JSON.stringify(transaction.cellDeps)}`);
-        return cellDeps.push(...transaction.cellDeps);
-    }).update("headerDeps", (headerDeps)=>{
-        console.debug(`Adding headerDeps: ${JSON.stringify(transaction.headerDeps)}`);
-        return headerDeps.push(...transaction.headerDeps);
-    });
-    console.debug("Fetching input cells");
-    const inputCells = (await collector.getLiveCells(transaction.inputs.map((input)=>input.previousOutput), true)).map((cell, idx)=>convertLiveCell(cell, transaction.inputs[idx].previousOutput));
-    console.debug("Updating inputs in TransactionSkeleton");
-    txSkeleton = txSkeleton.update("inputs", (inputs)=>{
-        console.debug(`Adding inputCells: ${JSON.stringify(inputCells)}`);
-        return inputs.push(...inputCells);
-    });
-    console.debug("Updating inputSinces in TransactionSkeleton");
-    txSkeleton = txSkeleton.update("inputSinces", (inputSinces)=>{
-        console.debug("Mapping inputSinces");
-        return transaction.inputs.reduce((map, input, i)=>{
-            console.debug(`Setting since for input at index ${i}: ${input.since}`);
-            return map.set(i, input.since);
-        }, inputSinces);
-    });
-    console.debug("Mapping output cells");
-    const outputCells = transaction.outputs.map((output, index)=>{
-        console.debug(`Creating output cell for output at index ${index}: ${JSON.stringify(output)}`);
-        return {
-            cellOutput: output,
-            data: transaction.outputsData[index] ?? "0x"
-        };
-    });
-    console.debug("Updating outputs and witnesses in TransactionSkeleton");
-    txSkeleton = txSkeleton.update("outputs", (outputs)=>{
-        console.debug(`Adding outputCells: ${JSON.stringify(outputCells)}`);
-        return outputs.push(...outputCells);
-    }).update("witnesses", (witnesses)=>{
-        console.debug(`Adding witnesses: ${JSON.stringify(transaction.witnesses)}`);
-        return witnesses.push(...transaction.witnesses);
-    });
-    console.debug("Conversion to TransactionSkeleton completed");
-    return txSkeleton;
-}
-/**
- * Signs and sends a transaction.
- * @param {CKBComponents.RawTransactionToSign} transaction - The raw transaction to sign.
- * @param {Collector} collector - The collector instance.
- * @param {ccc.Signer} cccSigner - The signer instance.
- * @returns {Promise<{ txHash: string }>} A promise that resolves to the transaction hash.
- */ const signAndSendTransaction = async (transaction, collector, cccSigner)=>{
-    const txSkeleton = await convertToTxSkeleton(transaction, collector);
-    const txHash = await cccSigner.sendTransaction(core_namespaceObject.Transaction.fromLumosSkeleton(txSkeleton));
-    return {
-        txHash
-    };
-};
-/**
- * Input for signing with an address.
- */ /**
- * Input for signing with a public key.
- */ /**
- * Union type for user sign input.
- */ /**
- * Options for signing a PSBT.
- */ // whether to finalize psbt automatically
-/**
- * AbstractWallet interface defines the contract for a wallet that can sign PSBTs (Partially Signed Bitcoin Transactions).
- */ /**
-   * Signs a PSBT (Partially Signed Bitcoin Transaction) given its hexadecimal representation.
-   * @param psbtHex - The hexadecimal string representation of the PSBT to be signed.
-   * @returns A promise that resolves to the signed PSBT in hexadecimal format.
-   */ /**
  * CkbHelper class provides utility methods for interacting with the CKB (Nervos Network) blockchain.
  */ class CkbHelper {
     /**
@@ -352,12 +147,6 @@ const EMPTY_WITNESS = (()=>{
     }
 }
 /**
- * Result interface for transaction operations.
- */ /**
-   * The transaction ID of the Bitcoin transaction.
-   */ /**
-   * The transaction hash of the CKB transaction, optional.
-   */ /**
  * Fetches indexer cells for given addresses.
  * @param {Object} params - The parameters object.
  * @param {string[]} params.ckbAddresses - The list of CKB addresses.
@@ -446,205 +235,17 @@ const EMPTY_WITNESS = (()=>{
     }
     return cellDeps;
 }
-const OMNILOCK_WITNESS_LOCK_SIZE = 292;
-const ACP_WITNESS_LOCK_SIZE = 41;
-const SECP256K1_WITNESS_LOCK_SIZE = 65;
-const SECP256K1_MULTISIG_WITNESS_LOCK_SIZE = 130;
-/**
- * Calculates the witness size for a given address.
- * @param {string} address - The CKB address.
- * @param {boolean} isMainnet - Whether the network is mainnet.
- * @returns {number} The witness size.
- */ function calculateWitnessSize(address, isMainnet) {
-    let config;
-    config = isMainnet ? config_namespaceObject.MAINNET : config_namespaceObject.TESTNET;
-    if ((0, helper_namespaceObject.isOmnilockAddress)(address, config)) return OMNILOCK_WITNESS_LOCK_SIZE;
-    if ((0, helper_namespaceObject.isAcpAddress)(address, config)) return ACP_WITNESS_LOCK_SIZE;
-    if ((0, helper_namespaceObject.isSecp256k1Blake160Address)(address, config)) return SECP256K1_WITNESS_LOCK_SIZE;
-    if ((0, helper_namespaceObject.isSecp256k1Blake160MultisigAddress)(address, config)) return SECP256K1_MULTISIG_WITNESS_LOCK_SIZE;
-    // 对于未知类型，返回一个保守的估计值
-    console.warn(`Unknown address type for address: ${address}. Using default witness size.`);
-    return SECP256K1_WITNESS_LOCK_SIZE;
-}
-var client_core_namespaceObject = require("@apollo/client/core");
-var cache_namespaceObject = require("@apollo/client/cache");
-var batch_http_namespaceObject = require("@apollo/client/link/batch-http");
-var sdk_MintStatus;
-/**
- * Represents an outpoint in a transaction.
- */ /**
-   * The transaction hash of the outpoint.
-   */ /**
-   * The index of the outpoint in the transaction.
-   */ /**
- * Enum representing the minting status of an inscription.
- */ (function(MintStatus) {
-    /** Inscription can continue to be minted */ MintStatus[MintStatus["MINTABLE"] = 0] = "MINTABLE";
-    /** Inscription minting has ended */ MintStatus[MintStatus["MINT_CLOSED"] = 1] = "MINT_CLOSED";
-    /** Inscription has entered the rebase phase */ MintStatus[MintStatus["REBASE_STARTED"] = 2] = "REBASE_STARTED";
-})(sdk_MintStatus || (sdk_MintStatus = {}));
+const core_namespaceObject = require("@apollo/client/core");
+const cache_namespaceObject = require("@apollo/client/cache");
+const batch_http_namespaceObject = require("@apollo/client/link/batch-http");
 // Mapping for MintStatus, used for validation
 const MintStatusMap = {
     [0]: 0,
     [1]: 1,
     [2]: 2
 };
-/**
- * Represents information about a token.
- */ /**
-   * The number of decimal places the token supports.
-   */ /**
-   * The name of the token.
-   */ /**
-   * The symbol of the token.
-   */ /**
- * Represents raw information about an inscription, extending TokenInfo.
- */ /**
-   * The expected total supply of the token.
-   */ /**
-   * The limit on the number of tokens that can be minted.
-   */ /**
-   * The status of the minting process, represented as a number.
-   */ /**
-   * The hash of the UDT (User Defined Token).
-   */ /**
- * Represents an XUDT cell, which contains information about a token cell.
- */ /**
-   * The amount of the token in the cell.
-   */ /**
-   * Indicates whether the cell has been consumed.
-   */ /**
-   * The type ID of the cell.
-   */ /**
-   * Information about the address associated with the type ID.
-   */ /**
-     * The token information, if available.
-     */ /**
-     * An array of raw inscription information for the token.
-     */ /**
-     * The script arguments associated with the address.
-     */ /**
- * Represents information about an inscription, extending TokenInfo.
- */ /**
-   * The expected total supply of the token.
-   */ /**
-   * The limit on the number of tokens that can be minted.
-   */ /**
-   * The status of the minting process, represented as a MintStatus enum.
-   */ /**
-   * The hash of the UDT (User Defined Token).
-   */ /**
- * Represents a processed XUDT cell, which contains information about a token cell.
- */ /**
-   * The amount of the token in the cell.
-   */ /**
-   * Indicates whether the cell has been consumed.
-   */ /**
-   * The type ID of the cell.
-   */ /**
-   * Information about the address associated with the type ID.
-   */ /**
-     * The token information, if available.
-     */ /**
-     * An array of inscription information for the token.
-     */ /**
-     * The script arguments associated with the address.
-     */ /**
- * Represents information about a cluster.
- */ /**
-   * The description of the cluster.
-   */ /**
-   * The name of the cluster.
-   */ /**
-   * The creation timestamp of the cluster.
-   */ /**
-   * The unique identifier of the cluster.
-   */ /**
-   * Indicates whether the cluster has been burned.
-   */ /**
-   * The mutant identifier of the cluster.
-   */ /**
-   * The owner address of the cluster.
-   */ /**
-   * The last updated timestamp of the cluster.
-   */ /**
-   * Information about the address associated with the type ID.
-   */ /**
-     * The script arguments associated with the address.
-     */ /**
-     * The script code hash associated with the address.
-     */ /**
-     * The script hash type.
-     */ /**
- * Represents information about a spore.
- */ /**
-   * The cluster identifier the spore belongs to.
-   */ /**
-   * The content of the spore.
-   */ /**
-   * The content type of the spore.
-   */ /**
-   * The creation timestamp of the spore.
-   */ /**
-   * The unique identifier of the spore.
-   */ /**
-   * Indicates whether the spore has been burned.
-   */ /**
-   * The owner address of the spore.
-   */ /**
-   * The last updated timestamp of the spore.
-   */ /**
-   * Information about the address associated with the type ID.
-   */ /**
-     * The script arguments associated with the address.
-     */ /**
-     * The script code hash associated with the address.
-     */ /**
-     * The script hash type.
-     */ /**
- * Represents an action related to a spore, including cluster and spore information.
- */ /**
-   * The cluster information.
-   */ /**
-   * The spore information.
-   */ /**
- * Represents the balance information of an address.
- */ /**
-   * The address.
-   */ /**
-   * The total satoshi amount.
-   */ /**
-   * The pending satoshi amount.
-   */ /**
-   * The satoshi amount.
-   */ /**
-   * The available satoshi amount.
-   */ /**
-   * The dust satoshi amount.
-   */ /**
-   * The RGBPP satoshi amount.
-   */ /**
-   * The count of UTXOs.
-   */ /**
- * Represents the details of assets, including XUDT cells and spore actions.
- */ /**
-   * An array of processed XUDT cells.
-   */ /**
-   * An array of spore actions.
-   */ /**
- * Represents the result of a query, including balance and asset details.
- */ /**
-   * The balance information.
-   */ /**
-   * The asset details.
-   */ /**
- * Represents the response from a GraphQL query, including XUDT cell and spore actions.
- */ /**
-   * The XUDT cell information, if available.
-   */ /**
-   * The spore actions information, if available.
-   */ // GraphQL query constants
-const ASSET_DETAILS_QUERY = (0, client_core_namespaceObject.gql)`
+// GraphQL query constants
+const ASSET_DETAILS_QUERY = (0, core_namespaceObject.gql)`
   query AssetDetails($txHash: bytea!, $txIndex: Int!) {
     xudtCell: xudt_cell_by_pk(
       transaction_hash: $txHash
@@ -705,7 +306,7 @@ const ASSET_DETAILS_QUERY = (0, client_core_namespaceObject.gql)`
     }
   }
 `;
-const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
+const RAW_INSCRIPTION_INFO_QUERY = (0, core_namespaceObject.gql)`
   query RawInscriptionInfo($udtHash: String!) {
     token_info(where: { udt_hash: { _eq: $udtHash } }) {
       decimal
@@ -738,7 +339,7 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
         this.isMainnet = isMainnet;
         this.service = createBtcService(btcTestnetType);
         const graphqlEndpoint = isMainnet ? "https://ckb-graph.unistate.io/v1/graphql" : "https://unistate-ckb-test.unistate.io/v1/graphql";
-        this.client = new client_core_namespaceObject.ApolloClient({
+        this.client = new core_namespaceObject.ApolloClient({
             cache: new cache_namespaceObject.InMemoryCache(),
             link: new batch_http_namespaceObject.BatchHttpLink({
                 uri: graphqlEndpoint,
@@ -887,18 +488,6 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
     }
 }
 /**
- * Interface for parameters required to create a burn transaction for xUDT assets.
- */ /**
-   * The xUDT type script args, which is the unique identifier for the xUDT token type.
-   */ /**
-   * The amount of xUDT asset to be burned, representing the quantity of tokens that will be destroyed.
-   */ /**
-   * The CKB address for the transaction, from which the tokens will be burned.
-   */ /**
-   * The collector instance used to fetch cells and collect inputs, responsible for gathering the necessary cells to construct the transaction.
-   */ /**
-   * A boolean indicating whether the network is mainnet or testnet, affecting the type script and cell dependencies.
-   */ /**
  * Creates an unsigned transaction for burning xUDT assets.
  *
  * This function constructs a transaction that burns a specified amount of xUDT tokens from a given CKB address.
@@ -910,11 +499,8 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
  * @param {string} params.ckbAddress - The CKB address for the transaction, from which the tokens will be burned.
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs, responsible for gathering the necessary cells to construct the transaction.
  * @param {boolean} params.isMainnet - A boolean indicating whether the network is mainnet or testnet, affecting the type script and cell dependencies.
- * @param {bigint} [feeRate] - An optional parameter specifying the fee rate for the transaction. If not provided, a default fee rate will be used.
- * @param {bigint} [maxFee=MAX_FEE] - An optional parameter specifying the maximum fee for the transaction. Defaults to MAX_FEE if not provided.
- * @param {number} [witnessLockPlaceholderSize] - An optional parameter specifying the size of the witness lock placeholder.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - An unsigned transaction object that can be signed and submitted to the network.
- */ async function createBurnXudtTransaction({ xudtArgs, burnAmount, ckbAddress, collector, isMainnet }, feeRate, maxFee = ckb_namespaceObject.MAX_FEE, witnessLockPlaceholderSize) {
+ */ async function createBurnXudtTransaction({ xudtArgs, burnAmount, ckbAddress, collector, isMainnet }) {
     const xudtType = {
         ...(0, ckb_namespaceObject.getXudtTypeScript)(isMainnet),
         args: xudtArgs
@@ -930,7 +516,6 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
         liveCells: xudtCells,
         needAmount: burnAmount
     });
-    let actualInputsCapacity = sumInputsCapacity;
     let inputs = udtInputs;
     console.debug("Collected inputs:", inputs);
     console.debug("Sum of inputs capacity:", sumInputsCapacity);
@@ -947,47 +532,10 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
             capacity: (0, ckb_namespaceObject.append0x)(xudtChangeCapacity.toString(16))
         });
         outputsData.push((0, ckb_namespaceObject.append0x)((0, ckb_namespaceObject.u128ToLe)(sumAmount - burnAmount)));
-        sumXudtOutputCapacity += xudtChangeCapacity;
         console.debug("XUDT change capacity:", xudtChangeCapacity);
         console.debug("Updated outputs:", outputs);
         console.debug("Updated outputs data:", outputsData);
     }
-    const txFee = maxFee;
-    if (sumInputsCapacity <= sumXudtOutputCapacity) {
-        let emptyCells = await collector.getCells({
-            lock: fromLock
-        });
-        console.debug("Fetched Empty Cells:", emptyCells);
-        emptyCells = emptyCells.filter((cell)=>!cell.output.type);
-        if (!emptyCells || 0 === emptyCells.length) throw new ckb_namespaceObject.NoLiveCellError("The address has no empty cells");
-        const needCapacity = sumXudtOutputCapacity - sumInputsCapacity;
-        const { inputs: emptyInputs, sumInputsCapacity: sumEmptyCapacity } = collector.collectInputs(emptyCells, needCapacity, txFee, {
-            minCapacity: ckb_namespaceObject.MIN_CAPACITY
-        });
-        inputs = [
-            ...inputs,
-            ...emptyInputs
-        ];
-        actualInputsCapacity += sumEmptyCapacity;
-        console.debug("Need Capacity:", needCapacity);
-        console.debug("Empty Inputs:", emptyInputs);
-        console.debug("Sum Empty Capacity:", sumEmptyCapacity);
-    }
-    let changeCapacity = actualInputsCapacity - sumXudtOutputCapacity;
-    outputs.push({
-        lock: fromLock,
-        capacity: (0, ckb_namespaceObject.append0x)(changeCapacity.toString(16))
-    });
-    outputsData.push("0x");
-    console.debug("Change Capacity:", changeCapacity);
-    console.debug("Updated Outputs:", outputs);
-    console.debug("Updated Outputs Data:", outputsData);
-    const emptyWitness = {
-        lock: "",
-        inputType: "",
-        outputType: ""
-    };
-    const witnesses = inputs.map((_, index)=>0 === index ? emptyWitness : "0x");
     const cellDeps = [
         ...await getAddressCellDeps(isMainnet, [
             ckbAddress
@@ -1003,34 +551,12 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
         inputs,
         outputs,
         outputsData,
-        witnesses
+        witnesses: []
     };
     console.debug("Unsigned transaction:", unsignedTx);
-    if (txFee === maxFee) {
-        const txSize = (0, ckb_sdk_utils_namespaceObject.getTransactionSize)(unsignedTx) + (witnessLockPlaceholderSize ?? calculateWitnessSize(ckbAddress, isMainnet));
-        const estimatedTxFee = (0, ckb_namespaceObject.calculateTransactionFee)(txSize, feeRate);
-        changeCapacity -= estimatedTxFee;
-        unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = (0, ckb_namespaceObject.append0x)(changeCapacity.toString(16));
-        console.debug("Transaction size:", txSize);
-        console.debug("Estimated transaction fee:", estimatedTxFee);
-        console.debug("Updated change capacity:", changeCapacity);
-        console.debug("Updated unsigned transaction:", unsignedTx);
-    }
     return unsignedTx;
 }
 /**
- * Interface for parameters required to create an issue xUDT transaction.
- */ /**
-   * The total amount of xUDT asset to be issued.
-   */ /**
-   * The xUDT token information including decimal, name, and symbol.
-   */ /**
-   * The CKB address for the transaction.
-   */ /**
-   * The collector instance used to fetch cells and collect inputs.
-   */ /**
-   * A boolean indicating whether the network is mainnet or testnet.
-   */ /**
  * Creates an unsigned transaction for issuing xUDT assets with a unique cell as the token info cell.
  *
  * @param {CreateIssueXudtTransactionParams} params - An object containing the parameters for the transaction.
@@ -1039,12 +565,9 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
  * @param {string} params.ckbAddress - The CKB address for the transaction.
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
  * @param {boolean} params.isMainnet - A boolean indicating whether the network is mainnet or testnet.
- * @param {bigint} [feeRate] - (Optional) The fee rate to be used for the transaction.
- * @param {bigint} [maxFee=MAX_FEE] - (Optional) The maximum fee allowed for the transaction. Defaults to MAX_FEE.
- * @param {number} [witnessLockPlaceholderSize] - (Optional) The size of the witness lock placeholder.
  *
  * @returns {Promise<CKBComponents.RawTransactionToSign>} A promise that resolves to an unsigned transaction object.
- */ async function createIssueXudtTransaction({ xudtTotalAmount, tokenInfo, ckbAddress, collector, isMainnet }, feeRate, maxFee = ckb_namespaceObject.MAX_FEE, witnessLockPlaceholderSize) {
+ */ async function createIssueXudtTransaction({ xudtTotalAmount, tokenInfo, ckbAddress, collector, isMainnet }) {
     const issueLock = (0, ckb_sdk_utils_namespaceObject.addressToScript)(ckbAddress);
     // Fetching empty cells and adding debug information
     let emptyCells = await collector.getCells({
@@ -1061,11 +584,8 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
     // Calculate the capacity required for the xUDT token info cell and add debug information
     const xudtInfoCapacity = (0, ckb_namespaceObject.calculateXudtTokenInfoCellCapacity)(tokenInfo, issueLock);
     console.debug("Calculated xUDT token info cell capacity:", xudtInfoCapacity);
-    // Set the transaction fee to the maximum fee and add debug information
-    const txFee = maxFee;
-    console.debug("Set transaction fee to maximum fee:", txFee);
     // Collect inputs for the transaction and add debug information
-    const { inputs, sumInputsCapacity } = collector.collectInputs(emptyCells, xudtCapacity + xudtInfoCapacity, txFee, {
+    const { inputs, sumInputsCapacity } = collector.collectInputs(emptyCells, xudtCapacity + xudtInfoCapacity, BigInt(0), {
         minCapacity: ckb_namespaceObject.MIN_CAPACITY
     });
     console.debug("Collected inputs:", inputs);
@@ -1111,16 +631,6 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
         "0x"
     ];
     console.debug("Defined outputs data:", outputsData);
-    // Define the empty witness and add debug information
-    const emptyWitness = {
-        lock: "",
-        inputType: "",
-        outputType: ""
-    };
-    console.debug("Defined empty witness:", emptyWitness);
-    // Define the witnesses and add debug information
-    const witnesses = inputs.map((_, index)=>0 === index ? emptyWitness : "0x");
-    console.debug("Defined witnesses:", witnesses);
     // Define the cell dependencies and add debug information
     const cellDeps = [
         ...await getAddressCellDeps(isMainnet, [
@@ -1140,40 +650,12 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
         inputs,
         outputs,
         outputsData,
-        witnesses
+        witnesses: []
     };
     console.debug("Defined unsigned transaction:", unsignedTx);
-    // Adjust the transaction fee if necessary and add debug information
-    if (txFee === maxFee) {
-        const txSize = (0, ckb_sdk_utils_namespaceObject.getTransactionSize)(unsignedTx) + (witnessLockPlaceholderSize ?? calculateWitnessSize(ckbAddress, isMainnet));
-        const estimatedTxFee = (0, ckb_namespaceObject.calculateTransactionFee)(txSize, feeRate);
-        changeCapacity -= estimatedTxFee;
-        unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = (0, ckb_namespaceObject.append0x)(changeCapacity.toString(16));
-        console.debug("Adjusted transaction fee:", estimatedTxFee);
-        console.debug("Updated change capacity:", changeCapacity);
-    }
-    console.info("Unsigned transaction created:", unsignedTx);
     return unsignedTx;
 }
 /**
- * Interface for parameters required for the leap from CKB to BTC transaction.
- */ /**
-   * The output index in the BTC transaction.
-   */ /**
-   * The transaction ID of the BTC transaction.
-   */ /**
-   * The type arguments for the XUDT (User Defined Token) on CKB.
-   */ /**
-   * The amount of assets to transfer.
-   */ /**
-   * Indicates whether the operation is on the mainnet.
-   */ /**
-   * The collector instance used for collecting cells.
-   */ /**
-   * The CKB address from which the assets are being transferred.
-   */ /**
-   * The type of BTC testnet, if applicable.
-   */ /**
  * Leap from CKB to BTC
  *
  * This function facilitates the transfer of assets from the CKB (Nervos Network) blockchain to the BTC (Bitcoin) blockchain.
@@ -1189,11 +671,9 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
  * @param {Collector} params.collector - The collector instance used for collecting cells.
  * @param {string} params.ckbAddress - The CKB address from which the assets are being transferred.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet, if applicable.
- * @param {bigint} [feeRate] - The fee rate for the transaction, optional.
- * @param {number} [witnessLockPlaceholderSize] - The size of the witness lock placeholder, optional.
  *
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - The unsigned raw transaction to sign.
- */ const leapFromCkbToBtcTransaction = async ({ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType }, feeRate, witnessLockPlaceholderSize)=>{
+ */ const leapFromCkbToBtcTransaction = async ({ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType })=>{
     const toRgbppLockArgs = (0, ckb_namespaceObject.buildRgbppLockArgs)(outIndex, btcTxId);
     const xudtType = {
         ...(0, ckb_namespaceObject.getXudtTypeScript)(isMainnet),
@@ -1206,14 +686,9 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
         xudtTypeBytes: (0, ckb_namespaceObject.serializeScript)(xudtType),
         transferAmount,
         btcTestnetType,
-        ckbFeeRate: feeRate,
-        witnessLockPlaceholderSize
+        ckbFeeRate: BigInt(0),
+        witnessLockPlaceholderSize: 0
     });
-    const emptyWitness = {
-        lock: "",
-        inputType: "",
-        outputType: ""
-    };
     const unsignedTx = {
         ...ckbRawTx,
         cellDeps: [
@@ -1222,30 +697,11 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
                 ckbAddress
             ])
         ],
-        witnesses: [
-            emptyWitness,
-            ...ckbRawTx.witnesses.slice(1)
-        ]
+        witnesses: []
     };
     return unsignedTx;
 };
 /**
- * Interface for parameters required to leap a spore from CKB to BTC.
- */ /**
-   * The output index of the spore.
-   */ /**
-   * The transaction ID of the BTC transaction.
-   */ /**
-   * The type arguments for the spore.
-   */ /**
-   * A flag indicating whether the operation is on the mainnet.
-   */ /**
-   * The collector instance.
-   */ /**
-   * The CKB address.
-   */ /**
-   * (Optional) The type of BTC testnet.
-   */ /**
  * Leap a spore from CKB to BTC.
  *
  * @param {LeapSporeToBtcTransactionParams} params - The parameters for leaping a spore from CKB to BTC.
@@ -1256,10 +712,8 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
  * @param {Collector} params.collector - The collector instance.
  * @param {string} params.ckbAddress - The CKB address.
  * @param {BTCTestnetType} [params.btcTestnetType] - (Optional) The type of BTC testnet.
- * @param {bigint} [feeRate] - (Optional) The fee rate for the transaction.
- * @param {number} [witnessLockPlaceholderSize] - (Optional) The size of the witness lock placeholder.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} A promise that resolves to the unsigned raw transaction to sign.
- */ const leapSporeFromCkbToBtcTransaction = async ({ outIndex, btcTxId, sporeTypeArgs, isMainnet, collector, ckbAddress, btcTestnetType }, feeRate, witnessLockPlaceholderSize)=>{
+ */ const leapSporeFromCkbToBtcTransaction = async ({ outIndex, btcTxId, sporeTypeArgs, isMainnet, collector, ckbAddress, btcTestnetType })=>{
     const toRgbppLockArgs = (0, ckb_namespaceObject.buildRgbppLockArgs)(outIndex, btcTxId);
     const sporeType = {
         ...(0, ckb_namespaceObject.getSporeTypeScript)(isMainnet),
@@ -1272,14 +726,9 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
         sporeTypeBytes: (0, ckb_namespaceObject.serializeScript)(sporeType),
         isMainnet,
         btcTestnetType,
-        ckbFeeRate: feeRate,
-        witnessLockPlaceholderSize
+        ckbFeeRate: BigInt(0),
+        witnessLockPlaceholderSize: 0
     });
-    const emptyWitness = {
-        lock: "",
-        inputType: "",
-        outputType: ""
-    };
     const unsignedTx = {
         ...ckbRawTx,
         cellDeps: [
@@ -1288,24 +737,11 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
                 ckbAddress
             ])
         ],
-        witnesses: [
-            emptyWitness,
-            ...ckbRawTx.witnesses.slice(1)
-        ]
+        witnesses: []
     };
     return unsignedTx;
 };
 /**
- * Parameters for creating a merged xUDT transaction.
- */ /**
-   * The xUDT type script args.
-   */ /**
-   * The CKB addresses involved in the transaction.
-   */ /**
-   * The collector instance used to fetch cells and collect inputs.
-   */ /**
-   * A boolean indicating whether the transaction is for the mainnet or testnet.
-   */ /**
  * Merges multiple xUDT cells into a single xUDT cell and returns the remaining capacity as a separate cell.
  * @param {CreateMergeXudtTransactionParams} params - The parameters object.
  * @param {string} params.xudtArgs - The xUDT type script args.
@@ -1313,11 +749,8 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
  * @param {boolean} params.isMainnet - A boolean indicating whether the transaction is for the mainnet or testnet.
  * @param {string} [ckbAddress=params.ckbAddresses[0]] - The address for the output cell, defaulting to the first address in the input address set.
- * @param {bigint} [feeRate] - The fee rate for the transaction, optional.
- * @param {bigint} [maxFee=MAX_FEE] - The maximum fee for the transaction, defaulting to MAX_FEE.
- * @param {number} [witnessLockPlaceholderSize] - The size of the witness lock placeholder, optional.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} An unsigned transaction object.
- */ async function createMergeXudtTransaction({ xudtArgs, ckbAddresses, collector, isMainnet }, ckbAddress = ckbAddresses[0], feeRate, maxFee = ckb_namespaceObject.MAX_FEE, witnessLockPlaceholderSize) {
+ */ async function createMergeXudtTransaction({ xudtArgs, ckbAddresses, collector, isMainnet }, ckbAddress = ckbAddresses[0]) {
     const fromLock = (0, ckb_sdk_utils_namespaceObject.addressToScript)(ckbAddress);
     const xudtType = {
         ...(0, ckb_namespaceObject.getXudtTypeScript)(isMainnet),
@@ -1332,7 +765,6 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
     if (!xudtCells || 0 === xudtCells.length) throw new ckb_namespaceObject.NoXudtLiveCellError("The addresses have no xudt cells");
     if (1 === xudtCells.length) throw new Error("Only one xudt cell found, no need to merge");
     const { inputs: udtInputs, sumInputsCapacity, sumAmount } = collectAllUdtInputs(xudtCells);
-    const actualInputsCapacity = sumInputsCapacity;
     const inputs = udtInputs;
     console.debug("Collected inputs:", inputs);
     console.debug("Sum of inputs capacity:", sumInputsCapacity);
@@ -1348,27 +780,6 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
     const outputsData = [
         (0, ckb_namespaceObject.append0x)((0, ckb_namespaceObject.u128ToLe)(sumAmount))
     ];
-    const sumXudtOutputCapacity = mergedXudtCapacity;
-    console.debug("Merged XUDT capacity:", mergedXudtCapacity);
-    console.debug("Updated outputs:", outputs);
-    console.debug("Updated outputs data:", outputsData);
-    const txFee = maxFee;
-    if (sumInputsCapacity <= sumXudtOutputCapacity) throw new Error("Thetotal input capacity is less than or equal to the total output capacity, which is not possible in a merge function.");
-    let changeCapacity = actualInputsCapacity - sumXudtOutputCapacity;
-    outputs.push({
-        lock: fromLock,
-        capacity: (0, ckb_namespaceObject.append0x)(changeCapacity.toString(16))
-    });
-    outputsData.push("0x");
-    console.debug("Change Capacity:", changeCapacity);
-    console.debug("Updated Outputs:", outputs);
-    console.debug("Updated Outputs Data:", outputsData);
-    const emptyWitness = {
-        lock: "",
-        inputType: "",
-        outputType: ""
-    };
-    const witnesses = inputs.map((_, index)=>0 === index ? emptyWitness : "0x");
     const cellDeps = [
         ...await getAddressCellDeps(isMainnet, ckbAddresses),
         ...await (0, ckb_namespaceObject.fetchTypeIdCellDeps)(isMainnet, {
@@ -1382,19 +793,9 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, client_core_namespaceObject.gql)`
         inputs,
         outputs,
         outputsData,
-        witnesses
+        witnesses: []
     };
     console.debug("Unsigned transaction:", unsignedTx);
-    if (txFee === maxFee) {
-        const txSize = (0, ckb_sdk_utils_namespaceObject.getTransactionSize)(unsignedTx) + (witnessLockPlaceholderSize ?? calculateWitnessSize(ckbAddress, isMainnet));
-        const estimatedTxFee = (0, ckb_namespaceObject.calculateTransactionFee)(txSize, feeRate);
-        changeCapacity -= estimatedTxFee;
-        unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = (0, ckb_namespaceObject.append0x)(changeCapacity.toString(16));
-        console.debug("Transaction size:", txSize);
-        console.debug("Estimated transaction fee:", estimatedTxFee);
-        console.debug("Updated change capacity:", changeCapacity);
-        console.debug("Updated unsigned transaction:", unsignedTx);
-    }
     return unsignedTx;
 }
 function collectAllUdtInputs(liveCells) {
@@ -1423,18 +824,6 @@ function collectAllUdtInputs(liveCells) {
     };
 }
 /**
- * Parameters for creating a transaction to transfer xUDT assets.
- */ /**
-   * The xUDT type script args.
-   */ /**
-   * An array of receiver objects containing `toAddress` and `transferAmount`.
-   */ /**
-   * The CKB addresses for the transaction.
-   */ /**
-   * The collector instance used to fetch cells and collect inputs.
-   */ /**
-   * A boolean indicating whether the network is mainnet or testnet.
-   */ /**
  * Creates an unsigned transaction for transferring xUDT assets. This function can also be used to mint xUDT assets.
  *
  * @param {CreateTransferXudtTransactionParams} params - The parameters for creating the transaction.
@@ -1444,15 +833,12 @@ function collectAllUdtInputs(liveCells) {
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
  * @param {boolean} params.isMainnet - A boolean indicating whether the network is mainnet or testnet.
  * @param {string} [ckbAddress=params.ckbAddresses[0]] - The address for the output cell, defaulting to the first address in the input address set.
- * @param {bigint} [feeRate] - (Optional) The fee rate to be used for the transaction.
- * @param {bigint} [maxFee=MAX_FEE] - (Optional) The maximum fee allowed for the transaction. Defaults to `MAX_FEE`.
- * @param {number} [witnessLockPlaceholderSize] - (Optional) The size of the witness lock placeholder.
  *
  * @returns {Promise<CKBComponents.RawTransactionToSign>} A promise that resolves to an unsigned transaction object.
  *
  * @throws {NoXudtLiveCellError} If the address has no xudt cells.
  * @throws {NoLiveCellError} If the address has no empty cells.
- */ async function createTransferXudtTransaction({ xudtArgs, receivers, ckbAddresses, collector, isMainnet }, ckbAddress = ckbAddresses[0], feeRate, maxFee = ckb_namespaceObject.MAX_FEE, witnessLockPlaceholderSize) {
+ */ async function createTransferXudtTransaction({ xudtArgs, receivers, ckbAddresses, collector, isMainnet }, ckbAddress = ckbAddresses[0]) {
     const xudtType = {
         ...(0, ckb_namespaceObject.getXudtTypeScript)(isMainnet),
         args: xudtArgs
@@ -1474,7 +860,6 @@ function collectAllUdtInputs(liveCells) {
     });
     console.debug("Sum XUDT Inputs Capacity:", sumXudtInputsCapacity);
     console.debug("Sum Amount:", sumAmount);
-    let actualInputsCapacity = sumXudtInputsCapacity;
     let inputs = udtInputs;
     const outputs = receivers.map(({ toAddress })=>({
             lock: (0, ckb_sdk_utils_namespaceObject.addressToScript)(toAddress),
@@ -1497,43 +882,6 @@ function collectAllUdtInputs(liveCells) {
         console.debug("Updated Outputs:", outputs);
         console.debug("Updated Outputs Data:", outputsData);
     }
-    const txFee = maxFee;
-    if (sumXudtInputsCapacity <= sumXudtOutputCapacity) {
-        let emptyCells = await getIndexerCells({
-            ckbAddresses,
-            collector
-        });
-        console.debug("Fetched Empty Cells:", emptyCells);
-        emptyCells = emptyCells.filter((cell)=>!cell.output.type);
-        if (!emptyCells || 0 === emptyCells.length) throw new ckb_namespaceObject.NoLiveCellError("The addresses have no empty cells");
-        const needCapacity = sumXudtOutputCapacity - sumXudtInputsCapacity;
-        const { inputs: emptyInputs, sumInputsCapacity: sumEmptyCapacity } = collector.collectInputs(emptyCells, needCapacity, txFee, {
-            minCapacity: ckb_namespaceObject.MIN_CAPACITY
-        });
-        inputs = [
-            ...inputs,
-            ...emptyInputs
-        ];
-        actualInputsCapacity += sumEmptyCapacity;
-        console.debug("Need Capacity:", needCapacity);
-        console.debug("Empty Inputs:", emptyInputs);
-        console.debug("Sum Empty Capacity:", sumEmptyCapacity);
-    }
-    let changeCapacity = actualInputsCapacity - sumXudtOutputCapacity;
-    outputs.push({
-        lock: (0, ckb_sdk_utils_namespaceObject.addressToScript)(ckbAddress),
-        capacity: (0, ckb_namespaceObject.append0x)(changeCapacity.toString(16))
-    });
-    outputsData.push("0x");
-    console.debug("Change Capacity:", changeCapacity);
-    console.debug("Updated Outputs:", outputs);
-    console.debug("Updated Outputs Data:", outputsData);
-    const emptyWitness = {
-        lock: "",
-        inputType: "",
-        outputType: ""
-    };
-    const witnesses = inputs.map((_, index)=>0 === index ? emptyWitness : "0x");
     const cellDeps = [
         ...await getAddressCellDeps(isMainnet, ckbAddresses),
         ...await (0, ckb_namespaceObject.fetchTypeIdCellDeps)(isMainnet, {
@@ -1548,22 +896,101 @@ function collectAllUdtInputs(liveCells) {
         inputs,
         outputs,
         outputsData,
-        witnesses
+        witnesses: []
     };
     console.debug("Unsigned Transaction:", unsignedTx);
-    if (txFee === maxFee) {
-        const txSize = (0, ckb_sdk_utils_namespaceObject.getTransactionSize)(unsignedTx) + (witnessLockPlaceholderSize ?? calculateWitnessSize(ckbAddress, isMainnet));
-        const estimatedTxFee = (0, ckb_namespaceObject.calculateTransactionFee)(txSize, feeRate);
-        changeCapacity -= estimatedTxFee;
-        unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = (0, ckb_namespaceObject.append0x)(changeCapacity.toString(16));
-        console.debug("Transaction Size:", txSize);
-        console.debug("Estimated Transaction Fee:", estimatedTxFee);
-        console.debug("Updated Change Capacity:", changeCapacity);
-        console.debug("Updated Unsigned Transaction:", unsignedTx);
-    }
     return unsignedTx;
 }
-var btc_namespaceObject = require("@rgbpp-sdk/btc");
+const external_ckb_ccc_core_namespaceObject = require("@ckb-ccc/core");
+/**
+ * Converts a CKBComponents.RawTransactionToSign to a CKBComponents.RawTransaction.
+ * @param {CKBComponents.RawTransactionToSign} rawTransactionToSign - The raw transaction to sign to convert.
+ * @returns {CKBComponents.RawTransaction} The converted raw transaction.
+ */ function convertToRawTransaction(rawTransactionToSign) {
+    const witnesses = rawTransactionToSign.witnesses.map((witness)=>{
+        if ("string" == typeof witness) return witness;
+        return convertToWitness(witness);
+    });
+    return {
+        version: rawTransactionToSign.version,
+        cellDeps: rawTransactionToSign.cellDeps,
+        headerDeps: rawTransactionToSign.headerDeps,
+        inputs: rawTransactionToSign.inputs,
+        outputs: rawTransactionToSign.outputs,
+        outputsData: rawTransactionToSign.outputsData,
+        witnesses
+    };
+}
+function convertToWitness(witnessArgs) {
+    const bytes = external_ckb_ccc_core_namespaceObject.ccc.WitnessArgs.from(witnessArgs).toBytes();
+    return Buffer.from(bytes).toString("hex");
+}
+/**
+ * Converts a CKBComponents.OutPoint to a ccc.OutPointLike.
+ * @param {CKBComponents.OutPoint} outPoint - The out point to convert.
+ * @returns {ccc.OutPointLike} The converted out point.
+ */ function convertToOutPointLike(outPoint) {
+    return {
+        txHash: (0, external_ckb_ccc_core_namespaceObject.hexFrom)(outPoint.txHash),
+        index: (0, external_ckb_ccc_core_namespaceObject.hexFrom)(outPoint.index)
+    };
+}
+/**
+ * Converts a CKBComponents.CellDep to a ccc.CellDepLike.
+ * @param {CKBComponents.CellDep} cellDep - The cell dep to convert.
+ * @returns {ccc.CellDepLike} The converted cell dep.
+ */ function convertToCellDepLike(cellDep) {
+    if (!cellDep.outPoint) throw new Error("CellDep is missing required field: outPoint");
+    return {
+        outPoint: convertToOutPointLike(cellDep.outPoint),
+        depType: cellDep.depType
+    };
+}
+/**
+ * Converts a CKBComponents.CellInput to a ccc.CellInputLike.
+ * @param {CKBComponents.CellInput} cellInput - The cell input to convert.
+ * @returns {ccc.CellInputLike} The converted cell input.
+ */ function convertToCellInputLike(cellInput) {
+    if (!cellInput.previousOutput) throw new Error("CellInput is missing required field: previousOutput");
+    return {
+        previousOutput: convertToOutPointLike(cellInput.previousOutput),
+        since: cellInput.since ? (0, external_ckb_ccc_core_namespaceObject.hexFrom)(cellInput.since) : void 0
+    };
+}
+function ConvertToTransactionLike(rawTransaction) {
+    return {
+        version: rawTransaction.version,
+        cellDeps: rawTransaction.cellDeps.map(convertToCellDepLike),
+        headerDeps: rawTransaction.headerDeps.map(external_ckb_ccc_core_namespaceObject.hexFrom),
+        inputs: rawTransaction.inputs.map(convertToCellInputLike),
+        outputs: rawTransaction.outputs.map((output)=>({
+                capacity: output.capacity,
+                lock: {
+                    args: (0, external_ckb_ccc_core_namespaceObject.hexFrom)(output.lock.args),
+                    codeHash: (0, external_ckb_ccc_core_namespaceObject.hexFrom)(output.lock.codeHash),
+                    hashType: output.lock.hashType
+                },
+                type: output.type ? {
+                    args: (0, external_ckb_ccc_core_namespaceObject.hexFrom)(output.type.args),
+                    codeHash: (0, external_ckb_ccc_core_namespaceObject.hexFrom)(output.type.codeHash),
+                    hashType: output.type.hashType
+                } : null
+            })),
+        outputsData: rawTransaction.outputsData.map(external_ckb_ccc_core_namespaceObject.hexFrom),
+        witnesses: rawTransaction.witnesses.map(external_ckb_ccc_core_namespaceObject.hexFrom)
+    };
+}
+/**
+ * Converts a CKBComponents.RawTransactionToSign to a ccc.Transaction.
+ * @param {CKBComponents.RawTransactionToSign} rawTransactionToSign - The raw transaction to sign to convert.
+ * @returns {ccc.Transaction} The converted transaction object.
+ */ function convertToTransaction(rawTransactionToSign) {
+    const rawTransaction = convertToRawTransaction(rawTransactionToSign);
+    const transactionLike = ConvertToTransactionLike(rawTransaction);
+    const tx = external_ckb_ccc_core_namespaceObject.ccc.Transaction.from(transactionLike);
+    return tx;
+}
+const btc_namespaceObject = require("@rgbpp-sdk/btc");
 async function signAndSendPsbt(psbt, wallet, service) {
     console.debug("Starting PSBT signing process...");
     console.debug("PSBT before signing:", psbt.toHex());
@@ -1589,7 +1016,7 @@ async function signAndSendPsbt(psbt, wallet, service) {
         throw error;
     }
 }
-const prepareLaunchCell = async ({ outIndex, btcTxId, rgbppTokenInfo, ckbAddress, collector, isMainnet, btcTestnetType }, ckbFeeRate, maxFee = ckb_namespaceObject.MAX_FEE, witnessLockPlaceholderSize)=>{
+const prepareLaunchCell = async ({ outIndex, btcTxId, rgbppTokenInfo, ckbAddress, collector, isMainnet, btcTestnetType })=>{
     const masterLock = (0, ckb_sdk_utils_namespaceObject.addressToScript)(ckbAddress);
     console.log("ckb address: ", ckbAddress);
     // The capacity required to launch cells is determined by the token info cell capacity, and transaction fee.
@@ -1599,29 +1026,17 @@ const prepareLaunchCell = async ({ outIndex, btcTxId, rgbppTokenInfo, ckbAddress
     });
     if (!emptyCells || 0 === emptyCells.length) throw new ckb_namespaceObject.NoLiveCellError("The address has no empty cells");
     emptyCells = emptyCells.filter((cell)=>!cell.output.type);
-    const txFee = maxFee;
-    const { inputs, sumInputsCapacity } = collector.collectInputs(emptyCells, launchCellCapacity, txFee);
+    const { inputs } = collector.collectInputs(emptyCells, launchCellCapacity, BigInt(0));
     const outputs = [
         {
             lock: (0, ckb_namespaceObject.genRgbppLockScript)((0, ckb_namespaceObject.buildRgbppLockArgs)(outIndex, btcTxId), isMainnet, btcTestnetType),
             capacity: (0, ckb_namespaceObject.append0x)(launchCellCapacity.toString(16))
         }
     ];
-    let changeCapacity = sumInputsCapacity - launchCellCapacity;
-    outputs.push({
-        lock: masterLock,
-        capacity: (0, ckb_namespaceObject.append0x)(changeCapacity.toString(16))
-    });
     const outputsData = [
         "0x",
         "0x"
     ];
-    const emptyWitness = {
-        lock: "",
-        inputType: "",
-        outputType: ""
-    };
-    const witnesses = inputs.map((_, index)=>0 === index ? emptyWitness : "0x");
     const cellDeps = [
         ...await getAddressCellDeps(isMainnet, [
             ckbAddress
@@ -1634,12 +1049,8 @@ const prepareLaunchCell = async ({ outIndex, btcTxId, rgbppTokenInfo, ckbAddress
         inputs,
         outputs,
         outputsData,
-        witnesses
+        witnesses: []
     };
-    const txSize = (0, ckb_sdk_utils_namespaceObject.getTransactionSize)(unsignedTx) + (witnessLockPlaceholderSize ?? calculateWitnessSize(ckbAddress, isMainnet));
-    const estimatedTxFee = (0, ckb_namespaceObject.calculateTransactionFee)(txSize, ckbFeeRate);
-    changeCapacity -= estimatedTxFee;
-    unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = (0, ckb_namespaceObject.append0x)(changeCapacity.toString(16));
     return unsignedTx;
 };
 const launchRgbppAsset = async ({ ownerRgbppLockArgs, rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, btcService, wallet }, btcFeeRate)=>{
@@ -1700,8 +1111,6 @@ const launchRgbppAsset = async ({ ownerRgbppLockArgs, rgbppTokenInfo, collector,
     };
 };
 /**
- * Parameters required for launching an RGB++ asset combined with CKB transaction preparation.
- */ /** Information about the RGB++ token to be launched. */ /** Collector instance used to gather cells for the transaction. */ /** Indicates whether the operation is on the mainnet. */ /** (Optional) Type of BTC testnet to use. */ /** BTC account address. */ /** Public key of the BTC account. */ /** Data source for BTC transactions. */ /** Amount of the asset to be launched, represented as a bigint. */ /** Service instance for interacting with BTC assets. */ /** CKB address where the asset will be launched. */ /** Signer instance for CKB transactions. */ /** Function to filter UTXOs for the BTC transaction. */ /** Wallet instance used for signing BTC transactions. */ /**
  * Launches an RGB++ asset by preparing a launch cell and subsequently sending a BTC transaction.
  *
  * @param params - An object containing the necessary parameters for launching the RGB++ asset.
@@ -1719,14 +1128,12 @@ const launchRgbppAsset = async ({ ownerRgbppLockArgs, rgbppTokenInfo, collector,
  * @param {(utxos: BtcApiUtxo[]) => Promise<{ outIndex: number; btcTxId: string }>} params.filterUtxo - A function to filter UTXOs for the BTC transaction.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {bigint} [ckbFeeRate] - (Optional) The fee rate for CKB transactions, represented as a bigint.
- * @param {bigint} [maxFee=MAX_FEE] - (Optional) The maximum fee for the transaction, represented as a bigint. Defaults to MAX_FEE.
  * @param {number} [btcFeeRate] - (Optional) The fee rate for BTC transactions, represented as a number.
- * @param {number} [witnessLockPlaceholderSize] - (Optional) The size of the witness lock placeholder.
  *
  * @returns A promise that resolves to the transaction result, including the BTC transaction ID and CKB transaction hash.
- */ const launchCombined = async ({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, ckbAddress, filterUtxo, btcService, wallet, cccSigner }, ckbFeeRate, maxFee = ckb_namespaceObject.MAX_FEE, btcFeeRate, witnessLockPlaceholderSize)=>{
+ */ const launchCombined = async ({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, ckbAddress, filterUtxo, btcService, wallet, cccSigner }, ckbFeeRate, btcFeeRate)=>{
     const { outIndex, btcTxId } = await fetchAndFilterUtxos(btcAccount, filterUtxo, btcService);
-    const prepareLaunchCellTx = await prepareLaunchCell({
+    const prepareLaunchCellTx = convertToTransaction(await prepareLaunchCell({
         outIndex,
         btcTxId,
         rgbppTokenInfo,
@@ -1734,8 +1141,9 @@ const launchRgbppAsset = async ({ ownerRgbppLockArgs, rgbppTokenInfo, collector,
         collector,
         isMainnet,
         btcTestnetType
-    }, ckbFeeRate, maxFee, witnessLockPlaceholderSize);
-    const { txHash } = await signAndSendTransaction(prepareLaunchCellTx, collector, cccSigner);
+    }));
+    await prepareLaunchCellTx.completeFeeBy(cccSigner, ckbFeeRate);
+    const txHash = await cccSigner.sendTransaction(prepareLaunchCellTx);
     console.info(`Launch cell has been created and the CKB tx hash ${txHash}`);
     const ownerRgbppLockArgs = (0, ckb_namespaceObject.buildRgbppLockArgs)(outIndex, btcTxId);
     const { btcTxId: TxId } = await launchRgbppAsset({
@@ -1757,8 +1165,6 @@ const launchRgbppAsset = async ({ ownerRgbppLockArgs, rgbppTokenInfo, collector,
     };
 };
 /**
- * Parameters required for preparing a launch cell transaction on the CKB network.
- */ /** CKB address where the launch cell will be created. */ /** Information about the RGB++ token to be launched. */ /** Collector instance used to gather cells for the transaction. */ /** Indicates whether the operation is on the mainnet. */ /** Type of BTC testnet (optional). */ /** Output index of the BTC transaction. */ /** ID of the BTC transaction. */ /**
  * Prepares a launch cell on the CKB network by creating a transaction.
  *
  * @param {PrepareLaunchCellTransactionParams} params - Parameters required to prepare the launch cell.
@@ -1769,9 +1175,6 @@ const launchRgbppAsset = async ({ ownerRgbppLockArgs, rgbppTokenInfo, collector,
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {number} params.outIndex - Output index of the BTC transaction.
  * @param {string} params.btcTxId - ID of the BTC transaction.
- * @param {bigint} [maxFee=MAX_FEE] - Maximum fee for the CKB transaction (default is MAX_FEE).
- * @param {bigint} [ckbFeeRate] - Fee rate for the CKB transaction (optional).
- * @param {number} [witnessLockPlaceholderSize] - Size of the witness lock placeholder (optional).
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - Promise that resolves to the prepared CKB transaction.
  *
  * --------------------------------------------
@@ -1784,7 +1187,7 @@ const launchRgbppAsset = async ({ ownerRgbppLockArgs, rgbppTokenInfo, collector,
  * );
  * ```
  * This example demonstrates how to obtain the necessary parameters (`outIndex` and `btcTxId`) by fetching and filtering UTXOs.
- */ const prepareLaunchCellTransaction = async ({ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcTestnetType, outIndex, btcTxId }, maxFee = ckb_namespaceObject.MAX_FEE, ckbFeeRate, witnessLockPlaceholderSize)=>{
+ */ const prepareLaunchCellTransaction = async ({ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcTestnetType, outIndex, btcTxId })=>{
     const prepareLaunchCellTx = await prepareLaunchCell({
         outIndex,
         btcTxId,
@@ -1793,12 +1196,10 @@ const launchRgbppAsset = async ({ ownerRgbppLockArgs, rgbppTokenInfo, collector,
         collector,
         isMainnet,
         btcTestnetType
-    }, ckbFeeRate, maxFee, witnessLockPlaceholderSize);
+    });
     return prepareLaunchCellTx;
 };
 /**
- * Parameters required for generating an unsigned PSBT for launching an RGB++ asset.
- */ /** Information about the RGB++ token to be launched. */ /** Instance used to collect cells for the transaction. */ /** Indicates if the operation is on the mainnet. */ /** (Optional) Type of BTC testnet to use. */ /** Address of the BTC account. */ /** Public key of the BTC account. */ /** Source for BTC transaction data. */ /** Amount of the asset to be launched, as a bigint. */ /** Output index of the BTC transaction. */ /** ID of the BTC transaction. */ /**
  * Generates an unsigned PSBT for launching an RGB++ asset.
  *
  * @param {PrepareLauncherUnsignedPsbtParams} params - Parameters required for generating the unsigned PSBT.
@@ -1873,7 +1274,7 @@ const launchRgbppAsset = async ({ ownerRgbppLockArgs, rgbppTokenInfo, collector,
         btcTxId
     };
 };
-const prepareClusterCell = async ({ outIndex, btcTxId, ckbAddress, clusterData, collector, isMainnet, btcTestnetType }, maxFee = ckb_namespaceObject.MAX_FEE, ckbFeeRate, witnessLockPlaceholderSize)=>{
+const prepareClusterCell = async ({ outIndex, btcTxId, ckbAddress, clusterData, collector, isMainnet, btcTestnetType })=>{
     const masterLock = (0, ckb_sdk_utils_namespaceObject.addressToScript)(ckbAddress);
     console.log("ckb address: ", ckbAddress);
     // The capacity required to launch cells is determined by the token info cell capacity, and transaction fee.
@@ -1883,29 +1284,16 @@ const prepareClusterCell = async ({ outIndex, btcTxId, ckbAddress, clusterData, 
     });
     if (!emptyCells || 0 === emptyCells.length) throw new ckb_namespaceObject.NoLiveCellError("The address has no empty cells");
     emptyCells = emptyCells.filter((cell)=>!cell.output.type);
-    const txFee = maxFee;
-    const { inputs, sumInputsCapacity } = collector.collectInputs(emptyCells, clusterCellCapacity, txFee);
+    const { inputs } = collector.collectInputs(emptyCells, clusterCellCapacity, BigInt(0));
     const outputs = [
         {
             lock: (0, ckb_namespaceObject.genRgbppLockScript)((0, ckb_namespaceObject.buildRgbppLockArgs)(outIndex, btcTxId), isMainnet, btcTestnetType),
             capacity: (0, ckb_namespaceObject.append0x)(clusterCellCapacity.toString(16))
         }
     ];
-    let changeCapacity = sumInputsCapacity - clusterCellCapacity;
-    outputs.push({
-        lock: masterLock,
-        capacity: (0, ckb_namespaceObject.append0x)(changeCapacity.toString(16))
-    });
     const outputsData = [
-        "0x",
         "0x"
     ];
-    const emptyWitness = {
-        lock: "",
-        inputType: "",
-        outputType: ""
-    };
-    const witnesses = inputs.map((_, index)=>0 === index ? emptyWitness : "0x");
     const cellDeps = [
         ...await getAddressCellDeps(isMainnet, [
             ckbAddress
@@ -1918,12 +1306,8 @@ const prepareClusterCell = async ({ outIndex, btcTxId, ckbAddress, clusterData, 
         inputs,
         outputs,
         outputsData,
-        witnesses
+        witnesses: []
     };
-    const txSize = (0, ckb_sdk_utils_namespaceObject.getTransactionSize)(unsignedTx) + (witnessLockPlaceholderSize ?? calculateWitnessSize(ckbAddress, isMainnet));
-    const estimatedTxFee = (0, ckb_namespaceObject.calculateTransactionFee)(txSize, ckbFeeRate);
-    changeCapacity -= estimatedTxFee;
-    unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = (0, ckb_namespaceObject.append0x)(changeCapacity.toString(16));
     return unsignedTx;
 };
 const createCluster = async ({ ownerRgbppLockArgs, collector, clusterData, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcService, wallet }, btcFeeRate = 30)=>{
@@ -1988,32 +1372,6 @@ const createCluster = async ({ ownerRgbppLockArgs, collector, clusterData, isMai
     };
 };
 /**
- * Parameters required to create a combined cluster.
- */ /**
-   * CKB address where the cluster cell will be created.
-   */ /**
-   * Raw data required to create the cluster.
-   */ /**
-   * Collector instance used to gather cells for the transaction.
-   */ /**
-   * Indicates whether the operation is on the mainnet.
-   */ /**
-   * Type of BTC testnet (optional).
-   */ /**
-   * BTC account from which the transaction will be initiated.
-   */ /**
-   * Public key of the BTC account.
-   */ /**
-   * Data source for BTC transactions.
-   */ /**
-   * Wallet instance used for signing BTC transactions.
-   */ /**
-   * BTC service instance for interacting with BTC assets.
-   */ /**
-   * Function to filter UTXOs for the BTC transaction.
-   */ /**
-   * Signer instance for signing CKB transactions.
-   */ /**
  * Creates a cluster cell on the CKB network and initiates a corresponding BTC transaction.
  *
  * @param {createClusterCombinedParams} params - Parameters required to create the cluster.
@@ -2030,12 +1388,11 @@ const createCluster = async ({ ownerRgbppLockArgs, collector, clusterData, isMai
  * @param {(utxos: BtcApiUtxo[]) => Promise<{ outIndex: number; btcTxId: string }>} params.filterUtxo - Function to filter UTXOs for the BTC transaction.
  * @param {ccc.Signer} params.cccSigner - Signer instance for signing CKB transactions.
  * @param {bigint} [ckbFeeRate] - Fee rate for the CKB transaction (optional).
- * @param {bigint} [maxFee=MAX_FEE] - Maximum fee for the CKB transaction (default is MAX_FEE).
  * @param {number} [btcFeeRate=30] - Fee rate for the BTC transaction (default is 30).
  * @returns {Promise<TxResult>} - Promise that resolves to the transaction result.
- */ const createClusterCombined = async ({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, filterUtxo, cccSigner }, ckbFeeRate, maxFee = ckb_namespaceObject.MAX_FEE, btcFeeRate = 30, witnessLockPlaceholderSize)=>{
+ */ const createClusterCombined = async ({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, filterUtxo, cccSigner }, ckbFeeRate, btcFeeRate = 30)=>{
     const { outIndex, btcTxId } = await fetchAndFilterUtxos(fromBtcAccount, filterUtxo, btcService);
-    const prepareClusterCellTx = await prepareClusterCell({
+    const prepareClusterCellTx = convertToTransaction(await prepareClusterCell({
         outIndex,
         btcTxId,
         clusterData,
@@ -2043,8 +1400,9 @@ const createCluster = async ({ ownerRgbppLockArgs, collector, clusterData, isMai
         collector,
         isMainnet,
         btcTestnetType
-    }, maxFee, ckbFeeRate, witnessLockPlaceholderSize);
-    const { txHash } = await signAndSendTransaction(prepareClusterCellTx, collector, cccSigner);
+    }));
+    await prepareClusterCellTx.completeFeeBy(cccSigner, ckbFeeRate);
+    const txHash = await cccSigner.sendTransaction(prepareClusterCellTx);
     console.info(`Create Cluster cell has been created and the CKB tx hash ${txHash}`);
     const ownerRgbppLockArgs = (0, ckb_namespaceObject.buildRgbppLockArgs)(outIndex, btcTxId);
     const { btcTxId: TxId } = await createCluster({
@@ -2065,22 +1423,6 @@ const createCluster = async ({ ownerRgbppLockArgs, collector, clusterData, isMai
     };
 };
 /**
- * Parameters required to prepare a cluster cell transaction.
- */ /**
-   * CKB address where the cluster cell will be created.
-   */ /**
-   * Raw data required to create the cluster.
-   */ /**
-   * Collector instance used to gather cells for the transaction.
-   */ /**
-   * Indicates whether the operation is on the mainnet.
-   */ /**
-   * Type of BTC testnet (optional).
-   */ /**
-   * Output index of the BTC transaction.
-   */ /**
-   * ID of the BTC transaction.
-   */ /**
  * Prepares a cluster cell on the CKB network by creating a transaction.
  *
  * @param {PrepareClusterCellTransactionParams} params - Parameters required to prepare the cluster cell.
@@ -2091,9 +1433,6 @@ const createCluster = async ({ ownerRgbppLockArgs, collector, clusterData, isMai
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {number} params.outIndex - Output index of the BTC transaction.
  * @param {string} params.btcTxId - ID of the BTC transaction.
- * @param {bigint} [maxFee=MAX_FEE] - Maximum fee for the CKB transaction (default is MAX_FEE).
- * @param {bigint} [ckbFeeRate] - Fee rate for the CKB transaction (optional).
- * @param {number} [witnessLockPlaceholderSize] - Size of the witness lock placeholder (optional).
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - Promise that resolves to the prepared CKB transaction.
  * --------------------------------------------
  * **Note: Example of fetching and filtering UTXOs:**
@@ -2105,7 +1444,7 @@ const createCluster = async ({ ownerRgbppLockArgs, collector, clusterData, isMai
  * );
  * ```
  * This example demonstrates how to obtain the necessary parameters (`outIndex` and `btcTxId`) by fetching and filtering UTXOs.
- */ const prepareClusterCellTransaction = async ({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, outIndex, btcTxId }, maxFee = ckb_namespaceObject.MAX_FEE, ckbFeeRate, witnessLockPlaceholderSize)=>{
+ */ const prepareClusterCellTransaction = async ({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, outIndex, btcTxId })=>{
     const prepareClusterCellTx = await prepareClusterCell({
         outIndex,
         btcTxId,
@@ -2114,33 +1453,10 @@ const createCluster = async ({ ownerRgbppLockArgs, collector, clusterData, isMai
         collector,
         isMainnet,
         btcTestnetType
-    }, maxFee, ckbFeeRate, witnessLockPlaceholderSize);
+    });
     return prepareClusterCellTx;
 };
 /**
- * Parameters required to generate an unsigned PSBT (Partially Signed Bitcoin Transaction) for creating a cluster.
- * This interface is used to estimate transaction fees before finalizing the transaction.
- */ /**
-   * Collector instance used to gather cells for the transaction.
-   */ /**
-   * Raw data required to create the cluster.
-   */ /**
-   * Indicates whether the operation is on the mainnet.
-   */ /**
-   * Type of BTC testnet (optional).
-   */ /**
-   * BTC account from which the transaction will be initiated.
-   */ /**
-   * Public key of the BTC account.
-   */ /**
-   * Data source for BTC transactions.
-   */ /**
-   * Output index of the BTC transaction.
-   */ /**
-   * ID of the BTC transaction.
-   */ /**
-   * Fee rate for the BTC transaction (optional, default is 30).
-   */ /**
  * Generates an unsigned PSBT (Partially Signed Bitcoin Transaction) for creating a cluster.
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
@@ -2193,7 +1509,7 @@ const createCluster = async ({ ownerRgbppLockArgs, collector, clusterData, isMai
     return psbt;
 };
 // Warning: Before running this file for the first time, please run 2-prepare-cluster.ts
-const createSpores = async ({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, ckbAddress, cccSigner }, btcFeeRate = 120, ckbFeeRate, witnessLockPlaceholderSize)=>{
+const createSpores = async ({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, ckbAddress, cccSigner }, btcFeeRate = 120, ckbFeeRate)=>{
     const ckbVirtualTxResult = await (0, ckb_namespaceObject.genCreateSporeCkbVirtualTx)({
         collector,
         sporeDataList: receivers.map((receiver)=>receiver.sporeData),
@@ -2255,15 +1571,16 @@ const createSpores = async ({ clusterRgbppLockArgs, receivers, collector, isMain
                 clusterOutputCell: ckbTx.outputs[0]
             });
             // console.log('ckbTx: ', JSON.stringify(ckbTx));
-            const unsignedTx = await (0, ckb_namespaceObject.buildAppendingIssuerCellToSporesCreateTx)({
+            const unsignedTx = convertToTransaction(await (0, ckb_namespaceObject.buildAppendingIssuerCellToSporesCreateTx)({
                 issuerAddress: ckbAddress,
                 ckbRawTx: ckbTx,
                 collector,
                 sumInputsCapacity,
-                ckbFeeRate,
-                witnessLockPlaceholderSize
-            });
-            const txHash = await signAndSendTransaction(unsignedTx, collector, cccSigner);
+                ckbFeeRate: BigInt(0),
+                witnessLockPlaceholderSize: 0
+            }));
+            await unsignedTx.completeFeeBy(cccSigner, ckbFeeRate);
+            const txHash = await cccSigner.sendTransaction(unsignedTx);
             console.info(`RGB++ Spore has been created and tx hash is ${txHash}`);
         } catch (error) {
             console.error(error);
@@ -2275,36 +1592,6 @@ const createSpores = async ({ clusterRgbppLockArgs, receivers, collector, isMain
     };
 };
 /**
- * Parameters for creating spores combined with the given parameters.
- */ /**
-   * The arguments for the cluster type script.
-   */ /**
-   * The list of receivers with their BTC addresses and spore data.
-   */ /**
-     * The BTC address of the receiver.
-     */ /**
-     * The raw spore data.
-     */ /**
-   * The collector instance.
-   */ /**
-   * Indicates if the operation is on mainnet.
-   */ /**
-   * The type of BTC testnet (optional).
-   */ /**
-   * The BTC account from which the spores are being created.
-   */ /**
-   * The public key of the BTC account.
-   */ /**
-   * The data source for BTC.
-   */ /**
-   * Wallet instance used for signing BTC transactions.
-   */ /**
-   * The CKB address.
-   */ /**
-   * The BTC assets API service.
-   */ /**
-   * The CCC signer instance.
-   */ /**
  * Creates spores combined with the given parameters.
  *
  * @param {SporeCreateCombinedParams} params - The parameters for creating spores.
@@ -2321,9 +1608,8 @@ const createSpores = async ({ clusterRgbppLockArgs, receivers, collector, isMain
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @param {ccc.Signer} params.cccSigner - The CCC signer instance.
  * @param {number} [btcFeeRate=120] - The fee rate for BTC transactions (default is 120).
- * @param {number} [witnessLockPlaceholderSize] - The size of the witness lock placeholder (optional). This parameter is used to estimate the transaction size when the witness lock placeholder size is known.
  * @returns {Promise<TxResult>} - The result of the transaction.
- */ const createSporesCombined = async ({ clusterTypeScriptArgs, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, ckbAddress, cccSigner }, btcFeeRate = 120, ckbFeeRate, witnessLockPlaceholderSize)=>{
+ */ const createSporesCombined = async ({ clusterTypeScriptArgs, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, ckbAddress, cccSigner }, btcFeeRate = 120, ckbFeeRate)=>{
     const clusterRgbppLockArgs = await fetchAndValidateAssets(fromBtcAccount, clusterTypeScriptArgs, isMainnet, btcService);
     const res = await createSpores({
         clusterRgbppLockArgs,
@@ -2338,42 +1624,10 @@ const createSpores = async ({ clusterRgbppLockArgs, receivers, collector, isMain
         btcService,
         ckbAddress,
         cccSigner
-    }, btcFeeRate, ckbFeeRate, witnessLockPlaceholderSize);
+    }, btcFeeRate, ckbFeeRate);
     return res;
 };
 /**
- * Parameters for preparing an unsigned CKB transaction for creating spores.
- */ /**
-   * The arguments for the cluster RGBPP lock.
-   * Note: This should be generated using the `fetchAndValidateAssets` function.
-   * Example:
-   * ```typescript
-   * const clusterRgbppLockArgs = await fetchAndValidateAssets(
-   *   fromBtcAccount,
-   *   clusterTypeScriptArgs,
-   *   isMainnet,
-   *   btcService,
-   * );
-   * ```
-   */ /**
-   * The list of receivers with their BTC addresses and spore data.
-   */ /**
-     * The BTC address of the receiver.
-     */ /**
-     * The raw spore data.
-     */ /**
-   * The collector instance.
-   */ /**
-   * Indicates if the operation is on mainnet.
-   */ /**
-   * The type of BTC testnet (optional).
-   */ /**
-   * The CKB address.
-   */ /**
-   * The fee rate for CKB transactions (optional).
-   */ /**
-   * The size of the witness lock placeholder (optional). This parameter is used to estimate the transaction size when the witness lock placeholder size is known.
-   */ /**
  * Prepares an unsigned CKB transaction for creating spores.
  *
  * @param {PrepareCreateSporeUnsignedTransactionParams} params - The parameters for preparing the unsigned CKB transaction.
@@ -2397,7 +1651,7 @@ const createSpores = async ({ clusterRgbppLockArgs, receivers, collector, isMain
  *   btcService,
  * );
  * ```
- */ const prepareCreateSporeUnsignedTransaction = async ({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, ckbAddress, ckbFeeRate, witnessLockPlaceholderSize })=>{
+ */ const prepareCreateSporeUnsignedTransaction = async ({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, ckbAddress, ckbFeeRate })=>{
     const ckbVirtualTxResult = await (0, ckb_namespaceObject.genCreateSporeCkbVirtualTx)({
         collector,
         sporeDataList: receivers.map((receiver)=>receiver.sporeData),
@@ -2412,46 +1666,11 @@ const createSpores = async ({ clusterRgbppLockArgs, receivers, collector, isMain
         ckbRawTx,
         collector,
         sumInputsCapacity,
-        ckbFeeRate,
-        witnessLockPlaceholderSize
+        ckbFeeRate
     });
     return unsignedTx;
 };
 /**
- * Parameters for preparing an unsigned BTC transaction for creating spores.
- */ /**
-   * The arguments for the cluster RGBPP lock.
-   * Note: This should be generated using the `fetchAndValidateAssets` function.
-   * Example:
-   * ```typescript
-   * const clusterRgbppLockArgs = await fetchAndValidateAssets(
-   *   fromBtcAccount,
-   *   clusterTypeScriptArgs,
-   *   isMainnet,
-   *   btcService,
-   * );
-   * ```
-   */ /**
-   * The list of receivers with their BTC addresses and spore data.
-   */ /**
-     * The BTC address of the receiver.
-     */ /**
-     * The raw spore data.
-     */ /**
-   * The collector instance.
-   */ /**
-   * Indicates if the operation is on mainnet.
-   */ /**
-   * The type of BTC testnet (optional).
-   */ /**
-   * The BTC account from which the spores are being created.
-   */ /**
-   * The public key of the BTC account.
-   */ /**
-   * The data source for BTC.
-   */ /**
-   * The fee rate for BTC transactions (optional).
-   */ /**
  * Prepares an unsigned BTC transaction for creating spores.
  *
  * @param {PrepareCreateSporeUnsignedPsbtParams} params - The parameters for preparing the unsigned BTC transaction.
@@ -2596,30 +1815,6 @@ const distribute = async ({ rgbppLockArgsList, receivers, xudtTypeArgs, collecto
     };
 };
 /**
- * Interface for parameters required to distribute RGBPP assets combined.
- */ /**
-   * List of receivers for the RGBPP assets.
-   */ /**
-   * Type arguments for the XUDT type script.
-   */ /**
-   * Collector instance used to gather cells for the transaction.
-   */ /**
-   * Data source for BTC transactions.
-   */ /**
-   * Type of BTC testnet (optional).
-   */ /**
-   * Indicates whether the operation is on the mainnet.
-   */ /**
-   * BTC account from which the assets will be distributed.
-   */ /**
-   * Public key of the BTC account.
-   */ /**
-   * Wallet instance used for signing BTC transactions.
-   */ /**
-   * Function to filter the RGBPP args list.
-   */ /**
-   * BTC assets API service.
-   */ /**
  * Distributes RGBPP assets to multiple receivers.
  *
  * @param {RgbppDistributeCombinedParams} params - The parameters for the distribution.
@@ -2660,30 +1855,6 @@ const distribute = async ({ rgbppLockArgsList, receivers, xudtTypeArgs, collecto
     return res;
 };
 /**
- * Interface for parameters required to prepare an unsigned PSBT for distributing RGBPP assets.
- */ /**
-   * List of receivers for the RGBPP assets.
-   */ /**
-   * Type arguments for the XUDT type script.
-   */ /**
-   * Collector instance used to gather cells for the transaction.
-   */ /**
-   * Data source for BTC transactions.
-   */ /**
-   * Type of BTC testnet (optional).
-   */ /**
-   * Indicates whether the operation is on the mainnet.
-   */ /**
-   * BTC account from which the assets will be distributed.
-   */ /**
-   * Public key of the BTC account.
-   */ /**
-   * Fee rate for the BTC transaction (optional, default is 30).
-   */ /**
-   * BTC assets API service.
-   */ /**
-   * Function to filter the RGBPP args list.
-   */ /**
  * Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for distributing RGBPP assets.
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
@@ -2790,8 +1961,6 @@ const leapFromBtcToCKB = async ({ rgbppLockArgsList, toCkbAddress, xudtTypeArgs,
     };
 };
 /**
- * Parameters for combining the leap operation of RGBPP assets from Bitcoin to CKB.
- */ /** The destination CKB address. */ /** The arguments for the XUDT type script. */ /** The amount of assets to transfer. */ /** The collector instance for CKB operations. */ /** The data source for BTC operations. */ /** The type of BTC testnet (optional). */ /** Indicates if the operation is on mainnet. */ /** The source BTC account. */ /** The public key of the source BTC account. */ /** Wallet instance used for signing BTC transactions. */ /** The BTC assets service instance. */ /**
  * Combines the parameters for leaping RGBPP assets from Bitcoin to CKB and executes the leap operation.
  *
  * @param {RgbppLeapFromBtcToCkbCombinedParams} params - The parameters for the leap operation.
@@ -2833,8 +2002,6 @@ const leapFromBtcToCKB = async ({ rgbppLockArgsList, toCkbAddress, xudtTypeArgs,
     return res;
 };
 /**
- * Parameters for preparing an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping RGBPP assets from Bitcoin to CKB.
- */ /** The BTC assets service instance. */ /** The destination CKB address. */ /** Type arguments for the XUDT type script. */ /** The amount of assets to transfer. */ /** Indicates whether the operation is on the mainnet. */ /** Collector instance used to gather cells for the transaction. */ /** Type of BTC testnet (optional). */ /** BTC account from which the assets will be leaped. */ /** Public key of the BTC account. */ /** Data source for BTC transactions. */ /** Fee rate for the BTC transaction (optional, default is 30). */ /**
  * Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping RGBPP assets from Bitcoin to CKB.
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
@@ -2946,8 +2113,6 @@ const transferSpore = async ({ sporeRgbppLockArgs, toBtcAddress, sporeTypeArgs, 
     };
 };
 /**
- * Interface for parameters required to transfer a spore combined.
- */ /** The recipient's BTC address. */ /** Type arguments for the spore. */ /** Collector instance used to gather cells for the transaction. */ /** Indicates whether the operation is on the mainnet. */ /** Type of BTC testnet (optional). */ /** BTC address from which the spore will be transferred. */ /** Public key of the BTC address. */ /** Data source for BTC transactions. */ /** Wallet instance used for signing BTC transactions. */ /** The BTC assets API service. */ /**
  * Transfers a spore to a specified BTC address.
  *
  * @param {SporeTransferCombinedParams} params - The parameters for the spore transfer.
@@ -2986,8 +2151,6 @@ const transferSpore = async ({ sporeRgbppLockArgs, toBtcAddress, sporeTypeArgs, 
     return res;
 };
 /**
- * Interface for parameters required to get spore RGBPP lock arguments.
- */ /** The BTC address from which the spore will be transferred. */ /** Type arguments for the spore. */ /** Indicates whether the operation is on the mainnet. */ /** The BTC assets API service. */ /**
  * Retrieves the spore RGBPP lock arguments based on the provided parameters.
  * @param {GetSporeRgbppLockArgsParams} params - The parameters for retrieving the spore RGBPP lock arguments.
  * @param {string} params.fromBtcAddress - The BTC address from which the spore will be transferred.
@@ -3018,8 +2181,6 @@ const transferSpore = async ({ sporeRgbppLockArgs, toBtcAddress, sporeTypeArgs, 
     }
 };
 /**
- * Interface for parameters required to prepare an unsigned PSBT for transferring a spore.
- */ /** The recipient's BTC address. */ /** Type arguments for the spore. */ /** Collector instance used to gather cells for the transaction. */ /** Indicates whether the operation is on the mainnet. */ /** Type of BTC testnet (optional). */ /** BTC address from which the spore will be transferred. */ /** Public key of the BTC address. */ /** The BTC assets API service. */ /** Data source for BTC transactions. */ /** Fee rate for the BTC transaction (optional, default is 30). */ /**
  * Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for transferring a spore.
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
@@ -3125,8 +2286,6 @@ const leapSporeFromBtcToCkb = async ({ sporeRgbppLockArgs, toCkbAddress, sporeTy
     };
 };
 /**
- * Parameters required for the combined process of leaping a spore from BTC to CKB.
- */ /** The CKB address to which the spore will be sent. */ /** The type arguments for the spore. */ /** The collector object used for collecting the spore. */ /** Indicates whether the operation is on the mainnet. */ /** The type of BTC testnet (optional). */ /** The BTC address from which the spore will be sent. */ /** The public key of the BTC address. */ /** The data source for BTC transactions. */ /** Wallet instance used for signing BTC transactions. */ /** The BTC assets API service. */ /**
  * Combines the process of leaping a spore from BTC to CKB with the necessary parameters.
  *
  * @param {SporeLeapCombinedParams} params - The parameters required for the spore leap process.
@@ -3167,9 +2326,6 @@ const leapSporeFromBtcToCkb = async ({ sporeRgbppLockArgs, toCkbAddress, sporeTy
     return res;
 };
 /**
- * Parameters required to generate an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping a spore from Bitcoin to CKB.
- * This interface is used to estimate transaction fees before finalizing the transaction.
- */ /** The destination CKB address. */ /** Type arguments for the spore. */ /** Collector instance used to gather cells for the transaction. */ /** Indicates whether the operation is on the mainnet. */ /** Type of BTC testnet (optional). */ /** BTC address from which the spore will be leaped. */ /** Public key of the BTC address. */ /** Data source for BTC transactions. */ /** Fee rate for the BTC transaction (optional, default is 30). */ /** The BTC assets API service. */ /**
  * Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping a spore from Bitcoin to CKB.
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
@@ -3270,8 +2426,6 @@ const transfer = async ({ rgbppLockArgsList, toBtcAddress, xudtTypeArgs, transfe
     };
 };
 /**
- * Parameters for combining the steps of getting the RGBPP lock arguments list and transferring RGBPP assets.
- */ /** The Bitcoin address to which the assets will be transferred. */ /** The type arguments for the XUDT script. */ /** The amount of assets to transfer, represented as a bigint. */ /** The collector instance used for collecting assets. */ /** The data source for Bitcoin transactions. */ /** (Optional) The type of Bitcoin testnet to use. */ /** A boolean indicating whether the operation is on the mainnet. */ /** The Bitcoin account from which the assets will be transferred. */ /** The public key of the Bitcoin account. */ /** Wallet instance used for signing BTC transactions. */ /** The service instance for interacting with Bitcoin assets. */ /**
  * Combines the steps of getting the RGBPP lock arguments list and transferring RGBPP assets.
  *
  * @param {RgbppTransferCombinedParams} params - Parameters for the transfer operation.
@@ -3312,9 +2466,6 @@ const transfer = async ({ rgbppLockArgsList, toBtcAddress, xudtTypeArgs, transfe
     return res;
 };
 /**
- * Parameters required to generate an unsigned PSBT (Partially Signed Bitcoin Transaction) for transferring RGBPP assets.
- * This interface is used to estimate transaction fees before finalizing the transaction.
- */ /** The recipient's BTC address. */ /** Type arguments for the XUDT script. */ /** The amount of assets to transfer. */ /** Collector instance used to gather cells for the transaction. */ /** Data source for BTC transactions. */ /** Type of BTC testnet (optional). */ /** Indicates whether the operation is on the mainnet. */ /** BTC account from which the assets will be transferred. */ /** Public key of the BTC account. */ /** Fee rate for the BTC transaction (optional, default is 30). */ /** The service instance for interacting with Bitcoin assets. */ /**
  * Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for transferring RGBPP assets.
  * This function is used to estimate transaction fees before finalizing the transaction.
  *
@@ -3360,7 +2511,7 @@ const transfer = async ({ rgbppLockArgsList, toBtcAddress, xudtTypeArgs, transfe
     return psbt;
 };
 var __webpack_export_target__ = exports;
-for(var i in __webpack_exports__)__webpack_export_target__[i] = __webpack_exports__[i];
+for(var __webpack_i__ in __webpack_exports__)__webpack_export_target__[__webpack_i__] = __webpack_exports__[__webpack_i__];
 if (__webpack_exports__.__esModule) Object.defineProperty(__webpack_export_target__, '__esModule', {
     value: true
 });

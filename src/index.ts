@@ -2,8 +2,8 @@ import {
   AbstractWallet,
   BtcHelper,
   CkbHelper,
-  TxResult,
   createBtcService,
+  TxResult,
 } from "./helper";
 import { QueryResult, RgbppSDK } from "./sdk";
 
@@ -31,7 +31,7 @@ import {
   createTransferXudtTransaction,
   CreateTransferXudtTransactionParams,
 } from "./ckb/transfer";
-import { convertToTxSkeleton } from "./convert";
+import { convertToTransaction } from "./convert";
 
 import {
   createClusterCombined,
@@ -93,7 +93,7 @@ import {
 export {
   BtcHelper,
   CkbHelper,
-  convertToTxSkeleton,
+  convertToTransaction,
   createBtcService,
   createBurnXudtTransaction,
   createClusterCombined,

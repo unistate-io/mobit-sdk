@@ -1,11 +1,6 @@
-import {
-  addressToScript,
-  getTransactionSize,
-  scriptToHash,
-} from "@nervosnetwork/ckb-sdk-utils";
+import { addressToScript, scriptToHash } from "@nervosnetwork/ckb-sdk-utils";
 import {
   append0x,
-  calculateTransactionFee,
   calculateUdtCellCapacity,
   calculateXudtTokenInfoCellCapacity,
   Collector,
@@ -14,13 +9,12 @@ import {
   generateUniqueTypeArgs,
   getUniqueTypeScript,
   getXudtTypeScript,
-  MAX_FEE,
   MIN_CAPACITY,
   NoLiveCellError,
   RgbppTokenInfo,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
-import { calculateWitnessSize, getAddressCellDeps } from "../helper";
+import { getAddressCellDeps } from "../helper";
 
 /**
  * Interface for parameters required to create an issue xUDT transaction.
@@ -57,24 +51,16 @@ export interface CreateIssueXudtTransactionParams {
  * @param {string} params.ckbAddress - The CKB address for the transaction.
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
  * @param {boolean} params.isMainnet - A boolean indicating whether the network is mainnet or testnet.
- * @param {bigint} [feeRate] - (Optional) The fee rate to be used for the transaction.
- * @param {bigint} [maxFee=MAX_FEE] - (Optional) The maximum fee allowed for the transaction. Defaults to MAX_FEE.
- * @param {number} [witnessLockPlaceholderSize] - (Optional) The size of the witness lock placeholder.
  *
  * @returns {Promise<CKBComponents.RawTransactionToSign>} A promise that resolves to an unsigned transaction object.
  */
-export async function createIssueXudtTransaction(
-  {
-    xudtTotalAmount,
-    tokenInfo,
-    ckbAddress,
-    collector,
-    isMainnet,
-  }: CreateIssueXudtTransactionParams,
-  feeRate?: bigint,
-  maxFee: bigint = MAX_FEE,
-  witnessLockPlaceholderSize?: number,
-): Promise<CKBComponents.RawTransactionToSign> {
+export async function createIssueXudtTransaction({
+  xudtTotalAmount,
+  tokenInfo,
+  ckbAddress,
+  collector,
+  isMainnet,
+}: CreateIssueXudtTransactionParams): Promise<CKBComponents.RawTransactionToSign> {
   const issueLock = addressToScript(ckbAddress);
 
   // Fetching empty cells and adding debug information
@@ -103,15 +89,11 @@ export async function createIssueXudtTransaction(
   );
   console.debug("Calculated xUDT token info cell capacity:", xudtInfoCapacity);
 
-  // Set the transaction fee to the maximum fee and add debug information
-  const txFee = maxFee;
-  console.debug("Set transaction fee to maximum fee:", txFee);
-
   // Collect inputs for the transaction and add debug information
   const { inputs, sumInputsCapacity } = collector.collectInputs(
     emptyCells,
     xudtCapacity + xudtInfoCapacity,
-    txFee,
+    BigInt(0),
     {
       minCapacity: MIN_CAPACITY,
     },
@@ -165,14 +147,6 @@ export async function createIssueXudtTransaction(
   ];
   console.debug("Defined outputs data:", outputsData);
 
-  // Define the empty witness and add debug information
-  const emptyWitness = { lock: "", inputType: "", outputType: "" };
-  console.debug("Defined empty witness:", emptyWitness);
-
-  // Define the witnesses and add debug information
-  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
-  console.debug("Defined witnesses:", witnesses);
-
   // Define the cell dependencies and add debug information
   const cellDeps = [
     ...(await getAddressCellDeps(isMainnet, [ckbAddress])),
@@ -188,24 +162,9 @@ export async function createIssueXudtTransaction(
     inputs,
     outputs,
     outputsData,
-    witnesses,
+    witnesses: [],
   };
   console.debug("Defined unsigned transaction:", unsignedTx);
 
-  // Adjust the transaction fee if necessary and add debug information
-  if (txFee === maxFee) {
-    const txSize = getTransactionSize(unsignedTx) +
-      (witnessLockPlaceholderSize ??
-        calculateWitnessSize(ckbAddress, isMainnet));
-    const estimatedTxFee = calculateTransactionFee(txSize, feeRate);
-    changeCapacity -= estimatedTxFee;
-    unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
-      changeCapacity.toString(16),
-    );
-    console.debug("Adjusted transaction fee:", estimatedTxFee);
-    console.debug("Updated change capacity:", changeCapacity);
-  }
-
-  console.info("Unsigned transaction created:", unsignedTx);
   return unsignedTx;
 }

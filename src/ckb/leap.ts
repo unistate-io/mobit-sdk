@@ -62,25 +62,19 @@ export interface LeapToBtcTransactionParams {
  * @param {Collector} params.collector - The collector instance used for collecting cells.
  * @param {string} params.ckbAddress - The CKB address from which the assets are being transferred.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet, if applicable.
- * @param {bigint} [feeRate] - The fee rate for the transaction, optional.
- * @param {number} [witnessLockPlaceholderSize] - The size of the witness lock placeholder, optional.
  *
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - The unsigned raw transaction to sign.
  */
-export const leapFromCkbToBtcTransaction = async (
-  {
-    outIndex,
-    btcTxId,
-    xudtTypeArgs,
-    transferAmount,
-    isMainnet,
-    collector,
-    ckbAddress,
-    btcTestnetType,
-  }: LeapToBtcTransactionParams,
-  feeRate?: bigint,
-  witnessLockPlaceholderSize?: number,
-): Promise<CKBComponents.RawTransactionToSign> => {
+export const leapFromCkbToBtcTransaction = async ({
+  outIndex,
+  btcTxId,
+  xudtTypeArgs,
+  transferAmount,
+  isMainnet,
+  collector,
+  ckbAddress,
+  btcTestnetType,
+}: LeapToBtcTransactionParams): Promise<CKBComponents.RawTransactionToSign> => {
   const toRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
 
   const xudtType: CKBComponents.Script = {
@@ -95,18 +89,17 @@ export const leapFromCkbToBtcTransaction = async (
     xudtTypeBytes: serializeScript(xudtType),
     transferAmount,
     btcTestnetType,
-    ckbFeeRate: feeRate,
-    witnessLockPlaceholderSize,
+    ckbFeeRate: BigInt(0),
+    witnessLockPlaceholderSize: 0,
   });
 
-  const emptyWitness = { lock: "", inputType: "", outputType: "" };
   const unsignedTx: CKBComponents.RawTransactionToSign = {
     ...ckbRawTx,
     cellDeps: [
       ...ckbRawTx.cellDeps,
       ...(await getAddressCellDeps(isMainnet, [ckbAddress])),
     ],
-    witnesses: [emptyWitness, ...ckbRawTx.witnesses.slice(1)],
+    witnesses: [],
   };
 
   return unsignedTx;

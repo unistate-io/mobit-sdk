@@ -1,25 +1,15 @@
-import {
-  addressToScript,
-  getTransactionSize,
-} from "@nervosnetwork/ckb-sdk-utils";
+import { addressToScript } from "@nervosnetwork/ckb-sdk-utils";
 import {
   append0x,
-  calculateTransactionFee,
   calculateUdtCellCapacity,
   Collector,
   fetchTypeIdCellDeps,
   getXudtTypeScript,
-  MAX_FEE,
-  MIN_CAPACITY,
   NoLiveCellError,
   NoXudtLiveCellError,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
-import {
-  calculateWitnessSize,
-  getAddressCellDeps,
-  getIndexerCells,
-} from "../helper";
+import { getAddressCellDeps, getIndexerCells } from "../helper";
 
 /**
  * Parameters for creating a transaction to transfer xUDT assets.
@@ -57,9 +47,6 @@ export interface CreateTransferXudtTransactionParams {
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
  * @param {boolean} params.isMainnet - A boolean indicating whether the network is mainnet or testnet.
  * @param {string} [ckbAddress=params.ckbAddresses[0]] - The address for the output cell, defaulting to the first address in the input address set.
- * @param {bigint} [feeRate] - (Optional) The fee rate to be used for the transaction.
- * @param {bigint} [maxFee=MAX_FEE] - (Optional) The maximum fee allowed for the transaction. Defaults to `MAX_FEE`.
- * @param {number} [witnessLockPlaceholderSize] - (Optional) The size of the witness lock placeholder.
  *
  * @returns {Promise<CKBComponents.RawTransactionToSign>} A promise that resolves to an unsigned transaction object.
  *
@@ -75,9 +62,6 @@ export async function createTransferXudtTransaction(
     isMainnet,
   }: CreateTransferXudtTransactionParams,
   ckbAddress: string = ckbAddresses[0],
-  feeRate?: bigint,
-  maxFee: bigint = MAX_FEE,
-  witnessLockPlaceholderSize?: number,
 ): Promise<CKBComponents.RawTransactionToSign> {
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
@@ -104,7 +88,7 @@ export async function createTransferXudtTransaction(
 
   let sumXudtOutputCapacity = receivers
     .map(({ toAddress }) =>
-      calculateUdtCellCapacity(addressToScript(toAddress))
+      calculateUdtCellCapacity(addressToScript(toAddress)),
     )
     .reduce((prev, current) => prev + current, BigInt(0));
 
@@ -122,7 +106,6 @@ export async function createTransferXudtTransaction(
   console.debug("Sum XUDT Inputs Capacity:", sumXudtInputsCapacity);
   console.debug("Sum Amount:", sumAmount);
 
-  let actualInputsCapacity = sumXudtInputsCapacity;
   let inputs = udtInputs;
 
   const outputs: CKBComponents.CellOutput[] = receivers.map(
@@ -136,7 +119,7 @@ export async function createTransferXudtTransaction(
   );
 
   const outputsData = receivers.map(({ transferAmount }) =>
-    append0x(u128ToLe(transferAmount))
+    append0x(u128ToLe(transferAmount)),
   );
 
   console.debug("Outputs:", outputs);
@@ -159,49 +142,6 @@ export async function createTransferXudtTransaction(
     console.debug("Updated Outputs Data:", outputsData);
   }
 
-  const txFee = maxFee;
-
-  if (sumXudtInputsCapacity <= sumXudtOutputCapacity) {
-    let emptyCells = await getIndexerCells({
-      ckbAddresses,
-      collector,
-    });
-
-    console.debug("Fetched Empty Cells:", emptyCells);
-
-    emptyCells = emptyCells.filter((cell) => !cell.output.type);
-
-    if (!emptyCells || emptyCells.length === 0) {
-      throw new NoLiveCellError("The addresses have no empty cells");
-    }
-
-    const needCapacity = sumXudtOutputCapacity - sumXudtInputsCapacity;
-    const { inputs: emptyInputs, sumInputsCapacity: sumEmptyCapacity } =
-      collector.collectInputs(emptyCells, needCapacity, txFee, {
-        minCapacity: MIN_CAPACITY,
-      });
-    inputs = [...inputs, ...emptyInputs];
-    actualInputsCapacity += sumEmptyCapacity;
-
-    console.debug("Need Capacity:", needCapacity);
-    console.debug("Empty Inputs:", emptyInputs);
-    console.debug("Sum Empty Capacity:", sumEmptyCapacity);
-  }
-
-  let changeCapacity = actualInputsCapacity - sumXudtOutputCapacity;
-  outputs.push({
-    lock: addressToScript(ckbAddress),
-    capacity: append0x(changeCapacity.toString(16)),
-  });
-  outputsData.push("0x");
-
-  console.debug("Change Capacity:", changeCapacity);
-  console.debug("Updated Outputs:", outputs);
-  console.debug("Updated Outputs Data:", outputsData);
-
-  const emptyWitness = { lock: "", inputType: "", outputType: "" };
-  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
-
   const cellDeps = [
     ...(await getAddressCellDeps(isMainnet, ckbAddresses)),
     ...(await fetchTypeIdCellDeps(isMainnet, { xudt: true })),
@@ -216,25 +156,10 @@ export async function createTransferXudtTransaction(
     inputs,
     outputs,
     outputsData,
-    witnesses,
+    witnesses: [],
   };
 
   console.debug("Unsigned Transaction:", unsignedTx);
-
-  if (txFee === maxFee) {
-    const txSize = getTransactionSize(unsignedTx) +
-      (witnessLockPlaceholderSize ??
-        calculateWitnessSize(ckbAddress, isMainnet));
-    const estimatedTxFee = calculateTransactionFee(txSize, feeRate);
-    changeCapacity -= estimatedTxFee;
-    unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
-      changeCapacity.toString(16),
-    );
-    console.debug("Transaction Size:", txSize);
-    console.debug("Estimated Transaction Fee:", estimatedTxFee);
-    console.debug("Updated Change Capacity:", changeCapacity);
-    console.debug("Updated Unsigned Transaction:", unsignedTx);
-  }
 
   return unsignedTx;
 }

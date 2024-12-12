@@ -1,4 +1,3 @@
-import * as ccc from "@ckb-ccc/core";
 import {
   isAcpAddress,
   isOmnilockAddress,
@@ -10,26 +9,6 @@ import { addressToScript } from "@nervosnetwork/ckb-sdk-utils";
 import { BTCTestnetType, Collector, IndexerCell } from "@rgbpp-sdk/ckb";
 import { NetworkType } from "rgbpp";
 import { BtcAssetsApi, DataSource } from "rgbpp";
-import { convertToTxSkeleton } from "./convert";
-
-/**
- * Signs and sends a transaction.
- * @param {CKBComponents.RawTransactionToSign} transaction - The raw transaction to sign.
- * @param {Collector} collector - The collector instance.
- * @param {ccc.Signer} cccSigner - The signer instance.
- * @returns {Promise<{ txHash: string }>} A promise that resolves to the transaction hash.
- */
-export const signAndSendTransaction = async (
-  transaction: CKBComponents.RawTransactionToSign,
-  collector: Collector,
-  cccSigner: ccc.Signer,
-): Promise<{ txHash: string }> => {
-  const txSkeleton = await convertToTxSkeleton(transaction, collector);
-  const txHash = await cccSigner.sendTransaction(
-    ccc.Transaction.fromLumosSkeleton(txSkeleton),
-  );
-  return { txHash };
-};
 
 interface BaseUserToSignInput {
   index: number;
@@ -263,14 +242,14 @@ export async function getAddressCellDeps(
   const cellDeps: CKBComponents.CellDep[] = [];
 
   const isOmnilock = ckbAddresses.some((address) =>
-    isOmnilockAddress(address, config)
+    isOmnilockAddress(address, config),
   );
   const isAcp = ckbAddresses.some((address) => isAcpAddress(address, config));
   const isSecp = ckbAddresses.some((address) =>
-    isSecp256k1Blake160Address(address, config)
+    isSecp256k1Blake160Address(address, config),
   );
   const isSecpMult = ckbAddresses.some((address) =>
-    isSecp256k1Blake160MultisigAddress(address, config)
+    isSecp256k1Blake160MultisigAddress(address, config),
   );
 
   if (isOmnilock) {

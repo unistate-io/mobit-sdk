@@ -53,23 +53,17 @@ export interface LeapSporeToBtcTransactionParams {
  * @param {Collector} params.collector - The collector instance.
  * @param {string} params.ckbAddress - The CKB address.
  * @param {BTCTestnetType} [params.btcTestnetType] - (Optional) The type of BTC testnet.
- * @param {bigint} [feeRate] - (Optional) The fee rate for the transaction.
- * @param {number} [witnessLockPlaceholderSize] - (Optional) The size of the witness lock placeholder.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} A promise that resolves to the unsigned raw transaction to sign.
  */
-export const leapSporeFromCkbToBtcTransaction = async (
-  {
-    outIndex,
-    btcTxId,
-    sporeTypeArgs,
-    isMainnet,
-    collector,
-    ckbAddress,
-    btcTestnetType,
-  }: LeapSporeToBtcTransactionParams,
-  feeRate?: bigint,
-  witnessLockPlaceholderSize?: number,
-): Promise<CKBComponents.RawTransactionToSign> => {
+export const leapSporeFromCkbToBtcTransaction = async ({
+  outIndex,
+  btcTxId,
+  sporeTypeArgs,
+  isMainnet,
+  collector,
+  ckbAddress,
+  btcTestnetType,
+}: LeapSporeToBtcTransactionParams): Promise<CKBComponents.RawTransactionToSign> => {
   const toRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
 
   const sporeType: CKBComponents.Script = {
@@ -84,18 +78,17 @@ export const leapSporeFromCkbToBtcTransaction = async (
     sporeTypeBytes: serializeScript(sporeType),
     isMainnet,
     btcTestnetType,
-    ckbFeeRate: feeRate,
-    witnessLockPlaceholderSize,
+    ckbFeeRate: BigInt(0),
+    witnessLockPlaceholderSize: 0,
   });
 
-  const emptyWitness = { lock: "", inputType: "", outputType: "" };
   const unsignedTx: CKBComponents.RawTransactionToSign = {
     ...ckbRawTx,
     cellDeps: [
       ...ckbRawTx.cellDeps,
       ...(await getAddressCellDeps(isMainnet, [ckbAddress])),
     ],
-    witnesses: [emptyWitness, ...ckbRawTx.witnesses.slice(1)],
+    witnesses: [],
   };
 
   return unsignedTx;

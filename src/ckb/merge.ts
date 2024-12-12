@@ -1,26 +1,17 @@
-import {
-  addressToScript,
-  getTransactionSize,
-} from "@nervosnetwork/ckb-sdk-utils";
+import { addressToScript } from "@nervosnetwork/ckb-sdk-utils";
 import {
   append0x,
-  calculateTransactionFee,
   calculateUdtCellCapacity,
   Collector,
   fetchTypeIdCellDeps,
   getXudtTypeScript,
   IndexerCell,
   leToU128,
-  MAX_FEE,
   NoXudtLiveCellError,
   remove0x,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
-import {
-  calculateWitnessSize,
-  getAddressCellDeps,
-  getIndexerCells,
-} from "../helper";
+import { getAddressCellDeps, getIndexerCells } from "../helper";
 
 /**
  * Parameters for creating a merged xUDT transaction.
@@ -52,9 +43,6 @@ export interface CreateMergeXudtTransactionParams {
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
  * @param {boolean} params.isMainnet - A boolean indicating whether the transaction is for the mainnet or testnet.
  * @param {string} [ckbAddress=params.ckbAddresses[0]] - The address for the output cell, defaulting to the first address in the input address set.
- * @param {bigint} [feeRate] - The fee rate for the transaction, optional.
- * @param {bigint} [maxFee=MAX_FEE] - The maximum fee for the transaction, defaulting to MAX_FEE.
- * @param {number} [witnessLockPlaceholderSize] - The size of the witness lock placeholder, optional.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} An unsigned transaction object.
  */
 export async function createMergeXudtTransaction(
@@ -65,9 +53,6 @@ export async function createMergeXudtTransaction(
     isMainnet,
   }: CreateMergeXudtTransactionParams,
   ckbAddress: string = ckbAddresses[0],
-  feeRate?: bigint,
-  maxFee: bigint = MAX_FEE,
-  witnessLockPlaceholderSize?: number,
 ): Promise<CKBComponents.RawTransactionToSign> {
   const fromLock = addressToScript(ckbAddress);
   const xudtType: CKBComponents.Script = {
@@ -97,7 +82,6 @@ export async function createMergeXudtTransaction(
     sumAmount,
   } = collectAllUdtInputs(xudtCells);
 
-  const actualInputsCapacity = sumInputsCapacity;
   const inputs = udtInputs;
 
   console.debug("Collected inputs:", inputs);
@@ -114,33 +98,6 @@ export async function createMergeXudtTransaction(
   ];
   const outputsData: string[] = [append0x(u128ToLe(sumAmount))];
 
-  const sumXudtOutputCapacity = mergedXudtCapacity;
-
-  console.debug("Merged XUDT capacity:", mergedXudtCapacity);
-  console.debug("Updated outputs:", outputs);
-  console.debug("Updated outputs data:", outputsData);
-
-  const txFee = maxFee;
-  if (sumInputsCapacity <= sumXudtOutputCapacity) {
-    throw new Error(
-      "Thetotal input capacity is less than or equal to the total output capacity, which is not possible in a merge function.",
-    );
-  }
-
-  let changeCapacity = actualInputsCapacity - sumXudtOutputCapacity;
-  outputs.push({
-    lock: fromLock,
-    capacity: append0x(changeCapacity.toString(16)),
-  });
-  outputsData.push("0x");
-
-  console.debug("Change Capacity:", changeCapacity);
-  console.debug("Updated Outputs:", outputs);
-  console.debug("Updated Outputs Data:", outputsData);
-
-  const emptyWitness = { lock: "", inputType: "", outputType: "" };
-  const witnesses = inputs.map((_, index) => index === 0 ? emptyWitness : "0x");
-
   const cellDeps = [
     ...(await getAddressCellDeps(isMainnet, ckbAddresses)),
     ...(await fetchTypeIdCellDeps(isMainnet, { xudt: true })),
@@ -153,26 +110,10 @@ export async function createMergeXudtTransaction(
     inputs,
     outputs,
     outputsData,
-    witnesses,
+    witnesses: [],
   };
 
   console.debug("Unsigned transaction:", unsignedTx);
-
-  if (txFee === maxFee) {
-    const txSize = getTransactionSize(unsignedTx) +
-      (witnessLockPlaceholderSize ??
-        calculateWitnessSize(ckbAddress, isMainnet));
-    const estimatedTxFee = calculateTransactionFee(txSize, feeRate);
-    changeCapacity -= estimatedTxFee;
-    unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
-      changeCapacity.toString(16),
-    );
-
-    console.debug("Transaction size:", txSize);
-    console.debug("Estimated transaction fee:", estimatedTxFee);
-    console.debug("Updated change capacity:", changeCapacity);
-    console.debug("Updated unsigned transaction:", unsignedTx);
-  }
 
   return unsignedTx;
 }

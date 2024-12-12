@@ -1,255 +1,126 @@
-import * as BaseComponents from "@ckb-lumos/base";
-import {
-  bytes,
-  createFixedBytesCodec,
-  molecule,
-  number,
-} from "@ckb-lumos/codec";
-import { BytesLike, FixedBytesCodec } from "@ckb-lumos/codec/lib/base";
-import {
-  TransactionSkeleton,
-  TransactionSkeletonType,
-} from "@ckb-lumos/helpers";
-import { Collector } from "@rgbpp-sdk/ckb";
+import { ccc, hexFrom } from "@ckb-ccc/core";
+import { ClientCollectableSearchKeyFilterLike } from "@ckb-ccc/core/dist.commonjs/advancedBarrel";
 
 /**
- * Converts a CKBComponents.CellDep to BaseComponents.CellDep.
- * @param {CKBComponents.CellDep} cellDep - The cell dependency to convert.
- * @returns {BaseComponents.CellDep} The converted cell dependency.
+ * Converts a CKBComponents.RawTransactionToSign to a CKBComponents.RawTransaction.
+ * @param {CKBComponents.RawTransactionToSign} rawTransactionToSign - The raw transaction to sign to convert.
+ * @returns {CKBComponents.RawTransaction} The converted raw transaction.
  */
-function convertCellDep(
-  cellDep: CKBComponents.CellDep,
-): BaseComponents.CellDep {
+function convertToRawTransaction(
+  rawTransactionToSign: CKBComponents.RawTransactionToSign,
+): CKBComponents.RawTransaction {
+  const witnesses: CKBComponents.Witness[] = rawTransactionToSign.witnesses.map(
+    (witness) => {
+      if (typeof witness === "string") {
+        return witness;
+      } else {
+        return convertToWitness(witness);
+      }
+    },
+  );
+
+  return {
+    version: rawTransactionToSign.version,
+    cellDeps: rawTransactionToSign.cellDeps,
+    headerDeps: rawTransactionToSign.headerDeps,
+    inputs: rawTransactionToSign.inputs,
+    outputs: rawTransactionToSign.outputs,
+    outputsData: rawTransactionToSign.outputsData,
+    witnesses,
+  };
+}
+
+function convertToWitness(
+  witnessArgs: CKBComponents.WitnessArgs,
+): CKBComponents.Witness {
+  const bytes = ccc.WitnessArgs.from(witnessArgs).toBytes();
+  return Buffer.from(bytes).toString("hex");
+}
+
+/**
+ * Converts a CKBComponents.OutPoint to a ccc.OutPointLike.
+ * @param {CKBComponents.OutPoint} outPoint - The out point to convert.
+ * @returns {ccc.OutPointLike} The converted out point.
+ */
+function convertToOutPointLike(
+  outPoint: CKBComponents.OutPoint,
+): ccc.OutPointLike {
+  return {
+    txHash: hexFrom(outPoint.txHash),
+    index: hexFrom(outPoint.index),
+  };
+}
+
+/**
+ * Converts a CKBComponents.CellDep to a ccc.CellDepLike.
+ * @param {CKBComponents.CellDep} cellDep - The cell dep to convert.
+ * @returns {ccc.CellDepLike} The converted cell dep.
+ */
+function convertToCellDepLike(cellDep: CKBComponents.CellDep): ccc.CellDepLike {
   if (!cellDep.outPoint) {
-    throw new Error("CellDep outPoint is required but was not provided.");
+    throw new Error("CellDep is missing required field: outPoint");
   }
   return {
-    outPoint: cellDep.outPoint,
+    outPoint: convertToOutPointLike(cellDep.outPoint),
     depType: cellDep.depType,
   };
 }
 
 /**
- * Converts a CKBComponents.CellOutput to BaseComponents.Output.
- * @param {CKBComponents.CellOutput} cellOutput - The cell output to convert.
- * @returns {BaseComponents.Output} The converted cell output.
- */
-function convertCellOutput(
-  cellOutput: CKBComponents.CellOutput,
-): BaseComponents.Output {
-  return {
-    capacity: cellOutput.capacity,
-    lock: cellOutput.lock,
-    type: cellOutput.type ? cellOutput.type : undefined,
-  };
-}
-
-/**
- * Converts a CKBComponents.CellInput to BaseComponents.Input.
+ * Converts a CKBComponents.CellInput to a ccc.CellInputLike.
  * @param {CKBComponents.CellInput} cellInput - The cell input to convert.
- * @returns {BaseComponents.Input} The converted cell input.
+ * @returns {ccc.CellInputLike} The converted cell input.
  */
-function convertCellInput(
+function convertToCellInputLike(
   cellInput: CKBComponents.CellInput,
-): BaseComponents.Input {
+): ccc.CellInputLike {
   if (!cellInput.previousOutput) {
-    throw new Error(
-      "CellInput previousOutput is required but was not provided.",
-    );
+    throw new Error("CellInput is missing required field: previousOutput");
   }
   return {
-    previousOutput: cellInput.previousOutput,
-    since: cellInput.since,
+    previousOutput: convertToOutPointLike(cellInput.previousOutput),
+    since: cellInput.since ? hexFrom(cellInput.since) : undefined,
   };
 }
 
-/**
- * Converts a CKBComponents.LiveCell to BaseComponents.Cell.
- * @param {CKBComponents.LiveCell} liveCell - The live cell to convert.
- * @param {BaseComponents.OutPoint} outPoint - The outpoint of the live cell.
- * @returns {BaseComponents.Cell} The converted live cell.
- */
-function convertLiveCell(
-  liveCell: CKBComponents.LiveCell,
-  outPoint: BaseComponents.OutPoint,
-): BaseComponents.Cell {
+function ConvertToTransactionLike(
+  rawTransaction: CKBComponents.RawTransaction,
+): ccc.TransactionLike {
   return {
-    cellOutput: convertCellOutput(liveCell.output),
-    data: liveCell.data ? liveCell.data.content : "",
-    outPoint,
+    version: rawTransaction.version,
+    cellDeps: rawTransaction.cellDeps.map(convertToCellDepLike),
+    headerDeps: rawTransaction.headerDeps.map(hexFrom),
+    inputs: rawTransaction.inputs.map(convertToCellInputLike),
+    outputs: rawTransaction.outputs.map((output) => ({
+      capacity: output.capacity,
+      lock: {
+        args: hexFrom(output.lock.args),
+        codeHash: hexFrom(output.lock.codeHash),
+        hashType: output.lock.hashType,
+      },
+      type: output.type
+        ? {
+            args: hexFrom(output.type.args),
+            codeHash: hexFrom(output.type.codeHash),
+            hashType: output.type.hashType,
+          }
+        : null,
+    })),
+    outputsData: rawTransaction.outputsData.map(hexFrom),
+    witnesses: rawTransaction.witnesses.map(hexFrom),
   };
 }
 
-const { table, option, vector, byteVecOf } = molecule;
-
-const { Uint8 } = number;
-
-const { bytify, hexify } = bytes;
-
 /**
- * Creates a fixed hex bytes codec.
- * @param {number} byteLength - The length of the bytes.
- * @returns {FixedBytesCodec<string, BytesLike>} The fixed bytes codec.
+ * Converts a CKBComponents.RawTransactionToSign to a ccc.Transaction.
+ * @param {CKBComponents.RawTransactionToSign} rawTransactionToSign - The raw transaction to sign to convert.
+ * @returns {ccc.Transaction} The converted transaction object.
  */
-function createFixedHexBytesCodec(
-  byteLength: number,
-): FixedBytesCodec<string, BytesLike> {
-  return createFixedBytesCodec({
-    byteLength,
-    pack: (hex) => bytify(hex),
-    unpack: (buf) => hexify(buf),
-  });
-}
-
-const Bytes = byteVecOf({ pack: bytify, unpack: hexify });
-
-const BytesOpt = option(Bytes);
-const Byte32 = createFixedHexBytesCodec(32);
-
-const Script = table(
-  {
-    codeHash: Byte32,
-    hashType: Uint8,
-    args: Bytes,
-  },
-  ["codeHash", "hashType", "args"],
-);
-const ScriptOpt = option(Script);
-const ScriptVecOpt = option(vector(Script));
-
-const xudtWitnessType = table(
-  {
-    owner_script: ScriptOpt,
-    owner_signature: BytesOpt,
-    raw_extension_data: ScriptVecOpt,
-    extension_data: vector(Bytes),
-  },
-  ["owner_script", "owner_signature", "raw_extension_data", "extension_data"],
-);
-
-const EMPTY_WITNESS: string = (() => {
-  /* 65-byte zeros in hex */
-  const lockWitness =
-    "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-
-  const inputTypeWitness = xudtWitnessType.pack({ extension_data: [] });
-  const outputTypeWitness = xudtWitnessType.pack({ extension_data: [] });
-  const witnessArgs = BaseComponents.blockchain.WitnessArgs.pack({
-    lock: lockWitness,
-    inputType: inputTypeWitness,
-    outputType: outputTypeWitness,
-  });
-  return bytes.hexify(witnessArgs);
-})();
-
-/**
- * Converts a raw transaction to a transaction skeleton.
- * @param {CKBComponents.RawTransactionToSign} rawTransaction - The raw transaction to convert.
- * @param {Collector} collector - The collector instance.
- * @returns {Promise<TransactionSkeletonType>} The transaction skeleton.
- */
-export async function convertToTxSkeleton(
-  rawTransaction: CKBComponents.RawTransactionToSign,
-  collector: Collector,
-): Promise<TransactionSkeletonType> {
-  console.debug("Starting conversion to TransactionSkeleton");
-
-  console.debug("Mapping rawTransaction to transaction object");
-  const transaction: import("@ckb-lumos/base").Transaction = {
-    ...rawTransaction,
-    witnesses: rawTransaction.witnesses.map((witness) => {
-      console.debug(
-        `Processing witness: ${
-          typeof witness === "string" ? witness : "non-string witness"
-        }`,
-      );
-      return typeof witness === "string" ? witness : EMPTY_WITNESS;
-    }),
-    inputs: rawTransaction.inputs.map((input) => {
-      console.debug(`Converting cell input: ${JSON.stringify(input)}`);
-      return convertCellInput(input);
-    }),
-    outputs: rawTransaction.outputs.map((output) => {
-      console.debug(`Converting cell output: ${JSON.stringify(output)}`);
-      return convertCellOutput(output);
-    }),
-    cellDeps: rawTransaction.cellDeps.map((cellDep) => {
-      console.debug(`Converting cell dep: ${JSON.stringify(cellDep)}`);
-      return convertCellDep(cellDep);
-    }),
-  };
-
-  console.debug("Initializing TransactionSkeleton");
-  let txSkeleton = TransactionSkeleton();
-
-  console.debug("Updating cellDeps and headerDeps in TransactionSkeleton");
-  txSkeleton = txSkeleton
-    .update("cellDeps", (cellDeps) => {
-      console.debug(`Adding cellDeps: ${JSON.stringify(transaction.cellDeps)}`);
-      return cellDeps.push(...transaction.cellDeps);
-    })
-    .update("headerDeps", (headerDeps) => {
-      console.debug(
-        `Adding headerDeps: ${JSON.stringify(transaction.headerDeps)}`,
-      );
-      return headerDeps.push(...transaction.headerDeps);
-    });
-
-  console.debug("Fetching input cells");
-  const inputCells = (
-    await collector.getLiveCells(
-      transaction.inputs.map((input) => input.previousOutput),
-      true,
-    )
-  ).map((cell, idx) => {
-    return convertLiveCell(cell, transaction.inputs[idx].previousOutput);
-  });
-
-  console.debug("Updating inputs in TransactionSkeleton");
-  txSkeleton = txSkeleton.update("inputs", (inputs) => {
-    console.debug(`Adding inputCells: ${JSON.stringify(inputCells)}`);
-    return inputs.push(...inputCells);
-  });
-
-  console.debug("Updating inputSinces in TransactionSkeleton");
-  txSkeleton = txSkeleton.update("inputSinces", (inputSinces) => {
-    console.debug("Mapping inputSinces");
-    return transaction.inputs.reduce((map, input, i) => {
-      console.debug(`Setting since for input at index ${i}: ${input.since}`);
-      return map.set(i, input.since);
-    }, inputSinces);
-  });
-
-  console.debug("Mapping output cells");
-  const outputCells: Array<BaseComponents.Cell> = transaction.outputs.map(
-    (output, index) => {
-      console.debug(
-        `Creating output cell for output at index ${index}: ${
-          JSON.stringify(
-            output,
-          )
-        }`,
-      );
-      return {
-        cellOutput: output,
-        data: transaction.outputsData[index] ?? "0x",
-      };
-    },
-  );
-
-  console.debug("Updating outputs and witnesses in TransactionSkeleton");
-  txSkeleton = txSkeleton
-    .update("outputs", (outputs) => {
-      console.debug(`Adding outputCells: ${JSON.stringify(outputCells)}`);
-      return outputs.push(...outputCells);
-    })
-    .update("witnesses", (witnesses) => {
-      console.debug(
-        `Adding witnesses: ${JSON.stringify(transaction.witnesses)}`,
-      );
-      return witnesses.push(...transaction.witnesses);
-    });
-
-  console.debug("Conversion to TransactionSkeleton completed");
-  return txSkeleton;
+export function convertToTransaction(
+  rawTransactionToSign: CKBComponents.RawTransactionToSign,
+): ccc.Transaction {
+  const rawTransaction = convertToRawTransaction(rawTransactionToSign);
+  const transactionLike = ConvertToTransactionLike(rawTransaction);
+  const tx = ccc.Transaction.from(transactionLike);
+  return tx;
 }

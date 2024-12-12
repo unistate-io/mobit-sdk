@@ -1,20 +1,15 @@
 import * as ccc from "@ckb-ccc/core";
-import {
-  addressToScript,
-  getTransactionSize,
-} from "@nervosnetwork/ckb-sdk-utils";
+import { addressToScript } from "@nervosnetwork/ckb-sdk-utils";
 import {
   append0x,
   appendCkbTxWitnesses,
   BTCTestnetType,
   buildRgbppLockArgs,
   calculateRgbppClusterCellCapacity,
-  calculateTransactionFee,
   Collector,
   genCreateClusterCkbVirtualTx,
   generateClusterCreateCoBuild,
   genRgbppLockScript,
-  MAX_FEE,
   NoLiveCellError,
   RawClusterData,
   sendCkbTx,
@@ -22,16 +17,11 @@ import {
 } from "@rgbpp-sdk/ckb";
 import { BtcApiUtxo } from "@rgbpp-sdk/service";
 import { BtcAssetsApi, DataSource, sendRgbppUtxos } from "rgbpp";
-import {
-  AbstractWallet,
-  calculateWitnessSize,
-  getAddressCellDeps,
-  signAndSendTransaction,
-  TxResult,
-} from "../helper";
+import { AbstractWallet, getAddressCellDeps, TxResult } from "../helper";
 import { signAndSendPsbt } from "../wallet";
 import { bitcoin } from "@rgbpp-sdk/btc";
 import { fetchAndFilterUtxos } from "./launcher";
+import { convertToTransaction } from "../convert";
 
 interface prepareClusterCellParams {
   outIndex: number;
@@ -43,20 +33,15 @@ interface prepareClusterCellParams {
   btcTestnetType?: BTCTestnetType;
 }
 
-const prepareClusterCell = async (
-  {
-    outIndex,
-    btcTxId,
-    ckbAddress,
-    clusterData,
-    collector,
-    isMainnet,
-    btcTestnetType,
-  }: prepareClusterCellParams,
-  maxFee = MAX_FEE,
-  ckbFeeRate?: bigint,
-  witnessLockPlaceholderSize?: number,
-): Promise<CKBComponents.RawTransactionToSign> => {
+const prepareClusterCell = async ({
+  outIndex,
+  btcTxId,
+  ckbAddress,
+  clusterData,
+  collector,
+  isMainnet,
+  btcTestnetType,
+}: prepareClusterCellParams): Promise<CKBComponents.RawTransactionToSign> => {
   const masterLock = addressToScript(ckbAddress);
   console.log("ckb address: ", ckbAddress);
 
@@ -71,11 +56,10 @@ const prepareClusterCell = async (
   }
   emptyCells = emptyCells.filter((cell) => !cell.output.type);
 
-  const txFee = maxFee;
-  const { inputs, sumInputsCapacity } = collector.collectInputs(
+  const { inputs } = collector.collectInputs(
     emptyCells,
     clusterCellCapacity,
-    txFee,
+    BigInt(0),
   );
 
   const outputs: CKBComponents.CellOutput[] = [
@@ -88,17 +72,7 @@ const prepareClusterCell = async (
       capacity: append0x(clusterCellCapacity.toString(16)),
     },
   ];
-  let changeCapacity = sumInputsCapacity - clusterCellCapacity;
-  outputs.push({
-    lock: masterLock,
-    capacity: append0x(changeCapacity.toString(16)),
-  });
-  const outputsData = ["0x", "0x"];
-
-  const emptyWitness = { lock: "", inputType: "", outputType: "" };
-  const witnesses = inputs.map((_, index) =>
-    index === 0 ? emptyWitness : "0x",
-  );
+  const outputsData = ["0x"];
 
   const cellDeps = [...(await getAddressCellDeps(isMainnet, [ckbAddress]))];
 
@@ -109,17 +83,8 @@ const prepareClusterCell = async (
     inputs,
     outputs,
     outputsData,
-    witnesses,
+    witnesses: [],
   };
-
-  const txSize =
-    getTransactionSize(unsignedTx) +
-    (witnessLockPlaceholderSize ?? calculateWitnessSize(ckbAddress, isMainnet));
-  const estimatedTxFee = calculateTransactionFee(txSize, ckbFeeRate);
-  changeCapacity -= estimatedTxFee;
-  unsignedTx.outputs[unsignedTx.outputs.length - 1].capacity = append0x(
-    changeCapacity.toString(16),
-  );
 
   return unsignedTx;
 };
@@ -309,7 +274,6 @@ export interface createClusterCombinedParams {
  * @param {(utxos: BtcApiUtxo[]) => Promise<{ outIndex: number; btcTxId: string }>} params.filterUtxo - Function to filter UTXOs for the BTC transaction.
  * @param {ccc.Signer} params.cccSigner - Signer instance for signing CKB transactions.
  * @param {bigint} [ckbFeeRate] - Fee rate for the CKB transaction (optional).
- * @param {bigint} [maxFee=MAX_FEE] - Maximum fee for the CKB transaction (default is MAX_FEE).
  * @param {number} [btcFeeRate=30] - Fee rate for the BTC transaction (default is 30).
  * @returns {Promise<TxResult>} - Promise that resolves to the transaction result.
  */
@@ -329,9 +293,7 @@ export const createClusterCombined = async (
     cccSigner,
   }: createClusterCombinedParams,
   ckbFeeRate?: bigint,
-  maxFee: bigint = MAX_FEE,
   btcFeeRate: number = 30,
-  witnessLockPlaceholderSize?: number,
 ): Promise<TxResult> => {
   const { outIndex, btcTxId } = await fetchAndFilterUtxos(
     fromBtcAccount,
@@ -339,8 +301,8 @@ export const createClusterCombined = async (
     btcService,
   );
 
-  const prepareClusterCellTx = await prepareClusterCell(
-    {
+  const prepareClusterCellTx = convertToTransaction(
+    await prepareClusterCell({
       outIndex,
       btcTxId,
       clusterData,
@@ -348,17 +310,12 @@ export const createClusterCombined = async (
       collector,
       isMainnet,
       btcTestnetType,
-    },
-    maxFee,
-    ckbFeeRate,
-    witnessLockPlaceholderSize,
+    }),
   );
 
-  const { txHash } = await signAndSendTransaction(
-    prepareClusterCellTx,
-    collector,
-    cccSigner,
-  );
+  await prepareClusterCellTx.completeFeeBy(cccSigner, ckbFeeRate);
+
+  const txHash = await cccSigner.sendTransaction(prepareClusterCellTx);
 
   console.info(
     `Create Cluster cell has been created and the CKB tx hash ${txHash}`,
@@ -438,9 +395,6 @@ export interface PrepareClusterCellTransactionParams {
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {number} params.outIndex - Output index of the BTC transaction.
  * @param {string} params.btcTxId - ID of the BTC transaction.
- * @param {bigint} [maxFee=MAX_FEE] - Maximum fee for the CKB transaction (default is MAX_FEE).
- * @param {bigint} [ckbFeeRate] - Fee rate for the CKB transaction (optional).
- * @param {number} [witnessLockPlaceholderSize] - Size of the witness lock placeholder (optional).
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - Promise that resolves to the prepared CKB transaction.
  * --------------------------------------------
  * **Note: Example of fetching and filtering UTXOs:**
@@ -453,34 +407,24 @@ export interface PrepareClusterCellTransactionParams {
  * ```
  * This example demonstrates how to obtain the necessary parameters (`outIndex` and `btcTxId`) by fetching and filtering UTXOs.
  */
-export const prepareClusterCellTransaction = async (
-  {
-    ckbAddress,
+export const prepareClusterCellTransaction = async ({
+  ckbAddress,
+  clusterData,
+  collector,
+  isMainnet,
+  btcTestnetType,
+  outIndex,
+  btcTxId,
+}: PrepareClusterCellTransactionParams): Promise<CKBComponents.RawTransactionToSign> => {
+  const prepareClusterCellTx = await prepareClusterCell({
+    outIndex,
+    btcTxId,
     clusterData,
+    ckbAddress,
     collector,
     isMainnet,
     btcTestnetType,
-    outIndex,
-    btcTxId,
-  }: PrepareClusterCellTransactionParams,
-  maxFee: bigint = MAX_FEE,
-  ckbFeeRate?: bigint,
-  witnessLockPlaceholderSize?: number,
-): Promise<CKBComponents.RawTransactionToSign> => {
-  const prepareClusterCellTx = await prepareClusterCell(
-    {
-      outIndex,
-      btcTxId,
-      clusterData,
-      ckbAddress,
-      collector,
-      isMainnet,
-      btcTestnetType,
-    },
-    maxFee,
-    ckbFeeRate,
-    witnessLockPlaceholderSize,
-  );
+  });
 
   return prepareClusterCellTx;
 };
