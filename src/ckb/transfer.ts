@@ -5,7 +5,6 @@ import {
   Collector,
   fetchTypeIdCellDeps,
   getXudtTypeScript,
-  NoLiveCellError,
   NoXudtLiveCellError,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
@@ -144,7 +143,9 @@ export async function createTransferXudtTransaction(
 
   const cellDeps = [
     ...(await getAddressCellDeps(isMainnet, ckbAddresses)),
-    ...(await fetchTypeIdCellDeps(isMainnet, { xudt: true })),
+    ...(isICKB(xudtArgs)
+      ? [getICKBCellDep(isMainnet)]
+      : await fetchTypeIdCellDeps(isMainnet, { xudt: true })),
   ];
 
   console.debug("Cell Deps:", cellDeps);
@@ -162,4 +163,34 @@ export async function createTransferXudtTransaction(
   console.debug("Unsigned Transaction:", unsignedTx);
 
   return unsignedTx;
+}
+
+const ICKB_ARGS =
+  "0xb73b6ab39d79390c6de90a09c96b290c331baf1798ed6f97aed02590929734e800000080";
+
+function isICKB(xudtArgs: string): boolean {
+  return xudtArgs === ICKB_ARGS;
+}
+
+const ICKB_CELL_DEP = {
+  mainnet: {
+    outPoint: {
+      txHash:
+        "0x621a6f38de3b9f453016780edac3b26bfcbfa3e2ecb47c2da275471a5d3ed165",
+      index: "0x0",
+    },
+    depType: "depGroup",
+  },
+  testnet: {
+    outPoint: {
+      txHash:
+        "0xf7ece4fb33d8378344cab11fcd6a4c6f382fd4207ac921cf5821f30712dcd311",
+      index: "0x0",
+    },
+    depType: "depGroup",
+  },
+} as const;
+
+function getICKBCellDep(isMainnet: boolean): CKBComponents.CellDep {
+  return isMainnet ? ICKB_CELL_DEP.mainnet : ICKB_CELL_DEP.testnet;
 }
