@@ -6,7 +6,6 @@ import {
   getXudtTypeScript,
   serializeScript,
 } from "@rgbpp-sdk/ckb";
-import { getAddressCellDeps } from "../helper";
 
 /**
  * Interface for parameters required for the leap from CKB to BTC transaction.
@@ -95,10 +94,7 @@ export const leapFromCkbToBtcTransaction = async ({
 
   const unsignedTx: CKBComponents.RawTransactionToSign = {
     ...ckbRawTx,
-    cellDeps: [
-      ...ckbRawTx.cellDeps,
-      ...(await getAddressCellDeps(isMainnet, [ckbAddress])),
-    ],
+    cellDeps: [...ckbRawTx.cellDeps],
     witnesses: [],
   };
 

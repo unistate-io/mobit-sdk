@@ -11,7 +11,7 @@ import {
   remove0x,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
-import { getAddressCellDeps, getIndexerCells } from "../helper";
+import { getIndexerCells } from "../helper";
 
 /**
  * Parameters for creating a merged xUDT transaction.
@@ -98,10 +98,7 @@ export async function createMergeXudtTransaction(
   ];
   const outputsData: string[] = [append0x(u128ToLe(sumAmount))];
 
-  const cellDeps = [
-    ...(await getAddressCellDeps(isMainnet, ckbAddresses)),
-    ...(await fetchTypeIdCellDeps(isMainnet, { xudt: true })),
-  ];
+  const cellDeps = [...(await fetchTypeIdCellDeps(isMainnet, { xudt: true }))];
 
   const unsignedTx: CKBComponents.RawTransactionToSign = {
     version: "0x0",

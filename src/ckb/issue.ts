@@ -14,7 +14,6 @@ import {
   RgbppTokenInfo,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
-import { getAddressCellDeps } from "../helper";
 
 /**
  * Interface for parameters required to create an issue xUDT transaction.
@@ -149,7 +148,6 @@ export async function createIssueXudtTransaction({
 
   // Define the cell dependencies and add debug information
   const cellDeps = [
-    ...(await getAddressCellDeps(isMainnet, [ckbAddress])),
     ...(await fetchTypeIdCellDeps(isMainnet, { xudt: true, unique: true })),
   ];
   console.debug("Defined cell dependencies:", cellDeps);

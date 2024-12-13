@@ -3,14 +3,11 @@ import {
   append0x,
   calculateUdtCellCapacity,
   Collector,
-  fetchTypeIdCellDeps,
   getXudtTypeScript,
-  MIN_CAPACITY,
-  NoLiveCellError,
   NoXudtLiveCellError,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
-import { getAddressCellDeps } from "../helper";
+import { getCellDeps } from "../helper";
 
 /**
  * Interface for parameters required to create a burn transaction for xUDT assets.
@@ -119,10 +116,7 @@ export async function createBurnXudtTransaction({
     console.debug("Updated outputs data:", outputsData);
   }
 
-  const cellDeps = [
-    ...(await getAddressCellDeps(isMainnet, [ckbAddress])),
-    ...(await fetchTypeIdCellDeps(isMainnet, { xudt: true })),
-  ];
+  const cellDeps = [...(await getCellDeps(isMainnet, xudtArgs))];
 
   const unsignedTx: CKBComponents.RawTransactionToSign = {
     version: "0x0",
@@ -137,4 +131,7 @@ export async function createBurnXudtTransaction({
   console.debug("Unsigned transaction:", unsignedTx);
 
   return unsignedTx;
+}
+function getICKBCellDep(isMainnet: boolean) {
+  throw new Error("Function not implemented.");
 }

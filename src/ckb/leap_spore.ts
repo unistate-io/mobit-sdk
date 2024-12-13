@@ -6,7 +6,6 @@ import {
   getSporeTypeScript,
   serializeScript,
 } from "@rgbpp-sdk/ckb";
-import { getAddressCellDeps } from "../helper";
 
 /**
  * Interface for parameters required to leap a spore from CKB to BTC.
@@ -84,10 +83,7 @@ export const leapSporeFromCkbToBtcTransaction = async ({
 
   const unsignedTx: CKBComponents.RawTransactionToSign = {
     ...ckbRawTx,
-    cellDeps: [
-      ...ckbRawTx.cellDeps,
-      ...(await getAddressCellDeps(isMainnet, [ckbAddress])),
-    ],
+    cellDeps: [...ckbRawTx.cellDeps],
     witnesses: [],
   };
 

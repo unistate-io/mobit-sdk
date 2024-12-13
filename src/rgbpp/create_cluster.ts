@@ -17,7 +17,7 @@ import {
 } from "@rgbpp-sdk/ckb";
 import { BtcApiUtxo } from "@rgbpp-sdk/service";
 import { BtcAssetsApi, DataSource, sendRgbppUtxos } from "rgbpp";
-import { AbstractWallet, getAddressCellDeps, TxResult } from "../helper";
+import { AbstractWallet, TxResult } from "../helper";
 import { signAndSendPsbt } from "../wallet";
 import { bitcoin } from "@rgbpp-sdk/btc";
 import { fetchAndFilterUtxos } from "./launcher";
@@ -74,11 +74,9 @@ const prepareClusterCell = async ({
   ];
   const outputsData = ["0x"];
 
-  const cellDeps = [...(await getAddressCellDeps(isMainnet, [ckbAddress]))];
-
   const unsignedTx = {
     version: "0x0",
-    cellDeps,
+    cellDeps: [],
     headerDeps: [],
     inputs,
     outputs,

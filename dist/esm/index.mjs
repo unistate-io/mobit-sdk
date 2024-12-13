@@ -1,5 +1,3 @@
-import * as __WEBPACK_EXTERNAL_MODULE__ckb_lumos_common_scripts_lib_helper__ from "@ckb-lumos/common-scripts/lib/helper";
-import * as __WEBPACK_EXTERNAL_MODULE__ckb_lumos_lumos_config__ from "@ckb-lumos/lumos/config";
 import * as __WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils__ from "@nervosnetwork/ckb-sdk-utils";
 import * as __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__ from "@rgbpp-sdk/ckb";
 import * as __WEBPACK_EXTERNAL_MODULE_rgbpp__ from "rgbpp";
@@ -112,65 +110,36 @@ import * as __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_btc__ from "@rgbpp-sdk/btc";
     console.debug("Total indexer cells fetched:", indexerCells);
     return indexerCells;
 }
-/**
- * Gets cell dependencies for given addresses.
- * @param {boolean} isMainnet - Whether the network is mainnet.
- * @param {string[]} ckbAddresses - The list of CKB addresses.
- * @returns {Promise<CKBComponents.CellDep[]>} A promise that resolves to an array of CellDep.
- */ async function getAddressCellDeps(isMainnet, ckbAddresses) {
-    let config;
-    config = isMainnet ? __WEBPACK_EXTERNAL_MODULE__ckb_lumos_lumos_config__.MAINNET : __WEBPACK_EXTERNAL_MODULE__ckb_lumos_lumos_config__.TESTNET;
-    const scripts = config.SCRIPTS;
-    const cellDeps = [];
-    const isOmnilock = ckbAddresses.some((address)=>(0, __WEBPACK_EXTERNAL_MODULE__ckb_lumos_common_scripts_lib_helper__.isOmnilockAddress)(address, config));
-    const isAcp = ckbAddresses.some((address)=>(0, __WEBPACK_EXTERNAL_MODULE__ckb_lumos_common_scripts_lib_helper__.isAcpAddress)(address, config));
-    const isSecp = ckbAddresses.some((address)=>(0, __WEBPACK_EXTERNAL_MODULE__ckb_lumos_common_scripts_lib_helper__.isSecp256k1Blake160Address)(address, config));
-    const isSecpMult = ckbAddresses.some((address)=>(0, __WEBPACK_EXTERNAL_MODULE__ckb_lumos_common_scripts_lib_helper__.isSecp256k1Blake160MultisigAddress)(address, config));
-    if (isOmnilock) {
-        const omnilock = scripts.OMNILOCK;
-        if (!omnilock) throw new Error("OMNILOCK script configuration is missing.");
-        cellDeps.push({
-            outPoint: {
-                txHash: omnilock.TX_HASH,
-                index: omnilock.INDEX
-            },
-            depType: omnilock.DEP_TYPE
-        });
+const ICKB_ARGS = "0xb73b6ab39d79390c6de90a09c96b290c331baf1798ed6f97aed02590929734e800000080";
+function isICKB(xudtArgs) {
+    return xudtArgs === ICKB_ARGS;
+}
+const ICKB_CELL_DEP = {
+    mainnet: {
+        outPoint: {
+            txHash: "0x621a6f38de3b9f453016780edac3b26bfcbfa3e2ecb47c2da275471a5d3ed165",
+            index: "0x0"
+        },
+        depType: "depGroup"
+    },
+    testnet: {
+        outPoint: {
+            txHash: "0xf7ece4fb33d8378344cab11fcd6a4c6f382fd4207ac921cf5821f30712dcd311",
+            index: "0x0"
+        },
+        depType: "depGroup"
     }
-    if (isAcp) {
-        const acp = scripts.ANYONE_CAN_PAY;
-        if (!acp) throw new Error("ANYONE_CAN_PAY script configuration is missing.");
-        cellDeps.push({
-            outPoint: {
-                txHash: acp.TX_HASH,
-                index: acp.INDEX
-            },
-            depType: acp.DEP_TYPE
-        });
-    }
-    if (isSecp) {
-        const secp = scripts.SECP256K1_BLAKE160;
-        if (!secp) throw new Error("SECP256K1_BLAKE160 script configuration is missing.");
-        cellDeps.push({
-            outPoint: {
-                txHash: secp.TX_HASH,
-                index: secp.INDEX
-            },
-            depType: secp.DEP_TYPE
-        });
-    }
-    if (isSecpMult) {
-        const secpMult = scripts.SECP256K1_BLAKE160_MULTISIG;
-        if (!secpMult) throw new Error("SECP256K1_BLAKE160_MULTISIG script configuration is missing.");
-        cellDeps.push({
-            outPoint: {
-                txHash: secpMult.TX_HASH,
-                index: secpMult.INDEX
-            },
-            depType: secpMult.DEP_TYPE
-        });
-    }
-    return cellDeps;
+};
+function getICKBCellDep(isMainnet) {
+    return isMainnet ? ICKB_CELL_DEP.mainnet : ICKB_CELL_DEP.testnet;
+}
+async function getCellDeps(isMainnet, xudtArgs) {
+    if (isICKB(xudtArgs)) return [
+        getICKBCellDep(isMainnet)
+    ];
+    return await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.fetchTypeIdCellDeps)(isMainnet, {
+        xudt: true
+    });
 }
 // Mapping for MintStatus, used for validation
 const MintStatusMap = {
@@ -471,12 +440,7 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, __WEBPACK_EXTERNAL_MODULE__apollo_client_
         console.debug("Updated outputs data:", outputsData);
     }
     const cellDeps = [
-        ...await getAddressCellDeps(isMainnet, [
-            ckbAddress
-        ]),
-        ...await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.fetchTypeIdCellDeps)(isMainnet, {
-            xudt: true
-        })
+        ...await getCellDeps(isMainnet, xudtArgs)
     ];
     const unsignedTx = {
         version: "0x0",
@@ -567,9 +531,6 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, __WEBPACK_EXTERNAL_MODULE__apollo_client_
     console.debug("Defined outputs data:", outputsData);
     // Define the cell dependencies and add debug information
     const cellDeps = [
-        ...await getAddressCellDeps(isMainnet, [
-            ckbAddress
-        ]),
         ...await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.fetchTypeIdCellDeps)(isMainnet, {
             xudt: true,
             unique: true
@@ -626,10 +587,7 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, __WEBPACK_EXTERNAL_MODULE__apollo_client_
     const unsignedTx = {
         ...ckbRawTx,
         cellDeps: [
-            ...ckbRawTx.cellDeps,
-            ...await getAddressCellDeps(isMainnet, [
-                ckbAddress
-            ])
+            ...ckbRawTx.cellDeps
         ],
         witnesses: []
     };
@@ -666,10 +624,7 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, __WEBPACK_EXTERNAL_MODULE__apollo_client_
     const unsignedTx = {
         ...ckbRawTx,
         cellDeps: [
-            ...ckbRawTx.cellDeps,
-            ...await getAddressCellDeps(isMainnet, [
-                ckbAddress
-            ])
+            ...ckbRawTx.cellDeps
         ],
         witnesses: []
     };
@@ -715,7 +670,6 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, __WEBPACK_EXTERNAL_MODULE__apollo_client_
         (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.append0x)((0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.u128ToLe)(sumAmount))
     ];
     const cellDeps = [
-        ...await getAddressCellDeps(isMainnet, ckbAddresses),
         ...await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.fetchTypeIdCellDeps)(isMainnet, {
             xudt: true
         })
@@ -817,12 +771,7 @@ function collectAllUdtInputs(liveCells) {
         console.debug("Updated Outputs Data:", outputsData);
     }
     const cellDeps = [
-        ...await getAddressCellDeps(isMainnet, ckbAddresses),
-        ...isICKB(xudtArgs) ? [
-            getICKBCellDep(isMainnet)
-        ] : await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.fetchTypeIdCellDeps)(isMainnet, {
-            xudt: true
-        })
+        ...await getCellDeps(isMainnet, xudtArgs)
     ];
     console.debug("Cell Deps:", cellDeps);
     const unsignedTx = {
@@ -836,29 +785,6 @@ function collectAllUdtInputs(liveCells) {
     };
     console.debug("Unsigned Transaction:", unsignedTx);
     return unsignedTx;
-}
-const ICKB_ARGS = "0xb73b6ab39d79390c6de90a09c96b290c331baf1798ed6f97aed02590929734e800000080";
-function isICKB(xudtArgs) {
-    return xudtArgs === ICKB_ARGS;
-}
-const ICKB_CELL_DEP = {
-    mainnet: {
-        outPoint: {
-            txHash: "0x621a6f38de3b9f453016780edac3b26bfcbfa3e2ecb47c2da275471a5d3ed165",
-            index: "0x0"
-        },
-        depType: "depGroup"
-    },
-    testnet: {
-        outPoint: {
-            txHash: "0xf7ece4fb33d8378344cab11fcd6a4c6f382fd4207ac921cf5821f30712dcd311",
-            index: "0x0"
-        },
-        depType: "depGroup"
-    }
-};
-function getICKBCellDep(isMainnet) {
-    return isMainnet ? ICKB_CELL_DEP.mainnet : ICKB_CELL_DEP.testnet;
 }
 /**
  * Converts a CKBComponents.RawTransactionToSign to a CKBComponents.RawTransaction.
@@ -994,14 +920,9 @@ const prepareLaunchCell = async ({ outIndex, btcTxId, rgbppTokenInfo, ckbAddress
         "0x",
         "0x"
     ];
-    const cellDeps = [
-        ...await getAddressCellDeps(isMainnet, [
-            ckbAddress
-        ])
-    ];
     const unsignedTx = {
         version: "0x0",
-        cellDeps,
+        cellDeps: [],
         headerDeps: [],
         inputs,
         outputs,
@@ -1251,14 +1172,9 @@ const prepareClusterCell = async ({ outIndex, btcTxId, ckbAddress, clusterData, 
     const outputsData = [
         "0x"
     ];
-    const cellDeps = [
-        ...await getAddressCellDeps(isMainnet, [
-            ckbAddress
-        ])
-    ];
     const unsignedTx = {
         version: "0x0",
-        cellDeps,
+        cellDeps: [],
         headerDeps: [],
         inputs,
         outputs,

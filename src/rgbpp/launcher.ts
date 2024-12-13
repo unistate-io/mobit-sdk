@@ -18,7 +18,7 @@ import {
 } from "@rgbpp-sdk/ckb";
 import { BtcApiUtxo } from "@rgbpp-sdk/service";
 import { BtcAssetsApi } from "rgbpp";
-import { AbstractWallet, getAddressCellDeps, TxResult } from "../helper";
+import { AbstractWallet, TxResult } from "../helper";
 import { signAndSendPsbt } from "../wallet";
 import { convertToTransaction } from "../convert";
 
@@ -75,11 +75,10 @@ const prepareLaunchCell = async ({
   ];
 
   const outputsData = ["0x", "0x"];
-  const cellDeps = [...(await getAddressCellDeps(isMainnet, [ckbAddress]))];
 
   const unsignedTx = {
     version: "0x0",
-    cellDeps,
+    cellDeps: [],
     headerDeps: [],
     inputs,
     outputs,

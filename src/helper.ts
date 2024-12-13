@@ -1,12 +1,10 @@
-import {
-  isAcpAddress,
-  isOmnilockAddress,
-  isSecp256k1Blake160Address,
-  isSecp256k1Blake160MultisigAddress,
-} from "@ckb-lumos/common-scripts/lib/helper";
-import { Config, MAINNET, TESTNET } from "@ckb-lumos/lumos/config";
 import { addressToScript } from "@nervosnetwork/ckb-sdk-utils";
-import { BTCTestnetType, Collector, IndexerCell } from "@rgbpp-sdk/ckb";
+import {
+  BTCTestnetType,
+  Collector,
+  fetchTypeIdCellDeps,
+  IndexerCell,
+} from "@rgbpp-sdk/ckb";
 import { NetworkType } from "rgbpp";
 import { BtcAssetsApi, DataSource } from "rgbpp";
 
@@ -221,139 +219,40 @@ export async function getIndexerCells({
   return indexerCells;
 }
 
-/**
- * Gets cell dependencies for given addresses.
- * @param {boolean} isMainnet - Whether the network is mainnet.
- * @param {string[]} ckbAddresses - The list of CKB addresses.
- * @returns {Promise<CKBComponents.CellDep[]>} A promise that resolves to an array of CellDep.
- */
-export async function getAddressCellDeps(
-  isMainnet: boolean,
-  ckbAddresses: string[],
-): Promise<CKBComponents.CellDep[]> {
-  let config: Config;
-  if (isMainnet) {
-    config = MAINNET;
-  } else {
-    config = TESTNET;
-  }
+const ICKB_ARGS =
+  "0xb73b6ab39d79390c6de90a09c96b290c331baf1798ed6f97aed02590929734e800000080";
 
-  const scripts = config.SCRIPTS;
-  const cellDeps: CKBComponents.CellDep[] = [];
-
-  const isOmnilock = ckbAddresses.some((address) =>
-    isOmnilockAddress(address, config),
-  );
-  const isAcp = ckbAddresses.some((address) => isAcpAddress(address, config));
-  const isSecp = ckbAddresses.some((address) =>
-    isSecp256k1Blake160Address(address, config),
-  );
-  const isSecpMult = ckbAddresses.some((address) =>
-    isSecp256k1Blake160MultisigAddress(address, config),
-  );
-
-  if (isOmnilock) {
-    const omnilock = scripts.OMNILOCK;
-    if (!omnilock) {
-      throw new Error("OMNILOCK script configuration is missing.");
-    }
-    cellDeps.push({
-      outPoint: {
-        txHash: omnilock.TX_HASH,
-        index: omnilock.INDEX,
-      },
-      depType: omnilock.DEP_TYPE,
-    });
-  }
-
-  if (isAcp) {
-    const acp = scripts.ANYONE_CAN_PAY;
-    if (!acp) {
-      throw new Error("ANYONE_CAN_PAY script configuration is missing.");
-    }
-    cellDeps.push({
-      outPoint: {
-        txHash: acp.TX_HASH,
-        index: acp.INDEX,
-      },
-      depType: acp.DEP_TYPE,
-    });
-  }
-
-  if (isSecp) {
-    const secp = scripts.SECP256K1_BLAKE160;
-    if (!secp) {
-      throw new Error("SECP256K1_BLAKE160 script configuration is missing.");
-    }
-    cellDeps.push({
-      outPoint: {
-        txHash: secp.TX_HASH,
-        index: secp.INDEX,
-      },
-      depType: secp.DEP_TYPE,
-    });
-  }
-
-  if (isSecpMult) {
-    const secpMult = scripts.SECP256K1_BLAKE160_MULTISIG;
-    if (!secpMult) {
-      throw new Error(
-        "SECP256K1_BLAKE160_MULTISIG script configuration is missing.",
-      );
-    }
-    cellDeps.push({
-      outPoint: {
-        txHash: secpMult.TX_HASH,
-        index: secpMult.INDEX,
-      },
-      depType: secpMult.DEP_TYPE,
-    });
-  }
-
-  return cellDeps;
+function isICKB(xudtArgs: string): boolean {
+  return xudtArgs === ICKB_ARGS;
 }
 
-const OMNILOCK_WITNESS_LOCK_SIZE = 292;
-const ACP_WITNESS_LOCK_SIZE = 41;
-const SECP256K1_WITNESS_LOCK_SIZE = 65;
-const SECP256K1_MULTISIG_WITNESS_LOCK_SIZE = 130;
+const ICKB_CELL_DEP = {
+  mainnet: {
+    outPoint: {
+      txHash:
+        "0x621a6f38de3b9f453016780edac3b26bfcbfa3e2ecb47c2da275471a5d3ed165",
+      index: "0x0",
+    },
+    depType: "depGroup",
+  },
+  testnet: {
+    outPoint: {
+      txHash:
+        "0xf7ece4fb33d8378344cab11fcd6a4c6f382fd4207ac921cf5821f30712dcd311",
+      index: "0x0",
+    },
+    depType: "depGroup",
+  },
+} as const;
 
-/**
- * Calculates the witness size for a given address.
- * @param {string} address - The CKB address.
- * @param {boolean} isMainnet - Whether the network is mainnet.
- * @returns {number} The witness size.
- */
-export function calculateWitnessSize(
-  address: string,
-  isMainnet: boolean,
-): number {
-  let config: Config;
-  if (isMainnet) {
-    config = MAINNET;
+function getICKBCellDep(isMainnet: boolean): CKBComponents.CellDep {
+  return isMainnet ? ICKB_CELL_DEP.mainnet : ICKB_CELL_DEP.testnet;
+}
+
+export async function getCellDeps(isMainnet: boolean, xudtArgs: string) {
+  if (isICKB(xudtArgs)) {
+    return [getICKBCellDep(isMainnet)];
   } else {
-    config = TESTNET;
+    return await fetchTypeIdCellDeps(isMainnet, { xudt: true });
   }
-
-  if (isOmnilockAddress(address, config)) {
-    return OMNILOCK_WITNESS_LOCK_SIZE;
-  }
-
-  if (isAcpAddress(address, config)) {
-    return ACP_WITNESS_LOCK_SIZE;
-  }
-
-  if (isSecp256k1Blake160Address(address, config)) {
-    return SECP256K1_WITNESS_LOCK_SIZE;
-  }
-
-  if (isSecp256k1Blake160MultisigAddress(address, config)) {
-    return SECP256K1_MULTISIG_WITNESS_LOCK_SIZE;
-  }
-
-  // 对于未知类型，返回一个保守的估计值
-  console.warn(
-    `Unknown address type for address: ${address}. Using default witness size.`,
-  );
-  return SECP256K1_WITNESS_LOCK_SIZE;
 }

@@ -122,19 +122,6 @@ export declare function getIndexerCells({ ckbAddresses, type, collector, }: {
     collector: Collector;
     type?: CKBComponents.Script;
 }): Promise<IndexerCell[]>;
-/**
- * Gets cell dependencies for given addresses.
- * @param {boolean} isMainnet - Whether the network is mainnet.
- * @param {string[]} ckbAddresses - The list of CKB addresses.
- * @returns {Promise<CKBComponents.CellDep[]>} A promise that resolves to an array of CellDep.
- */
-export declare function getAddressCellDeps(isMainnet: boolean, ckbAddresses: string[]): Promise<CKBComponents.CellDep[]>;
-/**
- * Calculates the witness size for a given address.
- * @param {string} address - The CKB address.
- * @param {boolean} isMainnet - Whether the network is mainnet.
- * @returns {number} The witness size.
- */
-export declare function calculateWitnessSize(address: string, isMainnet: boolean): number;
+export declare function getCellDeps(isMainnet: boolean, xudtArgs: string): Promise<CKBComponents.CellDep[]>;
 export {};
 //# sourceMappingURL=helper.d.ts.map
