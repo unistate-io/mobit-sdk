@@ -189,7 +189,7 @@ Indicates whether the operation is on the mainnet.
 </td></tr>
 <tr><td>
 
-[sporeTypeArgs](./mobit-sdk.prepareleapsporeunsignedpsbtparams.sporetypeargs.md)
+[sporeType](./mobit-sdk.prepareleapsporeunsignedpsbtparams.sporetype.md)
 
 
 </td><td>
@@ -197,12 +197,12 @@ Indicates whether the operation is on the mainnet.
 
 </td><td>
 
-Hex
+CKBComponents.Script
 
 
 </td><td>
 
-Type arguments for the spore.
+Type script for the spore.
 
 
 </td></tr>

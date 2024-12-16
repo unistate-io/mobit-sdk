@@ -9,7 +9,7 @@ Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for distributin
 **Signature:**
 
 ```typescript
-prepareDistributeUnsignedPsbt: ({ receivers, xudtTypeArgs, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, btcService, filterRgbppArgslist, }: PrepareDistributeUnsignedPsbtParams) => Promise<bitcoin.Psbt>
+prepareDistributeUnsignedPsbt: ({ receivers, xudtType, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, btcService, filterRgbppArgslist, }: PrepareDistributeUnsignedPsbtParams) => Promise<bitcoin.Psbt>
 ```
 
 ## Parameters
@@ -32,7 +32,7 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-{ receivers, xudtTypeArgs, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, btcService, filterRgbppArgslist, }
+{ receivers, xudtType, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, btcService, filterRgbppArgslist, }
 
 
 </td><td>

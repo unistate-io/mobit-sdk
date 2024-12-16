@@ -9,7 +9,7 @@ Prepares a launch cell on the CKB network by creating a transaction.
 **Signature:**
 
 ```typescript
-prepareLaunchCellTransaction: ({ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcTestnetType, outIndex, btcTxId, }: PrepareLaunchCellTransactionParams, maxFee?: bigint, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>
+prepareLaunchCellTransaction: ({ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcTestnetType, outIndex, btcTxId, }: PrepareLaunchCellTransactionParams) => Promise<CKBComponents.RawTransactionToSign>
 ```
 
 ## Parameters
@@ -41,54 +41,6 @@ Description
 
 
 </td><td>
-
-
-</td></tr>
-<tr><td>
-
-maxFee
-
-
-</td><td>
-
-bigint
-
-
-</td><td>
-
-_(Optional)_ Maximum fee for the CKB transaction (default is MAX\_FEE).
-
-
-</td></tr>
-<tr><td>
-
-ckbFeeRate
-
-
-</td><td>
-
-bigint
-
-
-</td><td>
-
-_(Optional)_ Fee rate for the CKB transaction (optional).
-
-
-</td></tr>
-<tr><td>
-
-witnessLockPlaceholderSize
-
-
-</td><td>
-
-number
-
-
-</td><td>
-
-_(Optional)_ Size of the witness lock placeholder (optional).
 
 
 </td></tr>

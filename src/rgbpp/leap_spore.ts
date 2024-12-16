@@ -15,7 +15,7 @@ import { bitcoin } from "@rgbpp-sdk/btc";
 interface SporeLeapParams {
   sporeRgbppLockArgs: Hex;
   toCkbAddress: string;
-  sporeTypeArgs: Hex;
+  sporeType: CKBComponents.Script;
   collector: Collector;
   isMainnet: boolean;
   btcTestnetType?: BTCTestnetType;
@@ -30,7 +30,7 @@ const leapSporeFromBtcToCkb = async (
   {
     sporeRgbppLockArgs,
     toCkbAddress,
-    sporeTypeArgs,
+    sporeType,
     collector,
     isMainnet,
     btcTestnetType,
@@ -42,10 +42,7 @@ const leapSporeFromBtcToCkb = async (
   }: SporeLeapParams,
   btcFeeRate: number = 30,
 ): Promise<TxResult> => {
-  const sporeTypeBytes = serializeScript({
-    ...getSporeTypeScript(isMainnet),
-    args: sporeTypeArgs,
-  });
+  const sporeTypeBytes = serializeScript(sporeType);
   const ckbVirtualTxResult = await genLeapSporeFromBtcToCkbVirtualTx({
     collector,
     sporeRgbppLockArgs,
@@ -112,8 +109,8 @@ const leapSporeFromBtcToCkb = async (
 export interface SporeLeapCombinedParams {
   /** The CKB address to which the spore will be sent. */
   toCkbAddress: string;
-  /** The type arguments for the spore. */
-  sporeTypeArgs: Hex;
+  /** The type script for the spore. */
+  sporeType: CKBComponents.Script;
   /** The collector object used for collecting the spore. */
   collector: Collector;
   /** Indicates whether the operation is on the mainnet. */
@@ -139,7 +136,7 @@ export interface SporeLeapCombinedParams {
  * @param {number} [btcFeeRate=30] - The fee rate for the BTC transaction (default is 30).
  *
  * @param {string} params.toCkbAddress - The CKB address to which the spore will be sent.
- * @param {Hex} params.sporeTypeArgs - The type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - The type script for the spore.
  * @param {Collector} params.collector - The collector object used for collecting the spore.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
@@ -154,7 +151,7 @@ export interface SporeLeapCombinedParams {
 export const leapSporeFromBtcToCkbCombined = async (
   {
     toCkbAddress,
-    sporeTypeArgs,
+    sporeType,
     collector,
     isMainnet,
     btcTestnetType,
@@ -168,7 +165,7 @@ export const leapSporeFromBtcToCkbCombined = async (
 ): Promise<TxResult> => {
   const sporeRgbppLockArgs = await getSporeRgbppLockArgs({
     fromBtcAddress,
-    sporeTypeArgs,
+    sporeType,
     isMainnet,
     btcService,
   });
@@ -177,7 +174,7 @@ export const leapSporeFromBtcToCkbCombined = async (
     {
       sporeRgbppLockArgs,
       toCkbAddress,
-      sporeTypeArgs,
+      sporeType,
       collector,
       isMainnet,
       btcTestnetType,
@@ -199,8 +196,8 @@ export const leapSporeFromBtcToCkbCombined = async (
 export interface PrepareLeapSporeUnsignedPsbtParams {
   /** The destination CKB address. */
   toCkbAddress: string;
-  /** Type arguments for the spore. */
-  sporeTypeArgs: Hex;
+  /** Type script for the spore. */
+  sporeType: CKBComponents.Script;
   /** Collector instance used to gather cells for the transaction. */
   collector: Collector;
   /** Indicates whether the operation is on the mainnet. */
@@ -226,7 +223,7 @@ export interface PrepareLeapSporeUnsignedPsbtParams {
  * @param {PrepareLeapSporeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {Hex} params.sporeRgbppLockArgs - RGBPP lock arguments for the spore.
  * @param {string} params.toCkbAddress - The destination CKB address.
- * @param {Hex} params.sporeTypeArgs - Type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - Type script for the spore.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
@@ -239,7 +236,7 @@ export interface PrepareLeapSporeUnsignedPsbtParams {
  */
 export const prepareLeapSporeUnsignedPsbt = async ({
   toCkbAddress,
-  sporeTypeArgs,
+  sporeType,
   collector,
   isMainnet,
   btcTestnetType,
@@ -251,15 +248,12 @@ export const prepareLeapSporeUnsignedPsbt = async ({
 }: PrepareLeapSporeUnsignedPsbtParams): Promise<bitcoin.Psbt> => {
   const sporeRgbppLockArgs = await getSporeRgbppLockArgs({
     fromBtcAddress,
-    sporeTypeArgs,
+    sporeType,
     isMainnet,
     btcService,
   });
 
-  const sporeTypeBytes = serializeScript({
-    ...getSporeTypeScript(isMainnet),
-    args: sporeTypeArgs,
-  });
+  const sporeTypeBytes = serializeScript(sporeType);
 
   const ckbVirtualTxResult = await genLeapSporeFromBtcToCkbVirtualTx({
     collector,

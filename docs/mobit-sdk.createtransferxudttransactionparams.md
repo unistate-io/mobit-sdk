@@ -113,7 +113,7 @@ An array of receiver objects containing `toAddress` and `transferAmount`<!-- -->
 </td></tr>
 <tr><td>
 
-[xudtArgs](./mobit-sdk.createtransferxudttransactionparams.xudtargs.md)
+[xudtType](./mobit-sdk.createtransferxudttransactionparams.xudttype.md)
 
 
 </td><td>
@@ -121,12 +121,12 @@ An array of receiver objects containing `toAddress` and `transferAmount`<!-- -->
 
 </td><td>
 
-string
+CKBComponents.Script
 
 
 </td><td>
 
-The xUDT type script args.
+The xUDT type script.
 
 
 </td></tr>

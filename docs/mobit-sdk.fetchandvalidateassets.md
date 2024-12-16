@@ -4,12 +4,12 @@
 
 ## fetchAndValidateAssets() function
 
-Fetches RGBPP assets for a given BTC address and type script args, and validates the result.
+Fetches RGBPP assets for a given BTC address and type script, and validates the result.
 
 **Signature:**
 
 ```typescript
-fetchAndValidateAssets: (fromBtcAccount: string, clusterTypeScriptArgs: string, isMainnet: boolean, btcService: BtcAssetsApi) => Promise<string>
+fetchAndValidateAssets: (fromBtcAccount: string, clusterType: CKBComponents.Script, btcService: BtcAssetsApi) => Promise<string>
 ```
 
 ## Parameters
@@ -48,33 +48,17 @@ The BTC account from which the assets are being fetched.
 </td></tr>
 <tr><td>
 
-clusterTypeScriptArgs
+clusterType
 
 
 </td><td>
 
-string
+CKBComponents.Script
 
 
 </td><td>
 
-The arguments for the cluster type script.
-
-
-</td></tr>
-<tr><td>
-
-isMainnet
-
-
-</td><td>
-
-boolean
-
-
-</td><td>
-
-Indicates if the operation is on mainnet.
+The cluster type script.
 
 
 </td></tr>
@@ -103,5 +87,5 @@ Promise&lt;string&gt;
 
 ## Exceptions
 
-{<!-- -->Error<!-- -->} - Throws an error if no assets are found for the given BTC address and type script args.
+{<!-- -->Error<!-- -->} - Throws an error if no assets are found for the given BTC address and type script.
 

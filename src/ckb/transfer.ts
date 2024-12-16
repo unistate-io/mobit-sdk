@@ -3,7 +3,6 @@ import {
   append0x,
   calculateUdtCellCapacity,
   Collector,
-  getXudtTypeScript,
   NoXudtLiveCellError,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
@@ -14,9 +13,9 @@ import { getCellDeps, getIndexerCells } from "../helper";
  */
 export interface CreateTransferXudtTransactionParams {
   /**
-   * The xUDT type script args.
+   * The xUDT type script.
    */
-  xudtArgs: string;
+  xudtType: CKBComponents.Script;
   /**
    * An array of receiver objects containing `toAddress` and `transferAmount`.
    */
@@ -39,7 +38,7 @@ export interface CreateTransferXudtTransactionParams {
  * Creates an unsigned transaction for transferring xUDT assets. This function can also be used to mint xUDT assets.
  *
  * @param {CreateTransferXudtTransactionParams} params - The parameters for creating the transaction.
- * @param {string} params.xudtArgs - The xUDT type script args.
+ * @param {CKBComponents.Script} params.xudtType - The xUDT type script.
  * @param {Array<{ toAddress: string, transferAmount: bigint }>} params.receivers - An array of receiver objects containing `toAddress` and `transferAmount`.
  * @param {Array<string>} params.ckbAddresses - The CKB addresses for the transaction.
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
@@ -53,7 +52,7 @@ export interface CreateTransferXudtTransactionParams {
  */
 export async function createTransferXudtTransaction(
   {
-    xudtArgs,
+    xudtType,
     receivers,
     ckbAddresses,
     collector,
@@ -61,11 +60,6 @@ export async function createTransferXudtTransaction(
   }: CreateTransferXudtTransactionParams,
   ckbAddress: string = ckbAddresses[0],
 ): Promise<CKBComponents.RawTransactionToSign> {
-  const xudtType: CKBComponents.Script = {
-    ...getXudtTypeScript(isMainnet),
-    args: xudtArgs,
-  };
-
   const xudtCells = await getIndexerCells({
     ckbAddresses,
     type: xudtType,
@@ -86,7 +80,7 @@ export async function createTransferXudtTransaction(
 
   let sumXudtOutputCapacity = receivers
     .map(({ toAddress }) =>
-      calculateUdtCellCapacity(addressToScript(toAddress)),
+      calculateUdtCellCapacity(addressToScript(toAddress))
     )
     .reduce((prev, current) => prev + current, BigInt(0));
 
@@ -117,7 +111,7 @@ export async function createTransferXudtTransaction(
   );
 
   const outputsData = receivers.map(({ transferAmount }) =>
-    append0x(u128ToLe(transferAmount)),
+    append0x(u128ToLe(transferAmount))
   );
 
   console.debug("Outputs:", outputs);
@@ -140,7 +134,7 @@ export async function createTransferXudtTransaction(
     console.debug("Updated Outputs Data:", outputsData);
   }
 
-  const cellDeps = [...(await getCellDeps(isMainnet, xudtArgs))];
+  const cellDeps = [...(await getCellDeps(isMainnet, xudtType.args))];
 
   console.debug("Cell Deps:", cellDeps);
 

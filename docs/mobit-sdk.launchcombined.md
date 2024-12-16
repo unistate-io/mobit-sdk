@@ -9,7 +9,7 @@ Launches an RGB++ asset by preparing a launch cell and subsequently sending a BT
 **Signature:**
 
 ```typescript
-launchCombined: ({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, ckbAddress, filterUtxo, btcService, wallet, cccSigner, }: RgbppLauncerCombinedParams, ckbFeeRate?: bigint, maxFee?: bigint, btcFeeRate?: number, witnessLockPlaceholderSize?: number) => Promise<TxResult>
+launchCombined: ({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, ckbAddress, filterUtxo, btcService, wallet, cccSigner, }: RgbppLauncerCombinedParams, ckbFeeRate?: bigint, btcFeeRate?: number) => Promise<TxResult>
 ```
 
 ## Parameters
@@ -62,22 +62,6 @@ _(Optional)_ (Optional) The fee rate for CKB transactions, represented as a bigi
 </td></tr>
 <tr><td>
 
-maxFee
-
-
-</td><td>
-
-bigint
-
-
-</td><td>
-
-_(Optional)_ (Optional) The maximum fee for the transaction, represented as a bigint. Defaults to MAX\_FEE.
-
-
-</td></tr>
-<tr><td>
-
 btcFeeRate
 
 
@@ -89,22 +73,6 @@ number
 </td><td>
 
 _(Optional)_ (Optional) The fee rate for BTC transactions, represented as a number.
-
-
-</td></tr>
-<tr><td>
-
-witnessLockPlaceholderSize
-
-
-</td><td>
-
-number
-
-
-</td><td>
-
-_(Optional)_ (Optional) The size of the witness lock placeholder.
 
 
 </td></tr>

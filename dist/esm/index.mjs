@@ -397,17 +397,13 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, __WEBPACK_EXTERNAL_MODULE__apollo_client_
  * It fetches the necessary cells, collects inputs, and constructs the transaction outputs accordingly.
  *
  * @param {CreateBurnXudtTransactionParams} params - The parameters for creating the burn transaction.
- * @param {string} params.xudtArgs - The xUDT type script args, which is the unique identifier for the xUDT token type.
+ * @param {CKBComponents.Script} params.xudtType - The xUDT type script, which is the unique identifier for the xUDT token type.
  * @param {bigint} params.burnAmount - The amount of xUDT asset to be burned, representing the quantity of tokens that will be destroyed.
  * @param {string} params.ckbAddress - The CKB address for the transaction, from which the tokens will be burned.
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs, responsible for gathering the necessary cells to construct the transaction.
  * @param {boolean} params.isMainnet - A boolean indicating whether the network is mainnet or testnet, affecting the type script and cell dependencies.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - An unsigned transaction object that can be signed and submitted to the network.
- */ async function createBurnXudtTransaction({ xudtArgs, burnAmount, ckbAddress, collector, isMainnet }) {
-    const xudtType = {
-        ...(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.getXudtTypeScript)(isMainnet),
-        args: xudtArgs
-    };
+ */ async function createBurnXudtTransaction({ xudtType, burnAmount, ckbAddress, collector, isMainnet }) {
     const fromLock = (0, __WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils__.addressToScript)(ckbAddress);
     const xudtCells = await collector.getCells({
         lock: fromLock,
@@ -440,7 +436,7 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, __WEBPACK_EXTERNAL_MODULE__apollo_client_
         console.debug("Updated outputs data:", outputsData);
     }
     const cellDeps = [
-        ...await getCellDeps(isMainnet, xudtArgs)
+        ...await getCellDeps(isMainnet, xudtType.args)
     ];
     const unsignedTx = {
         version: "0x0",
@@ -599,18 +595,14 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, __WEBPACK_EXTERNAL_MODULE__apollo_client_
  * @param {LeapSporeToBtcTransactionParams} params - The parameters for leaping a spore from CKB to BTC.
  * @param {number} params.outIndex - The output index of the spore.
  * @param {string} params.btcTxId - The transaction ID of the BTC transaction.
- * @param {string} params.sporeTypeArgs - The type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - The type script for the spore.
  * @param {boolean} params.isMainnet - A flag indicating whether the operation is on the mainnet.
  * @param {Collector} params.collector - The collector instance.
  * @param {string} params.ckbAddress - The CKB address.
  * @param {BTCTestnetType} [params.btcTestnetType] - (Optional) The type of BTC testnet.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} A promise that resolves to the unsigned raw transaction to sign.
- */ const leapSporeFromCkbToBtcTransaction = async ({ outIndex, btcTxId, sporeTypeArgs, isMainnet, collector, ckbAddress, btcTestnetType })=>{
+ */ const leapSporeFromCkbToBtcTransaction = async ({ outIndex, btcTxId, sporeType, isMainnet, collector, ckbAddress, btcTestnetType })=>{
     const toRgbppLockArgs = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.buildRgbppLockArgs)(outIndex, btcTxId);
-    const sporeType = {
-        ...(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.getSporeTypeScript)(isMainnet),
-        args: sporeTypeArgs
-    };
     const ckbRawTx = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.genLeapSporeFromCkbToBtcRawTx)({
         collector,
         fromCkbAddress: ckbAddress,
@@ -715,7 +707,7 @@ function collectAllUdtInputs(liveCells) {
  * Creates an unsigned transaction for transferring xUDT assets. This function can also be used to mint xUDT assets.
  *
  * @param {CreateTransferXudtTransactionParams} params - The parameters for creating the transaction.
- * @param {string} params.xudtArgs - The xUDT type script args.
+ * @param {CKBComponents.Script} params.xudtType - The xUDT type script.
  * @param {Array<{ toAddress: string, transferAmount: bigint }>} params.receivers - An array of receiver objects containing `toAddress` and `transferAmount`.
  * @param {Array<string>} params.ckbAddresses - The CKB addresses for the transaction.
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
@@ -726,11 +718,7 @@ function collectAllUdtInputs(liveCells) {
  *
  * @throws {NoXudtLiveCellError} If the address has no xudt cells.
  * @throws {NoLiveCellError} If the address has no empty cells.
- */ async function createTransferXudtTransaction({ xudtArgs, receivers, ckbAddresses, collector, isMainnet }, ckbAddress = ckbAddresses[0]) {
-    const xudtType = {
-        ...(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.getXudtTypeScript)(isMainnet),
-        args: xudtArgs
-    };
+ */ async function createTransferXudtTransaction({ xudtType, receivers, ckbAddresses, collector, isMainnet }, ckbAddress = ckbAddresses[0]) {
     const xudtCells = await getIndexerCells({
         ckbAddresses,
         type: xudtType,
@@ -771,7 +759,7 @@ function collectAllUdtInputs(liveCells) {
         console.debug("Updated Outputs Data:", outputsData);
     }
     const cellDeps = [
-        ...await getCellDeps(isMainnet, xudtArgs)
+        ...await getCellDeps(isMainnet, xudtType.args)
     ];
     console.debug("Cell Deps:", cellDeps);
     const unsignedTx = {
@@ -1468,7 +1456,7 @@ const createSpores = async ({ clusterRgbppLockArgs, receivers, collector, isMain
  * Creates spores combined with the given parameters.
  *
  * @param {SporeCreateCombinedParams} params - The parameters for creating spores.
- * @param {string} params.clusterTypeScriptArgs - The arguments for the cluster type script.
+ * @param {CKBComponents.Script} params.clusterType - The cluster type script.
  * @param {Array<{ toBtcAddress: string, sporeData: RawSporeData }>} params.receivers - The list of receivers with their BTC addresses and spore data.
  * @param {Collector} params.collector - The collector instance.
  * @param {boolean} params.isMainnet - Indicates if the operation is on mainnet.
@@ -1482,8 +1470,8 @@ const createSpores = async ({ clusterRgbppLockArgs, receivers, collector, isMain
  * @param {ccc.Signer} params.cccSigner - The CCC signer instance.
  * @param {number} [btcFeeRate=120] - The fee rate for BTC transactions (default is 120).
  * @returns {Promise<TxResult>} - The result of the transaction.
- */ const createSporesCombined = async ({ clusterTypeScriptArgs, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, ckbAddress, cccSigner }, btcFeeRate = 120, ckbFeeRate)=>{
-    const clusterRgbppLockArgs = await fetchAndValidateAssets(fromBtcAccount, clusterTypeScriptArgs, isMainnet, btcService);
+ */ const createSporesCombined = async ({ clusterType, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, ckbAddress, cccSigner }, btcFeeRate = 120, ckbFeeRate)=>{
+    const clusterRgbppLockArgs = await fetchAndValidateAssets(fromBtcAccount, clusterType, btcService);
     const res = await createSpores({
         clusterRgbppLockArgs,
         receivers,
@@ -1598,29 +1586,25 @@ const createSpores = async ({ clusterRgbppLockArgs, receivers, collector, isMain
     return psbt;
 };
 /**
- * Fetches RGBPP assets for a given BTC address and type script args, and validates the result.
+ * Fetches RGBPP assets for a given BTC address and type script, and validates the result.
  *
  * @param {string} fromBtcAccount - The BTC account from which the assets are being fetched.
- * @param {string} clusterTypeScriptArgs - The arguments for the cluster type script.
- * @param {boolean} isMainnet - Indicates if the operation is on mainnet.
+ * @param {CKBComponents.Script} clusterType - The cluster type script.
  * @param {BtcAssetsApi} btcService - The BTC assets API service.
  * @returns {Promise<string>} - The cluster RGBPP lock args.
- * @throws {Error} - Throws an error if no assets are found for the given BTC address and type script args.
- */ const fetchAndValidateAssets = async (fromBtcAccount, clusterTypeScriptArgs, isMainnet, btcService)=>{
+ * @throws {Error} - Throws an error if no assets are found for the given BTC address and type script.
+ */ const fetchAndValidateAssets = async (fromBtcAccount, clusterType, btcService)=>{
     const assets = await btcService.getRgbppAssetsByBtcAddress(fromBtcAccount, {
-        type_script: encodeURIComponent(JSON.stringify({
-            ...(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.getClusterTypeScript)(isMainnet),
-            args: clusterTypeScriptArgs
-        }))
+        type_script: encodeURIComponent(JSON.stringify(clusterType))
     });
-    if (0 === assets.length) throw new Error("No assets found for the given BTC address and type script args.");
+    if (0 === assets.length) throw new Error("No assets found for the given BTC address and type script.");
     return assets[0].cellOutput.lock.args;
 };
-const getRgbppLockArgsList = async ({ xudtTypeArgs, fromBtcAccount, isMainnet, btcService })=>{
+const getRgbppLockArgsList = async ({ xudtType, fromBtcAccount, isMainnet, btcService })=>{
     const type_script = encodeURIComponent(JSON.stringify({
-        codeHash: (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.getXudtTypeScript)(isMainnet).codeHash,
-        args: xudtTypeArgs,
-        hashType: "type"
+        codeHash: xudtType.codeHash,
+        args: xudtType.args,
+        hashType: xudtType.hashType
     }));
     console.log(type_script);
     const data = await btcService.getRgbppAssetsByBtcAddress(fromBtcAccount, {
@@ -1634,11 +1618,7 @@ const getRgbppLockArgsList = async ({ xudtTypeArgs, fromBtcAccount, isMainnet, b
         rgbppLockArgsList
     };
 };
-const distribute = async ({ rgbppLockArgsList, receivers, xudtTypeArgs, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService }, btcFeeRate)=>{
-    const xudtType = {
-        ...(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.getXudtTypeScript)(isMainnet),
-        args: xudtTypeArgs
-    };
+const distribute = async ({ rgbppLockArgsList, receivers, xudtType, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService }, btcFeeRate)=>{
     const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.genBtcBatchTransferCkbVirtualTx)({
         collector,
         rgbppLockArgsList,
@@ -1660,7 +1640,7 @@ const distribute = async ({ rgbppLockArgsList, receivers, xudtTypeArgs, collecto
         source: btcDataSource,
         feeRate: btcFeeRate
     });
-    const { txId: btcTxId, rawTxHex: btcTxBytes } = await signAndSendPsbt(psbt, wallet, btcService);
+    const { txId: btcTxId } = await signAndSendPsbt(psbt, wallet, btcService);
     console.log(`BTC ${btcTestnetType} TxId: ${btcTxId}`);
     await btcService.sendRgbppCkbTransaction({
         btc_txid: btcTxId,
@@ -1691,8 +1671,8 @@ const distribute = async ({ rgbppLockArgsList, receivers, xudtTypeArgs, collecto
  * Distributes RGBPP assets to multiple receivers.
  *
  * @param {RgbppDistributeCombinedParams} params - The parameters for the distribution.
- * @param {string} params.xudtTypeArgs - The type arguments for the XUDT type script.
  * @param {RgbppBtcAddressReceiver[]} params.receivers - The list of receivers for the RGBPP assets.
+ * @param {CKBComponents.Script} params.xudtType - The type script for the XUDT type.
  * @param {Collector} params.collector - The collector instance used for generating the CKB virtual transaction.
  * @param {DataSource} params.btcDataSource - The data source for BTC transactions.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
@@ -1704,9 +1684,9 @@ const distribute = async ({ rgbppLockArgsList, receivers, xudtTypeArgs, collecto
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @param {number} [btcFeeRate] - The fee rate for the BTC transaction (optional).
  * @returns {Promise<TxResult>} - The result of the transaction.
- */ const distributeCombined = async ({ xudtTypeArgs, receivers, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, filterRgbppArgslist, btcService }, btcFeeRate)=>{
+ */ const distributeCombined = async ({ xudtType, receivers, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, filterRgbppArgslist, btcService }, btcFeeRate)=>{
     const lockArgsListResponse = await getRgbppLockArgsList({
-        xudtTypeArgs,
+        xudtType,
         fromBtcAccount,
         isMainnet,
         btcService
@@ -1715,7 +1695,7 @@ const distribute = async ({ rgbppLockArgsList, receivers, xudtTypeArgs, collecto
     const res = await distribute({
         rgbppLockArgsList: filteredLockArgsList,
         receivers,
-        xudtTypeArgs,
+        xudtType,
         collector,
         btcDataSource,
         btcTestnetType,
@@ -1733,7 +1713,7 @@ const distribute = async ({ rgbppLockArgsList, receivers, xudtTypeArgs, collecto
  *
  * @param {PrepareDistributeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {RgbppBtcAddressReceiver[]} params.receivers - List of receivers for the RGBPP assets.
- * @param {string} params.xudtTypeArgs - Type arguments for the XUDT type script.
+ * @param {CKBComponents.Script} params.xudtType - Type script for the XUDT type.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
@@ -1744,18 +1724,14 @@ const distribute = async ({ rgbppLockArgsList, receivers, xudtTypeArgs, collecto
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @param {(argsList: string[]) => Promise<string[]>} params.filterRgbppArgslist - A function to filter the RGBPP args list.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
- */ const prepareDistributeUnsignedPsbt = async ({ receivers, xudtTypeArgs, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate = 30, btcService, filterRgbppArgslist })=>{
+ */ const prepareDistributeUnsignedPsbt = async ({ receivers, xudtType, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate = 30, btcService, filterRgbppArgslist })=>{
     const lockArgsListResponse = await getRgbppLockArgsList({
-        xudtTypeArgs,
+        xudtType,
         fromBtcAccount,
         isMainnet,
         btcService
     });
     const filteredLockArgsList = await filterRgbppArgslist(lockArgsListResponse.rgbppLockArgsList);
-    const xudtType = {
-        ...(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.getXudtTypeScript)(isMainnet),
-        args: xudtTypeArgs
-    };
     const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.genBtcBatchTransferCkbVirtualTx)({
         collector,
         rgbppLockArgsList: filteredLockArgsList,
@@ -1779,11 +1755,7 @@ const distribute = async ({ rgbppLockArgsList, receivers, xudtTypeArgs, collecto
     });
     return psbt;
 };
-const leapFromBtcToCKB = async ({ rgbppLockArgsList, toCkbAddress, xudtTypeArgs, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccountPubkey, fromBtcAccount, btcDataSource, btcService, wallet }, btcFeeRate)=>{
-    const xudtType = {
-        ...(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.getXudtTypeScript)(isMainnet),
-        args: xudtTypeArgs
-    };
+const leapFromBtcToCKB = async ({ rgbppLockArgsList, toCkbAddress, xudtType, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccountPubkey, fromBtcAccount, btcDataSource, btcService, wallet }, btcFeeRate)=>{
     const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.genBtcJumpCkbVirtualTx)({
         collector,
         rgbppLockArgsList,
@@ -1838,7 +1810,7 @@ const leapFromBtcToCKB = async ({ rgbppLockArgsList, toCkbAddress, xudtTypeArgs,
  *
  * @param {RgbppLeapFromBtcToCkbCombinedParams} params - The parameters for the leap operation.
  * @param {string} params.toCkbAddress - The destination CKB address.
- * @param {string} params.xudtTypeArgs - The arguments for the XUDT type script.
+ * @param {CKBComponents.Script} params.xudtType - The XUDT type script.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
  * @param {Collector} params.collector - The collector instance for CKB operations.
  * @param {DataSource} params.btcDataSource - The data source for BTC operations.
@@ -1851,9 +1823,9 @@ const leapFromBtcToCKB = async ({ rgbppLockArgsList, toCkbAddress, xudtTypeArgs,
  * @param {number} [btcFeeRate] - The fee rate for the BTC transaction (optional).
  *
  * @returns {Promise<TxResult>} - The result of the transaction.
- */ const leapFromBtcToCkbCombined = async ({ toCkbAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService }, btcFeeRate)=>{
+ */ const leapFromBtcToCkbCombined = async ({ toCkbAddress, xudtType, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService }, btcFeeRate)=>{
     const lockArgsListResponse = await getRgbppLockArgsList({
-        xudtTypeArgs,
+        xudtType,
         fromBtcAccount,
         isMainnet,
         btcService
@@ -1861,7 +1833,7 @@ const leapFromBtcToCKB = async ({ rgbppLockArgsList, toCkbAddress, xudtTypeArgs,
     const res = await leapFromBtcToCKB({
         rgbppLockArgsList: lockArgsListResponse.rgbppLockArgsList,
         toCkbAddress,
-        xudtTypeArgs,
+        xudtType,
         transferAmount,
         collector,
         btcDataSource,
@@ -1881,7 +1853,7 @@ const leapFromBtcToCKB = async ({ rgbppLockArgsList, toCkbAddress, xudtTypeArgs,
  * @param {PrepareLeapUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {BtcAssetsApi} params.btcService - The BTC assets service instance.
  * @param {string} params.toCkbAddress - The destination CKB address.
- * @param {string} params.xudtTypeArgs - Type arguments for the XUDT type script.
+ * @param {CKBComponents.Script} params.xudtType - The XUDT type script.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
@@ -1891,17 +1863,13 @@ const leapFromBtcToCKB = async ({ rgbppLockArgsList, toCkbAddress, xudtTypeArgs,
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
- */ const prepareLeapUnsignedPsbt = async ({ btcService, toCkbAddress, xudtTypeArgs, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate = 30 })=>{
+ */ const prepareLeapUnsignedPsbt = async ({ btcService, toCkbAddress, xudtType, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate = 30 })=>{
     const lockArgsListResponse = await getRgbppLockArgsList({
-        xudtTypeArgs,
+        xudtType,
         fromBtcAccount,
         isMainnet,
         btcService
     });
-    const xudtType = {
-        ...(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.getXudtTypeScript)(isMainnet),
-        args: xudtTypeArgs
-    };
     const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.genBtcJumpCkbVirtualTx)({
         collector,
         rgbppLockArgsList: lockArgsListResponse.rgbppLockArgsList,
@@ -1927,11 +1895,8 @@ const leapFromBtcToCKB = async ({ rgbppLockArgsList, toCkbAddress, xudtTypeArgs,
     });
     return psbt;
 };
-const transferSpore = async ({ sporeRgbppLockArgs, toBtcAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcService, wallet }, btcFeeRate = 30)=>{
-    const sporeTypeBytes = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.serializeScript)({
-        ...(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.getSporeTypeScript)(isMainnet),
-        args: sporeTypeArgs
-    });
+const transferSpore = async ({ sporeRgbppLockArgs, toBtcAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcService, wallet }, btcFeeRate = 30)=>{
+    const sporeTypeBytes = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.serializeScript)(sporeType);
     const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.genTransferSporeCkbVirtualTx)({
         collector,
         sporeRgbppLockArgs,
@@ -1990,7 +1955,7 @@ const transferSpore = async ({ sporeRgbppLockArgs, toBtcAddress, sporeTypeArgs, 
  *
  * @param {SporeTransferCombinedParams} params - The parameters for the spore transfer.
  * @param {string} params.toBtcAddress - The recipient's BTC address.
- * @param {Hex} params.sporeTypeArgs - The type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - The type script for the spore.
  * @param {Collector} params.collector - The collector object.
  * @param {boolean} params.isMainnet - Indicates if the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
@@ -2001,17 +1966,17 @@ const transferSpore = async ({ sporeRgbppLockArgs, toBtcAddress, sporeTypeArgs, 
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @param {number} [btcFeeRate=30] - The fee rate for the BTC transaction (optional, default is 30).
  * @returns {Promise<{ btcTxId: string }>} - The result of the spore transfer, including the BTC transaction ID.
- */ const transferSporeCombined = async ({ toBtcAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService }, btcFeeRate = 30)=>{
+ */ const transferSporeCombined = async ({ toBtcAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService }, btcFeeRate = 30)=>{
     const sporeRgbppLockArgs = await getSporeRgbppLockArgs({
         fromBtcAddress,
-        sporeTypeArgs,
+        sporeType,
         isMainnet,
         btcService
     });
     const res = await transferSpore({
         sporeRgbppLockArgs,
         toBtcAddress,
-        sporeTypeArgs,
+        sporeType,
         collector,
         isMainnet,
         btcTestnetType,
@@ -2027,15 +1992,12 @@ const transferSpore = async ({ sporeRgbppLockArgs, toBtcAddress, sporeTypeArgs, 
  * Retrieves the spore RGBPP lock arguments based on the provided parameters.
  * @param {GetSporeRgbppLockArgsParams} params - The parameters for retrieving the spore RGBPP lock arguments.
  * @param {string} params.fromBtcAddress - The BTC address from which the spore will be transferred.
- * @param {Hex} params.sporeTypeArgs - Type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - Type script for the spore.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @returns {Promise<Hex>} - A promise that resolves to the spore RGBPP lock arguments.
- */ const getSporeRgbppLockArgs = async ({ fromBtcAddress, sporeTypeArgs, isMainnet, btcService })=>{
-    const type_script = JSON.stringify({
-        ...(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.getSporeTypeScript)(isMainnet),
-        args: sporeTypeArgs
-    });
+ */ const getSporeRgbppLockArgs = async ({ fromBtcAddress, sporeType, isMainnet, btcService })=>{
+    const type_script = JSON.stringify(sporeType);
     console.log(type_script);
     try {
         const data = await btcService.getRgbppAssetsByBtcAddress(fromBtcAddress, {
@@ -2059,7 +2021,7 @@ const transferSpore = async ({ sporeRgbppLockArgs, toBtcAddress, sporeTypeArgs, 
  *
  * @param {PrepareTransferSporeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {string} params.toBtcAddress - The recipient's BTC address.
- * @param {Hex} params.sporeTypeArgs - Type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - Type script for the spore.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
@@ -2069,17 +2031,14 @@ const transferSpore = async ({ sporeRgbppLockArgs, toBtcAddress, sporeTypeArgs, 
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
- */ const prepareTransferSporeUnsignedPsbt = async ({ toBtcAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcService, btcFeeRate = 30 })=>{
+ */ const prepareTransferSporeUnsignedPsbt = async ({ toBtcAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcService, btcFeeRate = 30 })=>{
     const sporeRgbppLockArgs = await getSporeRgbppLockArgs({
         fromBtcAddress,
-        sporeTypeArgs,
+        sporeType,
         isMainnet,
         btcService
     });
-    const sporeTypeBytes = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.serializeScript)({
-        ...(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.getSporeTypeScript)(isMainnet),
-        args: sporeTypeArgs
-    });
+    const sporeTypeBytes = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.serializeScript)(sporeType);
     const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.genTransferSporeCkbVirtualTx)({
         collector,
         sporeRgbppLockArgs,
@@ -2104,11 +2063,8 @@ const transferSpore = async ({ sporeRgbppLockArgs, toBtcAddress, sporeTypeArgs, 
     });
     return psbt;
 };
-const leapSporeFromBtcToCkb = async ({ sporeRgbppLockArgs, toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService }, btcFeeRate = 30)=>{
-    const sporeTypeBytes = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.serializeScript)({
-        ...(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.getSporeTypeScript)(isMainnet),
-        args: sporeTypeArgs
-    });
+const leapSporeFromBtcToCkb = async ({ sporeRgbppLockArgs, toCkbAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService }, btcFeeRate = 30)=>{
+    const sporeTypeBytes = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.serializeScript)(sporeType);
     const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.genLeapSporeFromBtcToCkbVirtualTx)({
         collector,
         sporeRgbppLockArgs,
@@ -2165,7 +2121,7 @@ const leapSporeFromBtcToCkb = async ({ sporeRgbppLockArgs, toCkbAddress, sporeTy
  * @param {number} [btcFeeRate=30] - The fee rate for the BTC transaction (default is 30).
  *
  * @param {string} params.toCkbAddress - The CKB address to which the spore will be sent.
- * @param {Hex} params.sporeTypeArgs - The type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - The type script for the spore.
  * @param {Collector} params.collector - The collector object used for collecting the spore.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
@@ -2176,17 +2132,17 @@ const leapSporeFromBtcToCkb = async ({ sporeRgbppLockArgs, toCkbAddress, sporeTy
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  *
  * @returns {Promise<TxResult>} - The result of the transaction, including the BTC transaction ID.
- */ const leapSporeFromBtcToCkbCombined = async ({ toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService }, btcFeeRate = 30)=>{
+ */ const leapSporeFromBtcToCkbCombined = async ({ toCkbAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService }, btcFeeRate = 30)=>{
     const sporeRgbppLockArgs = await getSporeRgbppLockArgs({
         fromBtcAddress,
-        sporeTypeArgs,
+        sporeType,
         isMainnet,
         btcService
     });
     const res = await leapSporeFromBtcToCkb({
         sporeRgbppLockArgs,
         toCkbAddress,
-        sporeTypeArgs,
+        sporeType,
         collector,
         isMainnet,
         btcTestnetType,
@@ -2205,7 +2161,7 @@ const leapSporeFromBtcToCkb = async ({ sporeRgbppLockArgs, toCkbAddress, sporeTy
  * @param {PrepareLeapSporeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {Hex} params.sporeRgbppLockArgs - RGBPP lock arguments for the spore.
  * @param {string} params.toCkbAddress - The destination CKB address.
- * @param {Hex} params.sporeTypeArgs - Type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - Type script for the spore.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
@@ -2215,17 +2171,14 @@ const leapSporeFromBtcToCkb = async ({ sporeRgbppLockArgs, toCkbAddress, sporeTy
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
- */ const prepareLeapSporeUnsignedPsbt = async ({ toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate = 30, btcService })=>{
+ */ const prepareLeapSporeUnsignedPsbt = async ({ toCkbAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate = 30, btcService })=>{
     const sporeRgbppLockArgs = await getSporeRgbppLockArgs({
         fromBtcAddress,
-        sporeTypeArgs,
+        sporeType,
         isMainnet,
         btcService
     });
-    const sporeTypeBytes = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.serializeScript)({
-        ...(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.getSporeTypeScript)(isMainnet),
-        args: sporeTypeArgs
-    });
+    const sporeTypeBytes = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.serializeScript)(sporeType);
     const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.genLeapSporeFromBtcToCkbVirtualTx)({
         collector,
         sporeRgbppLockArgs,
@@ -2251,11 +2204,11 @@ const leapSporeFromBtcToCkb = async ({ sporeRgbppLockArgs, toCkbAddress, sporeTy
     });
     return psbt;
 };
-const transfer = async ({ rgbppLockArgsList, toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService }, btcFeeRate)=>{
+const transfer = async ({ rgbppLockArgsList, toBtcAddress, xudtType, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService }, btcFeeRate)=>{
     const { ckbVirtualTxResult, btcPsbtHex } = await (0, __WEBPACK_EXTERNAL_MODULE_rgbpp__.buildRgbppTransferTx)({
         ckb: {
             collector,
-            xudtTypeArgs,
+            xudtTypeArgs: xudtType.args,
             rgbppLockArgsList,
             transferAmount
         },
@@ -2303,7 +2256,7 @@ const transfer = async ({ rgbppLockArgsList, toBtcAddress, xudtTypeArgs, transfe
  *
  * @param {RgbppTransferCombinedParams} params - Parameters for the transfer operation.
  * @param {string} params.toBtcAddress - The Bitcoin address to which the assets will be transferred.
- * @param {string} params.xudtTypeArgs - The type arguments for the XUDT script.
+ * @param {CKBComponents.Script} params.xudtType - The type script for the XUDT.
  * @param {bigint} params.transferAmount - The amount of assets to transfer, represented as a bigint.
  * @param {Collector} params.collector - The collector instance used for collecting assets.
  * @param {DataSource} params.btcDataSource - The data source for Bitcoin transactions.
@@ -2315,9 +2268,9 @@ const transfer = async ({ rgbppLockArgsList, toBtcAddress, xudtTypeArgs, transfe
  * @param {BtcAssetsApi} params.btcService - The service instance for interacting with Bitcoin assets.
  * @param {number} [btcFeeRate] - (Optional) The fee rate to use for the Bitcoin transaction.
  * @returns {Promise<TxResult>} A promise that resolves to the transaction result.
- */ const transferCombined = async ({ toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService }, btcFeeRate)=>{
+ */ const transferCombined = async ({ toBtcAddress, xudtType, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService }, btcFeeRate)=>{
     const lockArgsListResponse = await getRgbppLockArgsList({
-        xudtTypeArgs,
+        xudtType,
         fromBtcAccount,
         isMainnet,
         btcService
@@ -2325,7 +2278,7 @@ const transfer = async ({ rgbppLockArgsList, toBtcAddress, xudtTypeArgs, transfe
     const res = await transfer({
         rgbppLockArgsList: lockArgsListResponse.rgbppLockArgsList,
         toBtcAddress,
-        xudtTypeArgs,
+        xudtType,
         transferAmount,
         collector,
         btcDataSource,
@@ -2344,7 +2297,7 @@ const transfer = async ({ rgbppLockArgsList, toBtcAddress, xudtTypeArgs, transfe
  *
  * @param {PrepareTransferUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {string} params.toBtcAddress - The recipient's BTC address.
- * @param {string} params.xudtTypeArgs - Type arguments for the XUDT script.
+ * @param {CKBComponents.Script} params.xudtType - Type script for the XUDT.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
@@ -2355,9 +2308,9 @@ const transfer = async ({ rgbppLockArgsList, toBtcAddress, xudtTypeArgs, transfe
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @param {BtcAssetsApi} params.btcService - The service instance for interacting with Bitcoin assets.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
- */ const prepareTransferUnsignedPsbt = async ({ btcService, toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate = 30 })=>{
+ */ const prepareTransferUnsignedPsbt = async ({ btcService, toBtcAddress, xudtType, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate = 30 })=>{
     const lockArgsListResponse = await getRgbppLockArgsList({
-        xudtTypeArgs,
+        xudtType,
         fromBtcAccount,
         isMainnet,
         btcService
@@ -2365,7 +2318,7 @@ const transfer = async ({ rgbppLockArgsList, toBtcAddress, xudtTypeArgs, transfe
     const { btcPsbtHex } = await (0, __WEBPACK_EXTERNAL_MODULE_rgbpp__.buildRgbppTransferTx)({
         ckb: {
             collector,
-            xudtTypeArgs,
+            xudtTypeArgs: xudtType.args,
             rgbppLockArgsList: lockArgsListResponse.rgbppLockArgsList,
             transferAmount
         },

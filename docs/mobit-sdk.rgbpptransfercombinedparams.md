@@ -227,7 +227,7 @@ Wallet instance used for signing BTC transactions.
 </td></tr>
 <tr><td>
 
-[xudtTypeArgs](./mobit-sdk.rgbpptransfercombinedparams.xudttypeargs.md)
+[xudtType](./mobit-sdk.rgbpptransfercombinedparams.xudttype.md)
 
 
 </td><td>
@@ -235,12 +235,12 @@ Wallet instance used for signing BTC transactions.
 
 </td><td>
 
-string
+CKBComponents.Script
 
 
 </td><td>
 
-The type arguments for the XUDT script.
+The type script for the XUDT.
 
 
 </td></tr>

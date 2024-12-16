@@ -12,9 +12,9 @@ export interface LeapSporeToBtcTransactionParams {
      */
     btcTxId: string;
     /**
-     * The type arguments for the spore.
+     * The type script for the spore.
      */
-    sporeTypeArgs: string;
+    sporeType: CKBComponents.Script;
     /**
      * A flag indicating whether the operation is on the mainnet.
      */
@@ -38,12 +38,12 @@ export interface LeapSporeToBtcTransactionParams {
  * @param {LeapSporeToBtcTransactionParams} params - The parameters for leaping a spore from CKB to BTC.
  * @param {number} params.outIndex - The output index of the spore.
  * @param {string} params.btcTxId - The transaction ID of the BTC transaction.
- * @param {string} params.sporeTypeArgs - The type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - The type script for the spore.
  * @param {boolean} params.isMainnet - A flag indicating whether the operation is on the mainnet.
  * @param {Collector} params.collector - The collector instance.
  * @param {string} params.ckbAddress - The CKB address.
  * @param {BTCTestnetType} [params.btcTestnetType] - (Optional) The type of BTC testnet.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} A promise that resolves to the unsigned raw transaction to sign.
  */
-export declare const leapSporeFromCkbToBtcTransaction: ({ outIndex, btcTxId, sporeTypeArgs, isMainnet, collector, ckbAddress, btcTestnetType, }: LeapSporeToBtcTransactionParams) => Promise<CKBComponents.RawTransactionToSign>;
+export declare const leapSporeFromCkbToBtcTransaction: ({ outIndex, btcTxId, sporeType, isMainnet, collector, ckbAddress, btcTestnetType, }: LeapSporeToBtcTransactionParams) => Promise<CKBComponents.RawTransactionToSign>;
 //# sourceMappingURL=leap_spore.d.ts.map

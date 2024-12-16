@@ -413,7 +413,9 @@ export const prepareClusterCellTransaction = async ({
   btcTestnetType,
   outIndex,
   btcTxId,
-}: PrepareClusterCellTransactionParams): Promise<CKBComponents.RawTransactionToSign> => {
+}: PrepareClusterCellTransactionParams): Promise<
+  CKBComponents.RawTransactionToSign
+> => {
   const prepareClusterCellTx = await prepareClusterCell({
     outIndex,
     btcTxId,

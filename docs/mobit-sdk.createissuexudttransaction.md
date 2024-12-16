@@ -9,7 +9,7 @@ Creates an unsigned transaction for issuing xUDT assets with a unique cell as th
 **Signature:**
 
 ```typescript
-export declare function createIssueXudtTransaction({ xudtTotalAmount, tokenInfo, ckbAddress, collector, isMainnet, }: CreateIssueXudtTransactionParams, feeRate?: bigint, maxFee?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createIssueXudtTransaction({ xudtTotalAmount, tokenInfo, ckbAddress, collector, isMainnet, }: CreateIssueXudtTransactionParams): Promise<CKBComponents.RawTransactionToSign>;
 ```
 
 ## Parameters
@@ -41,54 +41,6 @@ Description
 
 
 </td><td>
-
-
-</td></tr>
-<tr><td>
-
-feeRate
-
-
-</td><td>
-
-bigint
-
-
-</td><td>
-
-_(Optional)_ (Optional) The fee rate to be used for the transaction.
-
-
-</td></tr>
-<tr><td>
-
-maxFee
-
-
-</td><td>
-
-bigint
-
-
-</td><td>
-
-_(Optional)_ (Optional) The maximum fee allowed for the transaction. Defaults to MAX\_FEE.
-
-
-</td></tr>
-<tr><td>
-
-witnessLockPlaceholderSize
-
-
-</td><td>
-
-number
-
-
-</td><td>
-
-_(Optional)_ (Optional) The size of the witness lock placeholder.
 
 
 </td></tr>

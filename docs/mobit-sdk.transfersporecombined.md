@@ -9,7 +9,7 @@ Transfers a spore to a specified BTC address.
 **Signature:**
 
 ```typescript
-transferSporeCombined: ({ toBtcAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService, }: SporeTransferCombinedParams, btcFeeRate?: number) => Promise<{
+transferSporeCombined: ({ toBtcAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService, }: SporeTransferCombinedParams, btcFeeRate?: number) => Promise<{
     btcTxId: string;
 }>
 ```
@@ -34,7 +34,7 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-{ toBtcAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService, }
+{ toBtcAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService, }
 
 
 </td><td>

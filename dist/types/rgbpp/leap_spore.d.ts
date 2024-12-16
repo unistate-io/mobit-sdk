@@ -1,4 +1,4 @@
-import { BTCTestnetType, Collector, Hex } from "@rgbpp-sdk/ckb";
+import { BTCTestnetType, Collector } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi, DataSource } from "rgbpp";
 import { AbstractWallet, TxResult } from "../helper";
 import { bitcoin } from "@rgbpp-sdk/btc";
@@ -8,8 +8,8 @@ import { bitcoin } from "@rgbpp-sdk/btc";
 export interface SporeLeapCombinedParams {
     /** The CKB address to which the spore will be sent. */
     toCkbAddress: string;
-    /** The type arguments for the spore. */
-    sporeTypeArgs: Hex;
+    /** The type script for the spore. */
+    sporeType: CKBComponents.Script;
     /** The collector object used for collecting the spore. */
     collector: Collector;
     /** Indicates whether the operation is on the mainnet. */
@@ -34,7 +34,7 @@ export interface SporeLeapCombinedParams {
  * @param {number} [btcFeeRate=30] - The fee rate for the BTC transaction (default is 30).
  *
  * @param {string} params.toCkbAddress - The CKB address to which the spore will be sent.
- * @param {Hex} params.sporeTypeArgs - The type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - The type script for the spore.
  * @param {Collector} params.collector - The collector object used for collecting the spore.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
@@ -46,7 +46,7 @@ export interface SporeLeapCombinedParams {
  *
  * @returns {Promise<TxResult>} - The result of the transaction, including the BTC transaction ID.
  */
-export declare const leapSporeFromBtcToCkbCombined: ({ toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService, }: SporeLeapCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
+export declare const leapSporeFromBtcToCkbCombined: ({ toCkbAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService, }: SporeLeapCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
 /**
  * Parameters required to generate an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping a spore from Bitcoin to CKB.
  * This interface is used to estimate transaction fees before finalizing the transaction.
@@ -54,8 +54,8 @@ export declare const leapSporeFromBtcToCkbCombined: ({ toCkbAddress, sporeTypeAr
 export interface PrepareLeapSporeUnsignedPsbtParams {
     /** The destination CKB address. */
     toCkbAddress: string;
-    /** Type arguments for the spore. */
-    sporeTypeArgs: Hex;
+    /** Type script for the spore. */
+    sporeType: CKBComponents.Script;
     /** Collector instance used to gather cells for the transaction. */
     collector: Collector;
     /** Indicates whether the operation is on the mainnet. */
@@ -80,7 +80,7 @@ export interface PrepareLeapSporeUnsignedPsbtParams {
  * @param {PrepareLeapSporeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {Hex} params.sporeRgbppLockArgs - RGBPP lock arguments for the spore.
  * @param {string} params.toCkbAddress - The destination CKB address.
- * @param {Hex} params.sporeTypeArgs - Type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - Type script for the spore.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
@@ -91,5 +91,5 @@ export interface PrepareLeapSporeUnsignedPsbtParams {
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareLeapSporeUnsignedPsbt: ({ toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, btcService, }: PrepareLeapSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareLeapSporeUnsignedPsbt: ({ toCkbAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, btcService, }: PrepareLeapSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 //# sourceMappingURL=leap_spore.d.ts.map

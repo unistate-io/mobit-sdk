@@ -227,7 +227,7 @@ List of receivers for the RGBPP assets.
 </td></tr>
 <tr><td>
 
-[xudtTypeArgs](./mobit-sdk.preparedistributeunsignedpsbtparams.xudttypeargs.md)
+[xudtType](./mobit-sdk.preparedistributeunsignedpsbtparams.xudttype.md)
 
 
 </td><td>
@@ -235,12 +235,12 @@ List of receivers for the RGBPP assets.
 
 </td><td>
 
-string
+CKBComponents.Script
 
 
 </td><td>
 
-Type arguments for the XUDT type script.
+Type script for the XUDT type.
 
 
 </td></tr>

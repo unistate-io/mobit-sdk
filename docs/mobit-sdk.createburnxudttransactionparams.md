@@ -113,7 +113,7 @@ A boolean indicating whether the network is mainnet or testnet, affecting the ty
 </td></tr>
 <tr><td>
 
-[xudtArgs](./mobit-sdk.createburnxudttransactionparams.xudtargs.md)
+[xudtType](./mobit-sdk.createburnxudttransactionparams.xudttype.md)
 
 
 </td><td>
@@ -121,12 +121,12 @@ A boolean indicating whether the network is mainnet or testnet, affecting the ty
 
 </td><td>
 
-string
+CKBComponents.Script
 
 
 </td><td>
 
-The xUDT type script args, which is the unique identifier for the xUDT token type.
+The xUDT type script, which is the unique identifier for the xUDT token type.
 
 
 </td></tr>

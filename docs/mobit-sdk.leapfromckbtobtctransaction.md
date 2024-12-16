@@ -11,7 +11,7 @@ This function facilitates the transfer of assets from the CKB (Nervos Network) b
 **Signature:**
 
 ```typescript
-leapFromCkbToBtcTransaction: ({ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType, }: LeapToBtcTransactionParams, feeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>
+leapFromCkbToBtcTransaction: ({ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType, }: LeapToBtcTransactionParams) => Promise<CKBComponents.RawTransactionToSign>
 ```
 
 ## Parameters
@@ -43,38 +43,6 @@ Description
 
 
 </td><td>
-
-
-</td></tr>
-<tr><td>
-
-feeRate
-
-
-</td><td>
-
-bigint
-
-
-</td><td>
-
-_(Optional)_ The fee rate for the transaction, optional.
-
-
-</td></tr>
-<tr><td>
-
-witnessLockPlaceholderSize
-
-
-</td><td>
-
-number
-
-
-</td><td>
-
-_(Optional)_ The size of the witness lock placeholder, optional.
 
 
 </td></tr>

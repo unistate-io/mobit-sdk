@@ -151,7 +151,7 @@ The output index of the spore.
 </td></tr>
 <tr><td>
 
-[sporeTypeArgs](./mobit-sdk.leapsporetobtctransactionparams.sporetypeargs.md)
+[sporeType](./mobit-sdk.leapsporetobtctransactionparams.sporetype.md)
 
 
 </td><td>
@@ -159,12 +159,12 @@ The output index of the spore.
 
 </td><td>
 
-string
+CKBComponents.Script
 
 
 </td><td>
 
-The type arguments for the spore.
+The type script for the spore.
 
 
 </td></tr>

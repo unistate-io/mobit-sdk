@@ -3,7 +3,8 @@ import { BtcApiTransaction } from '@rgbpp-sdk/service';
 import { BtcApiUtxo } from '@rgbpp-sdk/service';
 import { BtcAssetsApi } from 'rgbpp';
 import { BTCTestnetType } from '@rgbpp-sdk/ckb';
-import * as ccc from '@ckb-ccc/core';
+import { ccc } from '@ckb-ccc/core';
+import * as ccc_2 from '@ckb-ccc/core';
 import { Collector } from '@rgbpp-sdk/ckb';
 import { DataSource } from 'rgbpp';
 import { DataSource as DataSource_2 } from '@rgbpp-sdk/btc';
@@ -13,7 +14,6 @@ import { RawClusterData } from '@rgbpp-sdk/ckb';
 import { RawSporeData } from '@rgbpp-sdk/ckb';
 import { RgbppBtcAddressReceiver } from '@rgbpp-sdk/ckb';
 import { RgbppTokenInfo } from '@rgbpp-sdk/ckb';
-import { TransactionSkeletonType } from '@ckb-lumos/helpers';
 
 /**
  * AbstractWallet interface defines the contract for a wallet that can sign PSBTs (Partially Signed Bitcoin Transactions).
@@ -187,12 +187,11 @@ declare interface ClusterInfo {
 }
 
 /**
- * Converts a raw transaction to a transaction skeleton.
- * @param {CKBComponents.RawTransactionToSign} rawTransaction - The raw transaction to convert.
- * @param {Collector} collector - The collector instance.
- * @returns {Promise<TransactionSkeletonType>} The transaction skeleton.
+ * Converts a CKBComponents.RawTransactionToSign to a ccc.Transaction.
+ * @param {CKBComponents.RawTransactionToSign} rawTransactionToSign - The raw transaction to sign to convert.
+ * @returns {ccc.Transaction} The converted transaction object.
  */
-export declare function convertToTxSkeleton(rawTransaction: CKBComponents.RawTransactionToSign, collector: Collector): Promise<TransactionSkeletonType>;
+export declare function convertToTransaction(rawTransactionToSign: CKBComponents.RawTransactionToSign): ccc.Transaction;
 
 /**
  * Creates a BTC service instance.
@@ -208,26 +207,23 @@ export declare const createBtcService: (btcTestnetType?: BTCTestnetType) => BtcA
  * It fetches the necessary cells, collects inputs, and constructs the transaction outputs accordingly.
  *
  * @param {CreateBurnXudtTransactionParams} params - The parameters for creating the burn transaction.
- * @param {string} params.xudtArgs - The xUDT type script args, which is the unique identifier for the xUDT token type.
+ * @param {CKBComponents.Script} params.xudtType - The xUDT type script, which is the unique identifier for the xUDT token type.
  * @param {bigint} params.burnAmount - The amount of xUDT asset to be burned, representing the quantity of tokens that will be destroyed.
  * @param {string} params.ckbAddress - The CKB address for the transaction, from which the tokens will be burned.
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs, responsible for gathering the necessary cells to construct the transaction.
  * @param {boolean} params.isMainnet - A boolean indicating whether the network is mainnet or testnet, affecting the type script and cell dependencies.
- * @param {bigint} [feeRate] - An optional parameter specifying the fee rate for the transaction. If not provided, a default fee rate will be used.
- * @param {bigint} [maxFee=MAX_FEE] - An optional parameter specifying the maximum fee for the transaction. Defaults to MAX_FEE if not provided.
- * @param {number} [witnessLockPlaceholderSize] - An optional parameter specifying the size of the witness lock placeholder.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - An unsigned transaction object that can be signed and submitted to the network.
  */
-export declare function createBurnXudtTransaction({ xudtArgs, burnAmount, ckbAddress, collector, isMainnet, }: CreateBurnXudtTransactionParams, feeRate?: bigint, maxFee?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createBurnXudtTransaction({ xudtType, burnAmount, ckbAddress, collector, isMainnet, }: CreateBurnXudtTransactionParams): Promise<CKBComponents.RawTransactionToSign>;
 
 /**
  * Interface for parameters required to create a burn transaction for xUDT assets.
  */
 export declare interface CreateBurnXudtTransactionParams {
     /**
-     * The xUDT type script args, which is the unique identifier for the xUDT token type.
+     * The xUDT type script, which is the unique identifier for the xUDT token type.
      */
-    xudtArgs: string;
+    xudtType: CKBComponents.Script;
     /**
      * The amount of xUDT asset to be burned, representing the quantity of tokens that will be destroyed.
      */
@@ -263,11 +259,10 @@ export declare interface CreateBurnXudtTransactionParams {
  * @param {(utxos: BtcApiUtxo[]) => Promise<{ outIndex: number; btcTxId: string }>} params.filterUtxo - Function to filter UTXOs for the BTC transaction.
  * @param {ccc.Signer} params.cccSigner - Signer instance for signing CKB transactions.
  * @param {bigint} [ckbFeeRate] - Fee rate for the CKB transaction (optional).
- * @param {bigint} [maxFee=MAX_FEE] - Maximum fee for the CKB transaction (default is MAX_FEE).
  * @param {number} [btcFeeRate=30] - Fee rate for the BTC transaction (default is 30).
  * @returns {Promise<TxResult>} - Promise that resolves to the transaction result.
  */
-export declare const createClusterCombined: ({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, filterUtxo, cccSigner, }: createClusterCombinedParams, ckbFeeRate?: bigint, maxFee?: bigint, btcFeeRate?: number, witnessLockPlaceholderSize?: number) => Promise<TxResult>;
+export declare const createClusterCombined: ({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, filterUtxo, cccSigner, }: createClusterCombinedParams, ckbFeeRate?: bigint, btcFeeRate?: number) => Promise<TxResult>;
 
 /**
  * Parameters required to create a combined cluster.
@@ -323,7 +318,7 @@ export declare interface createClusterCombinedParams {
     /**
      * Signer instance for signing CKB transactions.
      */
-    cccSigner: ccc.Signer;
+    cccSigner: ccc_2.Signer;
 }
 
 /**
@@ -335,13 +330,10 @@ export declare interface createClusterCombinedParams {
  * @param {string} params.ckbAddress - The CKB address for the transaction.
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
  * @param {boolean} params.isMainnet - A boolean indicating whether the network is mainnet or testnet.
- * @param {bigint} [feeRate] - (Optional) The fee rate to be used for the transaction.
- * @param {bigint} [maxFee=MAX_FEE] - (Optional) The maximum fee allowed for the transaction. Defaults to MAX_FEE.
- * @param {number} [witnessLockPlaceholderSize] - (Optional) The size of the witness lock placeholder.
  *
  * @returns {Promise<CKBComponents.RawTransactionToSign>} A promise that resolves to an unsigned transaction object.
  */
-export declare function createIssueXudtTransaction({ xudtTotalAmount, tokenInfo, ckbAddress, collector, isMainnet, }: CreateIssueXudtTransactionParams, feeRate?: bigint, maxFee?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createIssueXudtTransaction({ xudtTotalAmount, tokenInfo, ckbAddress, collector, isMainnet, }: CreateIssueXudtTransactionParams): Promise<CKBComponents.RawTransactionToSign>;
 
 /**
  * Interface for parameters required to create an issue xUDT transaction.
@@ -377,12 +369,9 @@ export declare interface CreateIssueXudtTransactionParams {
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
  * @param {boolean} params.isMainnet - A boolean indicating whether the transaction is for the mainnet or testnet.
  * @param {string} [ckbAddress=params.ckbAddresses[0]] - The address for the output cell, defaulting to the first address in the input address set.
- * @param {bigint} [feeRate] - The fee rate for the transaction, optional.
- * @param {bigint} [maxFee=MAX_FEE] - The maximum fee for the transaction, defaulting to MAX_FEE.
- * @param {number} [witnessLockPlaceholderSize] - The size of the witness lock placeholder, optional.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} An unsigned transaction object.
  */
-export declare function createMergeXudtTransaction({ xudtArgs, ckbAddresses, collector, isMainnet, }: CreateMergeXudtTransactionParams, ckbAddress?: string, feeRate?: bigint, maxFee?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createMergeXudtTransaction({ xudtArgs, ckbAddresses, collector, isMainnet, }: CreateMergeXudtTransactionParams, ckbAddress?: string): Promise<CKBComponents.RawTransactionToSign>;
 
 /**
  * Parameters for creating a merged xUDT transaction.
@@ -410,7 +399,7 @@ export declare interface CreateMergeXudtTransactionParams {
  * Creates spores combined with the given parameters.
  *
  * @param {SporeCreateCombinedParams} params - The parameters for creating spores.
- * @param {string} params.clusterTypeScriptArgs - The arguments for the cluster type script.
+ * @param {CKBComponents.Script} params.clusterType - The cluster type script.
  * @param {Array<{ toBtcAddress: string, sporeData: RawSporeData }>} params.receivers - The list of receivers with their BTC addresses and spore data.
  * @param {Collector} params.collector - The collector instance.
  * @param {boolean} params.isMainnet - Indicates if the operation is on mainnet.
@@ -423,40 +412,36 @@ export declare interface CreateMergeXudtTransactionParams {
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @param {ccc.Signer} params.cccSigner - The CCC signer instance.
  * @param {number} [btcFeeRate=120] - The fee rate for BTC transactions (default is 120).
- * @param {number} [witnessLockPlaceholderSize] - The size of the witness lock placeholder (optional). This parameter is used to estimate the transaction size when the witness lock placeholder size is known.
  * @returns {Promise<TxResult>} - The result of the transaction.
  */
-export declare const createSporesCombined: ({ clusterTypeScriptArgs, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, ckbAddress, cccSigner, }: SporeCreateCombinedParams, btcFeeRate?: number, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<TxResult>;
+export declare const createSporesCombined: ({ clusterType, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, ckbAddress, cccSigner, }: SporeCreateCombinedParams, btcFeeRate?: number, ckbFeeRate?: bigint) => Promise<TxResult>;
 
 /**
  * Creates an unsigned transaction for transferring xUDT assets. This function can also be used to mint xUDT assets.
  *
  * @param {CreateTransferXudtTransactionParams} params - The parameters for creating the transaction.
- * @param {string} params.xudtArgs - The xUDT type script args.
+ * @param {CKBComponents.Script} params.xudtType - The xUDT type script.
  * @param {Array<{ toAddress: string, transferAmount: bigint }>} params.receivers - An array of receiver objects containing `toAddress` and `transferAmount`.
  * @param {Array<string>} params.ckbAddresses - The CKB addresses for the transaction.
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
  * @param {boolean} params.isMainnet - A boolean indicating whether the network is mainnet or testnet.
  * @param {string} [ckbAddress=params.ckbAddresses[0]] - The address for the output cell, defaulting to the first address in the input address set.
- * @param {bigint} [feeRate] - (Optional) The fee rate to be used for the transaction.
- * @param {bigint} [maxFee=MAX_FEE] - (Optional) The maximum fee allowed for the transaction. Defaults to `MAX_FEE`.
- * @param {number} [witnessLockPlaceholderSize] - (Optional) The size of the witness lock placeholder.
  *
  * @returns {Promise<CKBComponents.RawTransactionToSign>} A promise that resolves to an unsigned transaction object.
  *
  * @throws {NoXudtLiveCellError} If the address has no xudt cells.
  * @throws {NoLiveCellError} If the address has no empty cells.
  */
-export declare function createTransferXudtTransaction({ xudtArgs, receivers, ckbAddresses, collector, isMainnet, }: CreateTransferXudtTransactionParams, ckbAddress?: string, feeRate?: bigint, maxFee?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createTransferXudtTransaction({ xudtType, receivers, ckbAddresses, collector, isMainnet, }: CreateTransferXudtTransactionParams, ckbAddress?: string): Promise<CKBComponents.RawTransactionToSign>;
 
 /**
  * Parameters for creating a transaction to transfer xUDT assets.
  */
 export declare interface CreateTransferXudtTransactionParams {
     /**
-     * The xUDT type script args.
+     * The xUDT type script.
      */
-    xudtArgs: string;
+    xudtType: CKBComponents.Script;
     /**
      * An array of receiver objects containing `toAddress` and `transferAmount`.
      */
@@ -482,8 +467,8 @@ export declare interface CreateTransferXudtTransactionParams {
  * Distributes RGBPP assets to multiple receivers.
  *
  * @param {RgbppDistributeCombinedParams} params - The parameters for the distribution.
- * @param {string} params.xudtTypeArgs - The type arguments for the XUDT type script.
  * @param {RgbppBtcAddressReceiver[]} params.receivers - The list of receivers for the RGBPP assets.
+ * @param {CKBComponents.Script} params.xudtType - The type script for the XUDT type.
  * @param {Collector} params.collector - The collector instance used for generating the CKB virtual transaction.
  * @param {DataSource} params.btcDataSource - The data source for BTC transactions.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
@@ -496,7 +481,7 @@ export declare interface CreateTransferXudtTransactionParams {
  * @param {number} [btcFeeRate] - The fee rate for the BTC transaction (optional).
  * @returns {Promise<TxResult>} - The result of the transaction.
  */
-export declare const distributeCombined: ({ xudtTypeArgs, receivers, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, filterRgbppArgslist, btcService, }: RgbppDistributeCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
+export declare const distributeCombined: ({ xudtType, receivers, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, filterRgbppArgslist, btcService, }: RgbppDistributeCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
 
 /**
  * Fetches the necessary UTXOs and filters them to get the output index and BTC transaction ID.
@@ -515,16 +500,15 @@ export declare const fetchAndFilterUtxos: (btcAccount: string, filterUtxo: (utxo
 }>;
 
 /**
- * Fetches RGBPP assets for a given BTC address and type script args, and validates the result.
+ * Fetches RGBPP assets for a given BTC address and type script, and validates the result.
  *
  * @param {string} fromBtcAccount - The BTC account from which the assets are being fetched.
- * @param {string} clusterTypeScriptArgs - The arguments for the cluster type script.
- * @param {boolean} isMainnet - Indicates if the operation is on mainnet.
+ * @param {CKBComponents.Script} clusterType - The cluster type script.
  * @param {BtcAssetsApi} btcService - The BTC assets API service.
  * @returns {Promise<string>} - The cluster RGBPP lock args.
- * @throws {Error} - Throws an error if no assets are found for the given BTC address and type script args.
+ * @throws {Error} - Throws an error if no assets are found for the given BTC address and type script.
  */
-export declare const fetchAndValidateAssets: (fromBtcAccount: string, clusterTypeScriptArgs: string, isMainnet: boolean, btcService: BtcAssetsApi) => Promise<string>;
+export declare const fetchAndValidateAssets: (fromBtcAccount: string, clusterType: CKBComponents.Script, btcService: BtcAssetsApi) => Promise<string>;
 
 /**
  * Represents information about an inscription, extending TokenInfo.
@@ -566,20 +550,18 @@ declare interface InscriptionInfo extends TokenInfo {
  * @param {(utxos: BtcApiUtxo[]) => Promise<{ outIndex: number; btcTxId: string }>} params.filterUtxo - A function to filter UTXOs for the BTC transaction.
  * @param {AbstractWallet} params.wallet - Wallet instance used for signing BTC transactions.
  * @param {bigint} [ckbFeeRate] - (Optional) The fee rate for CKB transactions, represented as a bigint.
- * @param {bigint} [maxFee=MAX_FEE] - (Optional) The maximum fee for the transaction, represented as a bigint. Defaults to MAX_FEE.
  * @param {number} [btcFeeRate] - (Optional) The fee rate for BTC transactions, represented as a number.
- * @param {number} [witnessLockPlaceholderSize] - (Optional) The size of the witness lock placeholder.
  *
  * @returns A promise that resolves to the transaction result, including the BTC transaction ID and CKB transaction hash.
  */
-export declare const launchCombined: ({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, ckbAddress, filterUtxo, btcService, wallet, cccSigner, }: RgbppLauncerCombinedParams, ckbFeeRate?: bigint, maxFee?: bigint, btcFeeRate?: number, witnessLockPlaceholderSize?: number) => Promise<TxResult>;
+export declare const launchCombined: ({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, ckbAddress, filterUtxo, btcService, wallet, cccSigner, }: RgbppLauncerCombinedParams, ckbFeeRate?: bigint, btcFeeRate?: number) => Promise<TxResult>;
 
 /**
  * Combines the parameters for leaping RGBPP assets from Bitcoin to CKB and executes the leap operation.
  *
  * @param {RgbppLeapFromBtcToCkbCombinedParams} params - The parameters for the leap operation.
  * @param {string} params.toCkbAddress - The destination CKB address.
- * @param {string} params.xudtTypeArgs - The arguments for the XUDT type script.
+ * @param {CKBComponents.Script} params.xudtType - The XUDT type script.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
  * @param {Collector} params.collector - The collector instance for CKB operations.
  * @param {DataSource} params.btcDataSource - The data source for BTC operations.
@@ -593,7 +575,7 @@ export declare const launchCombined: ({ rgbppTokenInfo, collector, isMainnet, bt
  *
  * @returns {Promise<TxResult>} - The result of the transaction.
  */
-export declare const leapFromBtcToCkbCombined: ({ toCkbAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService, }: RgbppLeapFromBtcToCkbCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
+export declare const leapFromBtcToCkbCombined: ({ toCkbAddress, xudtType, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService, }: RgbppLeapFromBtcToCkbCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
 
 /**
  * Leap from CKB to BTC
@@ -611,12 +593,10 @@ export declare const leapFromBtcToCkbCombined: ({ toCkbAddress, xudtTypeArgs, tr
  * @param {Collector} params.collector - The collector instance used for collecting cells.
  * @param {string} params.ckbAddress - The CKB address from which the assets are being transferred.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet, if applicable.
- * @param {bigint} [feeRate] - The fee rate for the transaction, optional.
- * @param {number} [witnessLockPlaceholderSize] - The size of the witness lock placeholder, optional.
  *
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - The unsigned raw transaction to sign.
  */
-export declare const leapFromCkbToBtcTransaction: ({ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType, }: LeapToBtcTransactionParams, feeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>;
+export declare const leapFromCkbToBtcTransaction: ({ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType, }: LeapToBtcTransactionParams) => Promise<CKBComponents.RawTransactionToSign>;
 
 /**
  * Combines the process of leaping a spore from BTC to CKB with the necessary parameters.
@@ -625,7 +605,7 @@ export declare const leapFromCkbToBtcTransaction: ({ outIndex, btcTxId, xudtType
  * @param {number} [btcFeeRate=30] - The fee rate for the BTC transaction (default is 30).
  *
  * @param {string} params.toCkbAddress - The CKB address to which the spore will be sent.
- * @param {Hex} params.sporeTypeArgs - The type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - The type script for the spore.
  * @param {Collector} params.collector - The collector object used for collecting the spore.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
@@ -637,7 +617,7 @@ export declare const leapFromCkbToBtcTransaction: ({ outIndex, btcTxId, xudtType
  *
  * @returns {Promise<TxResult>} - The result of the transaction, including the BTC transaction ID.
  */
-export declare const leapSporeFromBtcToCkbCombined: ({ toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService, }: SporeLeapCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
+export declare const leapSporeFromBtcToCkbCombined: ({ toCkbAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService, }: SporeLeapCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
 
 /**
  * Leap a spore from CKB to BTC.
@@ -645,16 +625,14 @@ export declare const leapSporeFromBtcToCkbCombined: ({ toCkbAddress, sporeTypeAr
  * @param {LeapSporeToBtcTransactionParams} params - The parameters for leaping a spore from CKB to BTC.
  * @param {number} params.outIndex - The output index of the spore.
  * @param {string} params.btcTxId - The transaction ID of the BTC transaction.
- * @param {string} params.sporeTypeArgs - The type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - The type script for the spore.
  * @param {boolean} params.isMainnet - A flag indicating whether the operation is on the mainnet.
  * @param {Collector} params.collector - The collector instance.
  * @param {string} params.ckbAddress - The CKB address.
  * @param {BTCTestnetType} [params.btcTestnetType] - (Optional) The type of BTC testnet.
- * @param {bigint} [feeRate] - (Optional) The fee rate for the transaction.
- * @param {number} [witnessLockPlaceholderSize] - (Optional) The size of the witness lock placeholder.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} A promise that resolves to the unsigned raw transaction to sign.
  */
-export declare const leapSporeFromCkbToBtcTransaction: ({ outIndex, btcTxId, sporeTypeArgs, isMainnet, collector, ckbAddress, btcTestnetType, }: LeapSporeToBtcTransactionParams, feeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>;
+export declare const leapSporeFromCkbToBtcTransaction: ({ outIndex, btcTxId, sporeType, isMainnet, collector, ckbAddress, btcTestnetType, }: LeapSporeToBtcTransactionParams) => Promise<CKBComponents.RawTransactionToSign>;
 
 /**
  * Interface for parameters required to leap a spore from CKB to BTC.
@@ -669,9 +647,9 @@ export declare interface LeapSporeToBtcTransactionParams {
      */
     btcTxId: string;
     /**
-     * The type arguments for the spore.
+     * The type script for the spore.
      */
-    sporeTypeArgs: string;
+    sporeType: CKBComponents.Script;
     /**
      * A flag indicating whether the operation is on the mainnet.
      */
@@ -751,9 +729,6 @@ declare enum MintStatus {
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {number} params.outIndex - Output index of the BTC transaction.
  * @param {string} params.btcTxId - ID of the BTC transaction.
- * @param {bigint} [maxFee=MAX_FEE] - Maximum fee for the CKB transaction (default is MAX_FEE).
- * @param {bigint} [ckbFeeRate] - Fee rate for the CKB transaction (optional).
- * @param {number} [witnessLockPlaceholderSize] - Size of the witness lock placeholder (optional).
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - Promise that resolves to the prepared CKB transaction.
  * --------------------------------------------
  * **Note: Example of fetching and filtering UTXOs:**
@@ -766,7 +741,7 @@ declare enum MintStatus {
  * ```
  * This example demonstrates how to obtain the necessary parameters (`outIndex` and `btcTxId`) by fetching and filtering UTXOs.
  */
-export declare const prepareClusterCellTransaction: ({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, outIndex, btcTxId, }: PrepareClusterCellTransactionParams, maxFee?: bigint, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>;
+export declare const prepareClusterCellTransaction: ({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, outIndex, btcTxId, }: PrepareClusterCellTransactionParams) => Promise<CKBComponents.RawTransactionToSign>;
 
 /**
  * Parameters required to prepare a cluster cell transaction.
@@ -993,7 +968,7 @@ export declare interface PrepareCreateSporeUnsignedPsbtParams {
  * );
  * ```
  */
-export declare const prepareCreateSporeUnsignedTransaction: ({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, ckbAddress, ckbFeeRate, witnessLockPlaceholderSize, }: PrepareCreateSporeUnsignedTransactionParams) => Promise<CKBComponents.RawTransactionToSign>;
+export declare const prepareCreateSporeUnsignedTransaction: ({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, ckbAddress, ckbFeeRate, }: PrepareCreateSporeUnsignedTransactionParams) => Promise<CKBComponents.RawTransactionToSign>;
 
 /**
  * Parameters for preparing an unsigned CKB transaction for creating spores.
@@ -1046,10 +1021,6 @@ export declare interface PrepareCreateSporeUnsignedTransactionParams {
      * The fee rate for CKB transactions (optional).
      */
     ckbFeeRate?: bigint;
-    /**
-     * The size of the witness lock placeholder (optional). This parameter is used to estimate the transaction size when the witness lock placeholder size is known.
-     */
-    witnessLockPlaceholderSize?: number;
 }
 
 /**
@@ -1058,7 +1029,7 @@ export declare interface PrepareCreateSporeUnsignedTransactionParams {
  *
  * @param {PrepareDistributeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {RgbppBtcAddressReceiver[]} params.receivers - List of receivers for the RGBPP assets.
- * @param {string} params.xudtTypeArgs - Type arguments for the XUDT type script.
+ * @param {CKBComponents.Script} params.xudtType - Type script for the XUDT type.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
@@ -1070,7 +1041,7 @@ export declare interface PrepareCreateSporeUnsignedTransactionParams {
  * @param {(argsList: string[]) => Promise<string[]>} params.filterRgbppArgslist - A function to filter the RGBPP args list.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareDistributeUnsignedPsbt: ({ receivers, xudtTypeArgs, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, btcService, filterRgbppArgslist, }: PrepareDistributeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareDistributeUnsignedPsbt: ({ receivers, xudtType, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, btcService, filterRgbppArgslist, }: PrepareDistributeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 
 /**
  * Interface for parameters required to prepare an unsigned PSBT for distributing RGBPP assets.
@@ -1081,9 +1052,9 @@ export declare interface PrepareDistributeUnsignedPsbtParams {
      */
     receivers: RgbppBtcAddressReceiver[];
     /**
-     * Type arguments for the XUDT type script.
+     * Type script for the XUDT type.
      */
-    xudtTypeArgs: string;
+    xudtType: CKBComponents.Script;
     /**
      * Collector instance used to gather cells for the transaction.
      */
@@ -1133,9 +1104,6 @@ export declare interface PrepareDistributeUnsignedPsbtParams {
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
  * @param {number} params.outIndex - Output index of the BTC transaction.
  * @param {string} params.btcTxId - ID of the BTC transaction.
- * @param {bigint} [maxFee=MAX_FEE] - Maximum fee for the CKB transaction (default is MAX_FEE).
- * @param {bigint} [ckbFeeRate] - Fee rate for the CKB transaction (optional).
- * @param {number} [witnessLockPlaceholderSize] - Size of the witness lock placeholder (optional).
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - Promise that resolves to the prepared CKB transaction.
  *
  * --------------------------------------------
@@ -1149,7 +1117,7 @@ export declare interface PrepareDistributeUnsignedPsbtParams {
  * ```
  * This example demonstrates how to obtain the necessary parameters (`outIndex` and `btcTxId`) by fetching and filtering UTXOs.
  */
-export declare const prepareLaunchCellTransaction: ({ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcTestnetType, outIndex, btcTxId, }: PrepareLaunchCellTransactionParams, maxFee?: bigint, ckbFeeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>;
+export declare const prepareLaunchCellTransaction: ({ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcTestnetType, outIndex, btcTxId, }: PrepareLaunchCellTransactionParams) => Promise<CKBComponents.RawTransactionToSign>;
 
 /**
  * Parameters required for preparing a launch cell transaction on the CKB network.
@@ -1235,7 +1203,7 @@ export declare interface PrepareLauncherUnsignedPsbtParams {
  * @param {PrepareLeapSporeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {Hex} params.sporeRgbppLockArgs - RGBPP lock arguments for the spore.
  * @param {string} params.toCkbAddress - The destination CKB address.
- * @param {Hex} params.sporeTypeArgs - Type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - Type script for the spore.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
@@ -1246,7 +1214,7 @@ export declare interface PrepareLauncherUnsignedPsbtParams {
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareLeapSporeUnsignedPsbt: ({ toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, btcService, }: PrepareLeapSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareLeapSporeUnsignedPsbt: ({ toCkbAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, btcService, }: PrepareLeapSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 
 /**
  * Parameters required to generate an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping a spore from Bitcoin to CKB.
@@ -1255,8 +1223,8 @@ export declare const prepareLeapSporeUnsignedPsbt: ({ toCkbAddress, sporeTypeArg
 export declare interface PrepareLeapSporeUnsignedPsbtParams {
     /** The destination CKB address. */
     toCkbAddress: string;
-    /** Type arguments for the spore. */
-    sporeTypeArgs: Hex;
+    /** Type script for the spore. */
+    sporeType: CKBComponents.Script;
     /** Collector instance used to gather cells for the transaction. */
     collector: Collector;
     /** Indicates whether the operation is on the mainnet. */
@@ -1282,7 +1250,7 @@ export declare interface PrepareLeapSporeUnsignedPsbtParams {
  * @param {PrepareLeapUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {BtcAssetsApi} params.btcService - The BTC assets service instance.
  * @param {string} params.toCkbAddress - The destination CKB address.
- * @param {string} params.xudtTypeArgs - Type arguments for the XUDT type script.
+ * @param {CKBComponents.Script} params.xudtType - The XUDT type script.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
@@ -1293,7 +1261,7 @@ export declare interface PrepareLeapSporeUnsignedPsbtParams {
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareLeapUnsignedPsbt: ({ btcService, toCkbAddress, xudtTypeArgs, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate, }: PrepareLeapUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareLeapUnsignedPsbt: ({ btcService, toCkbAddress, xudtType, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate, }: PrepareLeapUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 
 /**
  * Parameters for preparing an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping RGBPP assets from Bitcoin to CKB.
@@ -1303,8 +1271,8 @@ export declare interface PrepareLeapUnsignedPsbtParams {
     btcService: BtcAssetsApi;
     /** The destination CKB address. */
     toCkbAddress: string;
-    /** Type arguments for the XUDT type script. */
-    xudtTypeArgs: string;
+    /** The XUDT type script. */
+    xudtType: CKBComponents.Script;
     /** The amount of assets to transfer. */
     transferAmount: bigint;
     /** Indicates whether the operation is on the mainnet. */
@@ -1329,7 +1297,7 @@ export declare interface PrepareLeapUnsignedPsbtParams {
  *
  * @param {PrepareTransferSporeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {string} params.toBtcAddress - The recipient's BTC address.
- * @param {Hex} params.sporeTypeArgs - Type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - Type script for the spore.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
@@ -1340,7 +1308,7 @@ export declare interface PrepareLeapUnsignedPsbtParams {
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareTransferSporeUnsignedPsbt: ({ toBtcAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcService, btcFeeRate, }: PrepareTransferSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareTransferSporeUnsignedPsbt: ({ toBtcAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcService, btcFeeRate, }: PrepareTransferSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 
 /**
  * Interface for parameters required to prepare an unsigned PSBT for transferring a spore.
@@ -1348,8 +1316,8 @@ export declare const prepareTransferSporeUnsignedPsbt: ({ toBtcAddress, sporeTyp
 export declare interface PrepareTransferSporeUnsignedPsbtParams {
     /** The recipient's BTC address. */
     toBtcAddress: string;
-    /** Type arguments for the spore. */
-    sporeTypeArgs: Hex;
+    /** Type script for the spore. */
+    sporeType: CKBComponents.Script;
     /** Collector instance used to gather cells for the transaction. */
     collector: Collector;
     /** Indicates whether the operation is on the mainnet. */
@@ -1374,7 +1342,7 @@ export declare interface PrepareTransferSporeUnsignedPsbtParams {
  *
  * @param {PrepareTransferUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {string} params.toBtcAddress - The recipient's BTC address.
- * @param {string} params.xudtTypeArgs - Type arguments for the XUDT script.
+ * @param {CKBComponents.Script} params.xudtType - Type script for the XUDT.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
@@ -1386,7 +1354,7 @@ export declare interface PrepareTransferSporeUnsignedPsbtParams {
  * @param {BtcAssetsApi} params.btcService - The service instance for interacting with Bitcoin assets.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareTransferUnsignedPsbt: ({ btcService, toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, }: PrepareTransferUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareTransferUnsignedPsbt: ({ btcService, toBtcAddress, xudtType, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, }: PrepareTransferUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 
 /**
  * Parameters required to generate an unsigned PSBT (Partially Signed Bitcoin Transaction) for transferring RGBPP assets.
@@ -1395,8 +1363,8 @@ export declare const prepareTransferUnsignedPsbt: ({ btcService, toBtcAddress, x
 export declare interface PrepareTransferUnsignedPsbtParams {
     /** The recipient's BTC address. */
     toBtcAddress: string;
-    /** Type arguments for the XUDT script. */
-    xudtTypeArgs: string;
+    /** Type script for the XUDT. */
+    xudtType: CKBComponents.Script;
     /** The amount of assets to transfer. */
     transferAmount: bigint;
     /** Collector instance used to gather cells for the transaction. */
@@ -1475,9 +1443,9 @@ export declare interface RgbppDistributeCombinedParams {
      */
     receivers: RgbppBtcAddressReceiver[];
     /**
-     * Type arguments for the XUDT type script.
+     * Type script for the XUDT type.
      */
-    xudtTypeArgs: string;
+    xudtType: CKBComponents.Script;
     /**
      * Collector instance used to gather cells for the transaction.
      */
@@ -1541,7 +1509,7 @@ export declare interface RgbppLauncerCombinedParams {
     /** CKB address where the asset will be launched. */
     ckbAddress: string;
     /** Signer instance for CKB transactions. */
-    cccSigner: ccc.Signer;
+    cccSigner: ccc_2.Signer;
     /** Function to filter UTXOs for the BTC transaction. */
     filterUtxo: (utxos: BtcApiUtxo[]) => Promise<{
         outIndex: number;
@@ -1557,8 +1525,8 @@ export declare interface RgbppLauncerCombinedParams {
 export declare interface RgbppLeapFromBtcToCkbCombinedParams {
     /** The destination CKB address. */
     toCkbAddress: string;
-    /** The arguments for the XUDT type script. */
-    xudtTypeArgs: string;
+    /** The XUDT type script. */
+    xudtType: CKBComponents.Script;
     /** The amount of assets to transfer. */
     transferAmount: bigint;
     /** The collector instance for CKB operations. */
@@ -1664,8 +1632,8 @@ export declare class RgbppSDK {
 export declare interface RgbppTransferCombinedParams {
     /** The Bitcoin address to which the assets will be transferred. */
     toBtcAddress: string;
-    /** The type arguments for the XUDT script. */
-    xudtTypeArgs: string;
+    /** The type script for the XUDT. */
+    xudtType: CKBComponents.Script;
     /** The amount of assets to transfer, represented as a bigint. */
     transferAmount: bigint;
     /** The collector instance used for collecting assets. */
@@ -1705,9 +1673,9 @@ declare interface SporeAction {
  */
 export declare interface SporeCreateCombinedParams {
     /**
-     * The arguments for the cluster type script.
+     * The cluster type script.
      */
-    clusterTypeScriptArgs: string;
+    clusterType: CKBComponents.Script;
     /**
      * The list of receivers with their BTC addresses and spore data.
      */
@@ -1760,7 +1728,7 @@ export declare interface SporeCreateCombinedParams {
     /**
      * The CCC signer instance.
      */
-    cccSigner: ccc.Signer;
+    cccSigner: ccc_2.Signer;
 }
 
 /**
@@ -1824,8 +1792,8 @@ declare interface SporeInfo {
 export declare interface SporeLeapCombinedParams {
     /** The CKB address to which the spore will be sent. */
     toCkbAddress: string;
-    /** The type arguments for the spore. */
-    sporeTypeArgs: Hex;
+    /** The type script for the spore. */
+    sporeType: CKBComponents.Script;
     /** The collector object used for collecting the spore. */
     collector: Collector;
     /** Indicates whether the operation is on the mainnet. */
@@ -1850,8 +1818,8 @@ export declare interface SporeLeapCombinedParams {
 export declare interface SporeTransferCombinedParams {
     /** The recipient's BTC address. */
     toBtcAddress: string;
-    /** Type arguments for the spore. */
-    sporeTypeArgs: Hex;
+    /** Type script for the spore. */
+    sporeType: CKBComponents.Script;
     /** Collector instance used to gather cells for the transaction. */
     collector: Collector;
     /** Indicates whether the operation is on the mainnet. */
@@ -1893,7 +1861,7 @@ declare interface TokenInfo {
  *
  * @param {RgbppTransferCombinedParams} params - Parameters for the transfer operation.
  * @param {string} params.toBtcAddress - The Bitcoin address to which the assets will be transferred.
- * @param {string} params.xudtTypeArgs - The type arguments for the XUDT script.
+ * @param {CKBComponents.Script} params.xudtType - The type script for the XUDT.
  * @param {bigint} params.transferAmount - The amount of assets to transfer, represented as a bigint.
  * @param {Collector} params.collector - The collector instance used for collecting assets.
  * @param {DataSource} params.btcDataSource - The data source for Bitcoin transactions.
@@ -1906,14 +1874,14 @@ declare interface TokenInfo {
  * @param {number} [btcFeeRate] - (Optional) The fee rate to use for the Bitcoin transaction.
  * @returns {Promise<TxResult>} A promise that resolves to the transaction result.
  */
-export declare const transferCombined: ({ toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService, }: RgbppTransferCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
+export declare const transferCombined: ({ toBtcAddress, xudtType, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService, }: RgbppTransferCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
 
 /**
  * Transfers a spore to a specified BTC address.
  *
  * @param {SporeTransferCombinedParams} params - The parameters for the spore transfer.
  * @param {string} params.toBtcAddress - The recipient's BTC address.
- * @param {Hex} params.sporeTypeArgs - The type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - The type script for the spore.
  * @param {Collector} params.collector - The collector object.
  * @param {boolean} params.isMainnet - Indicates if the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
@@ -1925,7 +1893,7 @@ export declare const transferCombined: ({ toBtcAddress, xudtTypeArgs, transferAm
  * @param {number} [btcFeeRate=30] - The fee rate for the BTC transaction (optional, default is 30).
  * @returns {Promise<{ btcTxId: string }>} - The result of the spore transfer, including the BTC transaction ID.
  */
-export declare const transferSporeCombined: ({ toBtcAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService, }: SporeTransferCombinedParams, btcFeeRate?: number) => Promise<{
+export declare const transferSporeCombined: ({ toBtcAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService, }: SporeTransferCombinedParams, btcFeeRate?: number) => Promise<{
     btcTxId: string;
 }>;
 

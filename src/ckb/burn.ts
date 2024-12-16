@@ -3,7 +3,6 @@ import {
   append0x,
   calculateUdtCellCapacity,
   Collector,
-  getXudtTypeScript,
   NoXudtLiveCellError,
   u128ToLe,
 } from "@rgbpp-sdk/ckb";
@@ -14,9 +13,9 @@ import { getCellDeps } from "../helper";
  */
 export interface CreateBurnXudtTransactionParams {
   /**
-   * The xUDT type script args, which is the unique identifier for the xUDT token type.
+   * The xUDT type script, which is the unique identifier for the xUDT token type.
    */
-  xudtArgs: string;
+  xudtType: CKBComponents.Script;
 
   /**
    * The amount of xUDT asset to be burned, representing the quantity of tokens that will be destroyed.
@@ -46,7 +45,7 @@ export interface CreateBurnXudtTransactionParams {
  * It fetches the necessary cells, collects inputs, and constructs the transaction outputs accordingly.
  *
  * @param {CreateBurnXudtTransactionParams} params - The parameters for creating the burn transaction.
- * @param {string} params.xudtArgs - The xUDT type script args, which is the unique identifier for the xUDT token type.
+ * @param {CKBComponents.Script} params.xudtType - The xUDT type script, which is the unique identifier for the xUDT token type.
  * @param {bigint} params.burnAmount - The amount of xUDT asset to be burned, representing the quantity of tokens that will be destroyed.
  * @param {string} params.ckbAddress - The CKB address for the transaction, from which the tokens will be burned.
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs, responsible for gathering the necessary cells to construct the transaction.
@@ -54,17 +53,14 @@ export interface CreateBurnXudtTransactionParams {
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - An unsigned transaction object that can be signed and submitted to the network.
  */
 export async function createBurnXudtTransaction({
-  xudtArgs,
+  xudtType,
   burnAmount,
   ckbAddress,
   collector,
   isMainnet,
-}: CreateBurnXudtTransactionParams): Promise<CKBComponents.RawTransactionToSign> {
-  const xudtType: CKBComponents.Script = {
-    ...getXudtTypeScript(isMainnet),
-    args: xudtArgs,
-  };
-
+}: CreateBurnXudtTransactionParams): Promise<
+  CKBComponents.RawTransactionToSign
+> {
   const fromLock = addressToScript(ckbAddress);
   const xudtCells = await collector.getCells({
     lock: fromLock,
@@ -116,7 +112,7 @@ export async function createBurnXudtTransaction({
     console.debug("Updated outputs data:", outputsData);
   }
 
-  const cellDeps = [...(await getCellDeps(isMainnet, xudtArgs))];
+  const cellDeps = [...(await getCellDeps(isMainnet, xudtType.args))];
 
   const unsignedTx: CKBComponents.RawTransactionToSign = {
     version: "0x0",
@@ -131,7 +127,4 @@ export async function createBurnXudtTransaction({
   console.debug("Unsigned transaction:", unsignedTx);
 
   return unsignedTx;
-}
-function getICKBCellDep(isMainnet: boolean) {
-  throw new Error("Function not implemented.");
 }

@@ -3,7 +3,6 @@ import {
   BTCTestnetType,
   Collector,
   genBtcBatchTransferCkbVirtualTx,
-  getXudtTypeScript,
   RgbppBtcAddressReceiver,
   serializeScript,
 } from "@rgbpp-sdk/ckb";
@@ -12,7 +11,7 @@ import { AbstractWallet, TxResult } from "../helper";
 import { signAndSendPsbt } from "../wallet";
 
 interface RgbppLockArgsListParams {
-  xudtTypeArgs: string;
+  xudtType: CKBComponents.Script;
   fromBtcAccount: string;
   isMainnet: boolean;
   btcService: BtcAssetsApi;
@@ -23,16 +22,16 @@ interface RgbppLockArgsListResponse {
 }
 
 export const getRgbppLockArgsList = async ({
-  xudtTypeArgs,
+  xudtType,
   fromBtcAccount,
   isMainnet,
   btcService,
 }: RgbppLockArgsListParams): Promise<RgbppLockArgsListResponse> => {
   const type_script = encodeURIComponent(
     JSON.stringify({
-      codeHash: getXudtTypeScript(isMainnet).codeHash,
-      args: xudtTypeArgs,
-      hashType: "type",
+      codeHash: xudtType.codeHash,
+      args: xudtType.args,
+      hashType: xudtType.hashType,
     }),
   );
 
@@ -54,7 +53,7 @@ export const getRgbppLockArgsList = async ({
 interface RgbppDistributeParams {
   rgbppLockArgsList: string[];
   receivers: RgbppBtcAddressReceiver[];
-  xudtTypeArgs: string;
+  xudtType: CKBComponents.Script;
   collector: Collector;
   btcDataSource: DataSource;
   btcTestnetType?: BTCTestnetType;
@@ -69,7 +68,7 @@ const distribute = async (
   {
     rgbppLockArgsList,
     receivers,
-    xudtTypeArgs,
+    xudtType,
     collector,
     btcDataSource,
     btcTestnetType,
@@ -81,11 +80,6 @@ const distribute = async (
   }: RgbppDistributeParams,
   btcFeeRate?: number,
 ): Promise<TxResult> => {
-  const xudtType: CKBComponents.Script = {
-    ...getXudtTypeScript(isMainnet),
-    args: xudtTypeArgs,
-  };
-
   const ckbVirtualTxResult = await genBtcBatchTransferCkbVirtualTx({
     collector,
     rgbppLockArgsList,
@@ -110,11 +104,7 @@ const distribute = async (
     feeRate: btcFeeRate,
   });
 
-  const { txId: btcTxId, rawTxHex: btcTxBytes } = await signAndSendPsbt(
-    psbt,
-    wallet,
-    btcService,
-  );
+  const { txId: btcTxId } = await signAndSendPsbt(psbt, wallet, btcService);
 
   console.log(`BTC ${btcTestnetType} TxId: ${btcTxId}`);
 
@@ -163,9 +153,9 @@ export interface RgbppDistributeCombinedParams {
    */
   receivers: RgbppBtcAddressReceiver[];
   /**
-   * Type arguments for the XUDT type script.
+   * Type script for the XUDT type.
    */
-  xudtTypeArgs: string;
+  xudtType: CKBComponents.Script;
   /**
    * Collector instance used to gather cells for the transaction.
    */
@@ -208,8 +198,8 @@ export interface RgbppDistributeCombinedParams {
  * Distributes RGBPP assets to multiple receivers.
  *
  * @param {RgbppDistributeCombinedParams} params - The parameters for the distribution.
- * @param {string} params.xudtTypeArgs - The type arguments for the XUDT type script.
  * @param {RgbppBtcAddressReceiver[]} params.receivers - The list of receivers for the RGBPP assets.
+ * @param {CKBComponents.Script} params.xudtType - The type script for the XUDT type.
  * @param {Collector} params.collector - The collector instance used for generating the CKB virtual transaction.
  * @param {DataSource} params.btcDataSource - The data source for BTC transactions.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
@@ -224,7 +214,7 @@ export interface RgbppDistributeCombinedParams {
  */
 export const distributeCombined = async (
   {
-    xudtTypeArgs,
+    xudtType,
     receivers,
     collector,
     btcDataSource,
@@ -239,7 +229,7 @@ export const distributeCombined = async (
   btcFeeRate?: number,
 ): Promise<TxResult> => {
   const lockArgsListResponse = await getRgbppLockArgsList({
-    xudtTypeArgs,
+    xudtType,
     fromBtcAccount,
     isMainnet,
     btcService,
@@ -252,7 +242,7 @@ export const distributeCombined = async (
     {
       rgbppLockArgsList: filteredLockArgsList,
       receivers,
-      xudtTypeArgs,
+      xudtType,
       collector,
       btcDataSource,
       btcTestnetType,
@@ -277,9 +267,9 @@ export interface PrepareDistributeUnsignedPsbtParams {
    */
   receivers: RgbppBtcAddressReceiver[];
   /**
-   * Type arguments for the XUDT type script.
+   * Type script for the XUDT type.
    */
-  xudtTypeArgs: string;
+  xudtType: CKBComponents.Script;
   /**
    * Collector instance used to gather cells for the transaction.
    */
@@ -324,7 +314,7 @@ export interface PrepareDistributeUnsignedPsbtParams {
  *
  * @param {PrepareDistributeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {RgbppBtcAddressReceiver[]} params.receivers - List of receivers for the RGBPP assets.
- * @param {string} params.xudtTypeArgs - Type arguments for the XUDT type script.
+ * @param {CKBComponents.Script} params.xudtType - Type script for the XUDT type.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
@@ -338,7 +328,7 @@ export interface PrepareDistributeUnsignedPsbtParams {
  */
 export const prepareDistributeUnsignedPsbt = async ({
   receivers,
-  xudtTypeArgs,
+  xudtType,
   collector,
   btcDataSource,
   btcTestnetType,
@@ -350,7 +340,7 @@ export const prepareDistributeUnsignedPsbt = async ({
   filterRgbppArgslist,
 }: PrepareDistributeUnsignedPsbtParams): Promise<bitcoin.Psbt> => {
   const lockArgsListResponse = await getRgbppLockArgsList({
-    xudtTypeArgs,
+    xudtType,
     fromBtcAccount,
     isMainnet,
     btcService,
@@ -358,11 +348,6 @@ export const prepareDistributeUnsignedPsbt = async ({
   const filteredLockArgsList = await filterRgbppArgslist(
     lockArgsListResponse.rgbppLockArgsList,
   );
-
-  const xudtType: CKBComponents.Script = {
-    ...getXudtTypeScript(isMainnet),
-    args: xudtTypeArgs,
-  };
 
   const ckbVirtualTxResult = await genBtcBatchTransferCkbVirtualTx({
     collector,

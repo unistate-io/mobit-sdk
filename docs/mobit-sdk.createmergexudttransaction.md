@@ -9,7 +9,7 @@ Merges multiple xUDT cells into a single xUDT cell and returns the remaining cap
 **Signature:**
 
 ```typescript
-export declare function createMergeXudtTransaction({ xudtArgs, ckbAddresses, collector, isMainnet, }: CreateMergeXudtTransactionParams, ckbAddress?: string, feeRate?: bigint, maxFee?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createMergeXudtTransaction({ xudtArgs, ckbAddresses, collector, isMainnet, }: CreateMergeXudtTransactionParams, ckbAddress?: string): Promise<CKBComponents.RawTransactionToSign>;
 ```
 
 ## Parameters
@@ -57,54 +57,6 @@ string
 </td><td>
 
 _(Optional)_ The address for the output cell, defaulting to the first address in the input address set.
-
-
-</td></tr>
-<tr><td>
-
-feeRate
-
-
-</td><td>
-
-bigint
-
-
-</td><td>
-
-_(Optional)_ The fee rate for the transaction, optional.
-
-
-</td></tr>
-<tr><td>
-
-maxFee
-
-
-</td><td>
-
-bigint
-
-
-</td><td>
-
-_(Optional)_ The maximum fee for the transaction, defaulting to MAX\_FEE.
-
-
-</td></tr>
-<tr><td>
-
-witnessLockPlaceholderSize
-
-
-</td><td>
-
-number
-
-
-</td><td>
-
-_(Optional)_ The size of the witness lock placeholder, optional.
 
 
 </td></tr>

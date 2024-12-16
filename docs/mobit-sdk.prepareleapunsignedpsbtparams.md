@@ -227,7 +227,7 @@ The amount of assets to transfer.
 </td></tr>
 <tr><td>
 
-[xudtTypeArgs](./mobit-sdk.prepareleapunsignedpsbtparams.xudttypeargs.md)
+[xudtType](./mobit-sdk.prepareleapunsignedpsbtparams.xudttype.md)
 
 
 </td><td>
@@ -235,12 +235,12 @@ The amount of assets to transfer.
 
 </td><td>
 
-string
+CKBComponents.Script
 
 
 </td><td>
 
-Type arguments for the XUDT type script.
+The XUDT type script.
 
 
 </td></tr>

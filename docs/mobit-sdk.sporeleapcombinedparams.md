@@ -170,7 +170,7 @@ Indicates whether the operation is on the mainnet.
 </td></tr>
 <tr><td>
 
-[sporeTypeArgs](./mobit-sdk.sporeleapcombinedparams.sporetypeargs.md)
+[sporeType](./mobit-sdk.sporeleapcombinedparams.sporetype.md)
 
 
 </td><td>
@@ -178,12 +178,12 @@ Indicates whether the operation is on the mainnet.
 
 </td><td>
 
-Hex
+CKBComponents.Script
 
 
 </td><td>
 
-The type arguments for the spore.
+The type script for the spore.
 
 
 </td></tr>

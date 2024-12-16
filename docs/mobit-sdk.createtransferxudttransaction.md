@@ -9,7 +9,7 @@ Creates an unsigned transaction for transferring xUDT assets. This function can 
 **Signature:**
 
 ```typescript
-export declare function createTransferXudtTransaction({ xudtArgs, receivers, ckbAddresses, collector, isMainnet, }: CreateTransferXudtTransactionParams, ckbAddress?: string, feeRate?: bigint, maxFee?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createTransferXudtTransaction({ xudtType, receivers, ckbAddresses, collector, isMainnet, }: CreateTransferXudtTransactionParams, ckbAddress?: string): Promise<CKBComponents.RawTransactionToSign>;
 ```
 
 ## Parameters
@@ -32,7 +32,7 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-{ xudtArgs, receivers, ckbAddresses, collector, isMainnet, }
+{ xudtType, receivers, ckbAddresses, collector, isMainnet, }
 
 
 </td><td>
@@ -57,54 +57,6 @@ string
 </td><td>
 
 _(Optional)_ The address for the output cell, defaulting to the first address in the input address set.
-
-
-</td></tr>
-<tr><td>
-
-feeRate
-
-
-</td><td>
-
-bigint
-
-
-</td><td>
-
-_(Optional)_ (Optional) The fee rate to be used for the transaction.
-
-
-</td></tr>
-<tr><td>
-
-maxFee
-
-
-</td><td>
-
-bigint
-
-
-</td><td>
-
-_(Optional)_ (Optional) The maximum fee allowed for the transaction. Defaults to `MAX_FEE`<!-- -->.
-
-
-</td></tr>
-<tr><td>
-
-witnessLockPlaceholderSize
-
-
-</td><td>
-
-number
-
-
-</td><td>
-
-_(Optional)_ (Optional) The size of the witness lock placeholder.
 
 
 </td></tr>

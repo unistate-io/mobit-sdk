@@ -67,12 +67,12 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-[convertToTxSkeleton(rawTransaction, collector)](./mobit-sdk.converttotxskeleton.md)
+[convertToTransaction(rawTransactionToSign)](./mobit-sdk.converttotransaction.md)
 
 
 </td><td>
 
-Converts a raw transaction to a transaction skeleton.
+Converts a CKBComponents.RawTransactionToSign to a ccc.Transaction.
 
 
 </td></tr>
@@ -89,7 +89,7 @@ Creates a BTC service instance.
 </td></tr>
 <tr><td>
 
-[createBurnXudtTransaction({ xudtArgs, burnAmount, ckbAddress, collector, isMainnet, }, feeRate, maxFee, witnessLockPlaceholderSize)](./mobit-sdk.createburnxudttransaction.md)
+[createBurnXudtTransaction({ xudtType, burnAmount, ckbAddress, collector, isMainnet, })](./mobit-sdk.createburnxudttransaction.md)
 
 
 </td><td>
@@ -102,7 +102,7 @@ This function constructs a transaction that burns a specified amount of xUDT tok
 </td></tr>
 <tr><td>
 
-[createClusterCombined({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, filterUtxo, cccSigner, }, ckbFeeRate, maxFee, btcFeeRate, witnessLockPlaceholderSize)](./mobit-sdk.createclustercombined.md)
+[createClusterCombined({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, filterUtxo, cccSigner, }, ckbFeeRate, btcFeeRate)](./mobit-sdk.createclustercombined.md)
 
 
 </td><td>
@@ -113,7 +113,7 @@ Creates a cluster cell on the CKB network and initiates a corresponding BTC tran
 </td></tr>
 <tr><td>
 
-[createIssueXudtTransaction({ xudtTotalAmount, tokenInfo, ckbAddress, collector, isMainnet, }, feeRate, maxFee, witnessLockPlaceholderSize)](./mobit-sdk.createissuexudttransaction.md)
+[createIssueXudtTransaction({ xudtTotalAmount, tokenInfo, ckbAddress, collector, isMainnet, })](./mobit-sdk.createissuexudttransaction.md)
 
 
 </td><td>
@@ -124,7 +124,7 @@ Creates an unsigned transaction for issuing xUDT assets with a unique cell as th
 </td></tr>
 <tr><td>
 
-[createMergeXudtTransaction({ xudtArgs, ckbAddresses, collector, isMainnet, }, ckbAddress, feeRate, maxFee, witnessLockPlaceholderSize)](./mobit-sdk.createmergexudttransaction.md)
+[createMergeXudtTransaction({ xudtArgs, ckbAddresses, collector, isMainnet, }, ckbAddress)](./mobit-sdk.createmergexudttransaction.md)
 
 
 </td><td>
@@ -135,7 +135,7 @@ Merges multiple xUDT cells into a single xUDT cell and returns the remaining cap
 </td></tr>
 <tr><td>
 
-[createSporesCombined({ clusterTypeScriptArgs, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, ckbAddress, cccSigner, }, btcFeeRate, ckbFeeRate, witnessLockPlaceholderSize)](./mobit-sdk.createsporescombined.md)
+[createSporesCombined({ clusterType, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, ckbAddress, cccSigner, }, btcFeeRate, ckbFeeRate)](./mobit-sdk.createsporescombined.md)
 
 
 </td><td>
@@ -146,7 +146,7 @@ Creates spores combined with the given parameters.
 </td></tr>
 <tr><td>
 
-[createTransferXudtTransaction({ xudtArgs, receivers, ckbAddresses, collector, isMainnet, }, ckbAddress, feeRate, maxFee, witnessLockPlaceholderSize)](./mobit-sdk.createtransferxudttransaction.md)
+[createTransferXudtTransaction({ xudtType, receivers, ckbAddresses, collector, isMainnet, }, ckbAddress)](./mobit-sdk.createtransferxudttransaction.md)
 
 
 </td><td>
@@ -157,7 +157,7 @@ Creates an unsigned transaction for transferring xUDT assets. This function can 
 </td></tr>
 <tr><td>
 
-[distributeCombined({ xudtTypeArgs, receivers, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, filterRgbppArgslist, btcService, }, btcFeeRate)](./mobit-sdk.distributecombined.md)
+[distributeCombined({ xudtType, receivers, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, filterRgbppArgslist, btcService, }, btcFeeRate)](./mobit-sdk.distributecombined.md)
 
 
 </td><td>
@@ -179,18 +179,18 @@ Fetches the necessary UTXOs and filters them to get the output index and BTC tra
 </td></tr>
 <tr><td>
 
-[fetchAndValidateAssets(fromBtcAccount, clusterTypeScriptArgs, isMainnet, btcService)](./mobit-sdk.fetchandvalidateassets.md)
+[fetchAndValidateAssets(fromBtcAccount, clusterType, btcService)](./mobit-sdk.fetchandvalidateassets.md)
 
 
 </td><td>
 
-Fetches RGBPP assets for a given BTC address and type script args, and validates the result.
+Fetches RGBPP assets for a given BTC address and type script, and validates the result.
 
 
 </td></tr>
 <tr><td>
 
-[launchCombined({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, ckbAddress, filterUtxo, btcService, wallet, cccSigner, }, ckbFeeRate, maxFee, btcFeeRate, witnessLockPlaceholderSize)](./mobit-sdk.launchcombined.md)
+[launchCombined({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, ckbAddress, filterUtxo, btcService, wallet, cccSigner, }, ckbFeeRate, btcFeeRate)](./mobit-sdk.launchcombined.md)
 
 
 </td><td>
@@ -201,7 +201,7 @@ Launches an RGB++ asset by preparing a launch cell and subsequently sending a BT
 </td></tr>
 <tr><td>
 
-[leapFromBtcToCkbCombined({ toCkbAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService, }, btcFeeRate)](./mobit-sdk.leapfrombtctockbcombined.md)
+[leapFromBtcToCkbCombined({ toCkbAddress, xudtType, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService, }, btcFeeRate)](./mobit-sdk.leapfrombtctockbcombined.md)
 
 
 </td><td>
@@ -212,7 +212,7 @@ Combines the parameters for leaping RGBPP assets from Bitcoin to CKB and execute
 </td></tr>
 <tr><td>
 
-[leapFromCkbToBtcTransaction({ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType, }, feeRate, witnessLockPlaceholderSize)](./mobit-sdk.leapfromckbtobtctransaction.md)
+[leapFromCkbToBtcTransaction({ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType, })](./mobit-sdk.leapfromckbtobtctransaction.md)
 
 
 </td><td>
@@ -225,7 +225,7 @@ This function facilitates the transfer of assets from the CKB (Nervos Network) b
 </td></tr>
 <tr><td>
 
-[leapSporeFromBtcToCkbCombined({ toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService, }, btcFeeRate)](./mobit-sdk.leapsporefrombtctockbcombined.md)
+[leapSporeFromBtcToCkbCombined({ toCkbAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService, }, btcFeeRate)](./mobit-sdk.leapsporefrombtctockbcombined.md)
 
 
 </td><td>
@@ -236,7 +236,7 @@ Combines the process of leaping a spore from BTC to CKB with the necessary param
 </td></tr>
 <tr><td>
 
-[leapSporeFromCkbToBtcTransaction({ outIndex, btcTxId, sporeTypeArgs, isMainnet, collector, ckbAddress, btcTestnetType, }, feeRate, witnessLockPlaceholderSize)](./mobit-sdk.leapsporefromckbtobtctransaction.md)
+[leapSporeFromCkbToBtcTransaction({ outIndex, btcTxId, sporeType, isMainnet, collector, ckbAddress, btcTestnetType, })](./mobit-sdk.leapsporefromckbtobtctransaction.md)
 
 
 </td><td>
@@ -247,7 +247,7 @@ Leap a spore from CKB to BTC.
 </td></tr>
 <tr><td>
 
-[prepareClusterCellTransaction({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, outIndex, btcTxId, }, maxFee, ckbFeeRate, witnessLockPlaceholderSize)](./mobit-sdk.prepareclustercelltransaction.md)
+[prepareClusterCellTransaction({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, outIndex, btcTxId, })](./mobit-sdk.prepareclustercelltransaction.md)
 
 
 </td><td>
@@ -280,7 +280,7 @@ Prepares an unsigned BTC transaction for creating spores.
 </td></tr>
 <tr><td>
 
-[prepareCreateSporeUnsignedTransaction({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, ckbAddress, ckbFeeRate, witnessLockPlaceholderSize, })](./mobit-sdk.preparecreatesporeunsignedtransaction.md)
+[prepareCreateSporeUnsignedTransaction({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, ckbAddress, ckbFeeRate, })](./mobit-sdk.preparecreatesporeunsignedtransaction.md)
 
 
 </td><td>
@@ -291,7 +291,7 @@ Prepares an unsigned CKB transaction for creating spores.
 </td></tr>
 <tr><td>
 
-[prepareDistributeUnsignedPsbt({ receivers, xudtTypeArgs, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, btcService, filterRgbppArgslist, })](./mobit-sdk.preparedistributeunsignedpsbt.md)
+[prepareDistributeUnsignedPsbt({ receivers, xudtType, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, btcService, filterRgbppArgslist, })](./mobit-sdk.preparedistributeunsignedpsbt.md)
 
 
 </td><td>
@@ -302,7 +302,7 @@ Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for distributin
 </td></tr>
 <tr><td>
 
-[prepareLaunchCellTransaction({ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcTestnetType, outIndex, btcTxId, }, maxFee, ckbFeeRate, witnessLockPlaceholderSize)](./mobit-sdk.preparelaunchcelltransaction.md)
+[prepareLaunchCellTransaction({ ckbAddress, rgbppTokenInfo, collector, isMainnet, btcTestnetType, outIndex, btcTxId, })](./mobit-sdk.preparelaunchcelltransaction.md)
 
 
 </td><td>
@@ -324,7 +324,7 @@ Generates an unsigned PSBT for launching an RGB++ asset.
 </td></tr>
 <tr><td>
 
-[prepareLeapSporeUnsignedPsbt({ toCkbAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, btcService, })](./mobit-sdk.prepareleapsporeunsignedpsbt.md)
+[prepareLeapSporeUnsignedPsbt({ toCkbAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcFeeRate, btcService, })](./mobit-sdk.prepareleapsporeunsignedpsbt.md)
 
 
 </td><td>
@@ -335,7 +335,7 @@ Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping a s
 </td></tr>
 <tr><td>
 
-[prepareLeapUnsignedPsbt({ btcService, toCkbAddress, xudtTypeArgs, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate, })](./mobit-sdk.prepareleapunsignedpsbt.md)
+[prepareLeapUnsignedPsbt({ btcService, toCkbAddress, xudtType, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate, })](./mobit-sdk.prepareleapunsignedpsbt.md)
 
 
 </td><td>
@@ -346,7 +346,7 @@ Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping RGB
 </td></tr>
 <tr><td>
 
-[prepareTransferSporeUnsignedPsbt({ toBtcAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcService, btcFeeRate, })](./mobit-sdk.preparetransfersporeunsignedpsbt.md)
+[prepareTransferSporeUnsignedPsbt({ toBtcAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcService, btcFeeRate, })](./mobit-sdk.preparetransfersporeunsignedpsbt.md)
 
 
 </td><td>
@@ -357,7 +357,7 @@ Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for transferrin
 </td></tr>
 <tr><td>
 
-[prepareTransferUnsignedPsbt({ btcService, toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, })](./mobit-sdk.preparetransferunsignedpsbt.md)
+[prepareTransferUnsignedPsbt({ btcService, toBtcAddress, xudtType, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, })](./mobit-sdk.preparetransferunsignedpsbt.md)
 
 
 </td><td>
@@ -368,7 +368,7 @@ Prepares an unsigned PSBT (Partially Signed Bitcoin Transaction) for transferrin
 </td></tr>
 <tr><td>
 
-[transferCombined({ toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService, }, btcFeeRate)](./mobit-sdk.transfercombined.md)
+[transferCombined({ toBtcAddress, xudtType, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService, }, btcFeeRate)](./mobit-sdk.transfercombined.md)
 
 
 </td><td>
@@ -379,7 +379,7 @@ Combines the steps of getting the RGBPP lock arguments list and transferring RGB
 </td></tr>
 <tr><td>
 
-[transferSporeCombined({ toBtcAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService, }, btcFeeRate)](./mobit-sdk.transfersporecombined.md)
+[transferSporeCombined({ toBtcAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService, }, btcFeeRate)](./mobit-sdk.transfersporecombined.md)
 
 
 </td><td>

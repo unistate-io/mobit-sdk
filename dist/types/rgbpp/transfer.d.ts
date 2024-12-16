@@ -8,8 +8,8 @@ import { AbstractWallet, TxResult } from "../helper";
 export interface RgbppTransferCombinedParams {
     /** The Bitcoin address to which the assets will be transferred. */
     toBtcAddress: string;
-    /** The type arguments for the XUDT script. */
-    xudtTypeArgs: string;
+    /** The type script for the XUDT. */
+    xudtType: CKBComponents.Script;
     /** The amount of assets to transfer, represented as a bigint. */
     transferAmount: bigint;
     /** The collector instance used for collecting assets. */
@@ -34,7 +34,7 @@ export interface RgbppTransferCombinedParams {
  *
  * @param {RgbppTransferCombinedParams} params - Parameters for the transfer operation.
  * @param {string} params.toBtcAddress - The Bitcoin address to which the assets will be transferred.
- * @param {string} params.xudtTypeArgs - The type arguments for the XUDT script.
+ * @param {CKBComponents.Script} params.xudtType - The type script for the XUDT.
  * @param {bigint} params.transferAmount - The amount of assets to transfer, represented as a bigint.
  * @param {Collector} params.collector - The collector instance used for collecting assets.
  * @param {DataSource} params.btcDataSource - The data source for Bitcoin transactions.
@@ -47,7 +47,7 @@ export interface RgbppTransferCombinedParams {
  * @param {number} [btcFeeRate] - (Optional) The fee rate to use for the Bitcoin transaction.
  * @returns {Promise<TxResult>} A promise that resolves to the transaction result.
  */
-export declare const transferCombined: ({ toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService, }: RgbppTransferCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
+export declare const transferCombined: ({ toBtcAddress, xudtType, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService, }: RgbppTransferCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
 /**
  * Parameters required to generate an unsigned PSBT (Partially Signed Bitcoin Transaction) for transferring RGBPP assets.
  * This interface is used to estimate transaction fees before finalizing the transaction.
@@ -55,8 +55,8 @@ export declare const transferCombined: ({ toBtcAddress, xudtTypeArgs, transferAm
 export interface PrepareTransferUnsignedPsbtParams {
     /** The recipient's BTC address. */
     toBtcAddress: string;
-    /** Type arguments for the XUDT script. */
-    xudtTypeArgs: string;
+    /** Type script for the XUDT. */
+    xudtType: CKBComponents.Script;
     /** The amount of assets to transfer. */
     transferAmount: bigint;
     /** Collector instance used to gather cells for the transaction. */
@@ -82,7 +82,7 @@ export interface PrepareTransferUnsignedPsbtParams {
  *
  * @param {PrepareTransferUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {string} params.toBtcAddress - The recipient's BTC address.
- * @param {string} params.xudtTypeArgs - Type arguments for the XUDT script.
+ * @param {CKBComponents.Script} params.xudtType - Type script for the XUDT.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
@@ -94,5 +94,5 @@ export interface PrepareTransferUnsignedPsbtParams {
  * @param {BtcAssetsApi} params.btcService - The service instance for interacting with Bitcoin assets.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareTransferUnsignedPsbt: ({ btcService, toBtcAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, }: PrepareTransferUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareTransferUnsignedPsbt: ({ btcService, toBtcAddress, xudtType, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, }: PrepareTransferUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 //# sourceMappingURL=transfer.d.ts.map

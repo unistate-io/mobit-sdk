@@ -3,7 +3,7 @@ import { BTCTestnetType, Collector, RgbppBtcAddressReceiver } from "@rgbpp-sdk/c
 import { BtcAssetsApi } from "rgbpp";
 import { AbstractWallet, TxResult } from "../helper";
 interface RgbppLockArgsListParams {
-    xudtTypeArgs: string;
+    xudtType: CKBComponents.Script;
     fromBtcAccount: string;
     isMainnet: boolean;
     btcService: BtcAssetsApi;
@@ -11,7 +11,7 @@ interface RgbppLockArgsListParams {
 interface RgbppLockArgsListResponse {
     rgbppLockArgsList: string[];
 }
-export declare const getRgbppLockArgsList: ({ xudtTypeArgs, fromBtcAccount, isMainnet, btcService, }: RgbppLockArgsListParams) => Promise<RgbppLockArgsListResponse>;
+export declare const getRgbppLockArgsList: ({ xudtType, fromBtcAccount, isMainnet, btcService, }: RgbppLockArgsListParams) => Promise<RgbppLockArgsListResponse>;
 /**
  * Interface for parameters required to distribute RGBPP assets combined.
  */
@@ -21,9 +21,9 @@ export interface RgbppDistributeCombinedParams {
      */
     receivers: RgbppBtcAddressReceiver[];
     /**
-     * Type arguments for the XUDT type script.
+     * Type script for the XUDT type.
      */
-    xudtTypeArgs: string;
+    xudtType: CKBComponents.Script;
     /**
      * Collector instance used to gather cells for the transaction.
      */
@@ -65,8 +65,8 @@ export interface RgbppDistributeCombinedParams {
  * Distributes RGBPP assets to multiple receivers.
  *
  * @param {RgbppDistributeCombinedParams} params - The parameters for the distribution.
- * @param {string} params.xudtTypeArgs - The type arguments for the XUDT type script.
  * @param {RgbppBtcAddressReceiver[]} params.receivers - The list of receivers for the RGBPP assets.
+ * @param {CKBComponents.Script} params.xudtType - The type script for the XUDT type.
  * @param {Collector} params.collector - The collector instance used for generating the CKB virtual transaction.
  * @param {DataSource} params.btcDataSource - The data source for BTC transactions.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
@@ -79,7 +79,7 @@ export interface RgbppDistributeCombinedParams {
  * @param {number} [btcFeeRate] - The fee rate for the BTC transaction (optional).
  * @returns {Promise<TxResult>} - The result of the transaction.
  */
-export declare const distributeCombined: ({ xudtTypeArgs, receivers, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, filterRgbppArgslist, btcService, }: RgbppDistributeCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
+export declare const distributeCombined: ({ xudtType, receivers, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, filterRgbppArgslist, btcService, }: RgbppDistributeCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
 /**
  * Interface for parameters required to prepare an unsigned PSBT for distributing RGBPP assets.
  */
@@ -89,9 +89,9 @@ export interface PrepareDistributeUnsignedPsbtParams {
      */
     receivers: RgbppBtcAddressReceiver[];
     /**
-     * Type arguments for the XUDT type script.
+     * Type script for the XUDT type.
      */
-    xudtTypeArgs: string;
+    xudtType: CKBComponents.Script;
     /**
      * Collector instance used to gather cells for the transaction.
      */
@@ -135,7 +135,7 @@ export interface PrepareDistributeUnsignedPsbtParams {
  *
  * @param {PrepareDistributeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {RgbppBtcAddressReceiver[]} params.receivers - List of receivers for the RGBPP assets.
- * @param {string} params.xudtTypeArgs - Type arguments for the XUDT type script.
+ * @param {CKBComponents.Script} params.xudtType - Type script for the XUDT type.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
@@ -147,6 +147,6 @@ export interface PrepareDistributeUnsignedPsbtParams {
  * @param {(argsList: string[]) => Promise<string[]>} params.filterRgbppArgslist - A function to filter the RGBPP args list.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareDistributeUnsignedPsbt: ({ receivers, xudtTypeArgs, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, btcService, filterRgbppArgslist, }: PrepareDistributeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareDistributeUnsignedPsbt: ({ receivers, xudtType, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, btcFeeRate, btcService, filterRgbppArgslist, }: PrepareDistributeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 export {};
 //# sourceMappingURL=distribute.d.ts.map

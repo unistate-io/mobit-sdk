@@ -8,9 +8,9 @@ import { bitcoin } from "@rgbpp-sdk/btc";
  */
 export interface SporeCreateCombinedParams {
     /**
-     * The arguments for the cluster type script.
+     * The cluster type script.
      */
-    clusterTypeScriptArgs: string;
+    clusterType: CKBComponents.Script;
     /**
      * The list of receivers with their BTC addresses and spore data.
      */
@@ -69,7 +69,7 @@ export interface SporeCreateCombinedParams {
  * Creates spores combined with the given parameters.
  *
  * @param {SporeCreateCombinedParams} params - The parameters for creating spores.
- * @param {string} params.clusterTypeScriptArgs - The arguments for the cluster type script.
+ * @param {CKBComponents.Script} params.clusterType - The cluster type script.
  * @param {Array<{ toBtcAddress: string, sporeData: RawSporeData }>} params.receivers - The list of receivers with their BTC addresses and spore data.
  * @param {Collector} params.collector - The collector instance.
  * @param {boolean} params.isMainnet - Indicates if the operation is on mainnet.
@@ -84,7 +84,7 @@ export interface SporeCreateCombinedParams {
  * @param {number} [btcFeeRate=120] - The fee rate for BTC transactions (default is 120).
  * @returns {Promise<TxResult>} - The result of the transaction.
  */
-export declare const createSporesCombined: ({ clusterTypeScriptArgs, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, ckbAddress, cccSigner, }: SporeCreateCombinedParams, btcFeeRate?: number, ckbFeeRate?: bigint) => Promise<TxResult>;
+export declare const createSporesCombined: ({ clusterType, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, ckbAddress, cccSigner, }: SporeCreateCombinedParams, btcFeeRate?: number, ckbFeeRate?: bigint) => Promise<TxResult>;
 /**
  * Parameters for preparing an unsigned CKB transaction for creating spores.
  */
@@ -252,14 +252,13 @@ export interface PrepareCreateSporeUnsignedPsbtParams {
  */
 export declare const prepareCreateSporeUnsignedPsbt: ({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate, }: PrepareCreateSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 /**
- * Fetches RGBPP assets for a given BTC address and type script args, and validates the result.
+ * Fetches RGBPP assets for a given BTC address and type script, and validates the result.
  *
  * @param {string} fromBtcAccount - The BTC account from which the assets are being fetched.
- * @param {string} clusterTypeScriptArgs - The arguments for the cluster type script.
- * @param {boolean} isMainnet - Indicates if the operation is on mainnet.
+ * @param {CKBComponents.Script} clusterType - The cluster type script.
  * @param {BtcAssetsApi} btcService - The BTC assets API service.
  * @returns {Promise<string>} - The cluster RGBPP lock args.
- * @throws {Error} - Throws an error if no assets are found for the given BTC address and type script args.
+ * @throws {Error} - Throws an error if no assets are found for the given BTC address and type script.
  */
-export declare const fetchAndValidateAssets: (fromBtcAccount: string, clusterTypeScriptArgs: string, isMainnet: boolean, btcService: BtcAssetsApi) => Promise<string>;
+export declare const fetchAndValidateAssets: (fromBtcAccount: string, clusterType: CKBComponents.Script, btcService: BtcAssetsApi) => Promise<string>;
 //# sourceMappingURL=create_spore.d.ts.map

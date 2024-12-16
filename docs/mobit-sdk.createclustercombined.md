@@ -9,7 +9,7 @@ Creates a cluster cell on the CKB network and initiates a corresponding BTC tran
 **Signature:**
 
 ```typescript
-createClusterCombined: ({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, filterUtxo, cccSigner, }: createClusterCombinedParams, ckbFeeRate?: bigint, maxFee?: bigint, btcFeeRate?: number, witnessLockPlaceholderSize?: number) => Promise<TxResult>
+createClusterCombined: ({ ckbAddress, clusterData, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, filterUtxo, cccSigner, }: createClusterCombinedParams, ckbFeeRate?: bigint, btcFeeRate?: number) => Promise<TxResult>
 ```
 
 ## Parameters
@@ -62,22 +62,6 @@ _(Optional)_ Fee rate for the CKB transaction (optional).
 </td></tr>
 <tr><td>
 
-maxFee
-
-
-</td><td>
-
-bigint
-
-
-</td><td>
-
-_(Optional)_ Maximum fee for the CKB transaction (default is MAX\_FEE).
-
-
-</td></tr>
-<tr><td>
-
 btcFeeRate
 
 
@@ -89,22 +73,6 @@ number
 </td><td>
 
 _(Optional)_ Fee rate for the BTC transaction (default is 30).
-
-
-</td></tr>
-<tr><td>
-
-witnessLockPlaceholderSize
-
-
-</td><td>
-
-number
-
-
-</td><td>
-
-_(Optional)_
 
 
 </td></tr>

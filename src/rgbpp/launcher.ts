@@ -45,8 +45,7 @@ const prepareLaunchCell = async ({
   console.log("ckb address: ", ckbAddress);
 
   // The capacity required to launch cells is determined by the token info cell capacity, and transaction fee.
-  const launchCellCapacity =
-    calculateRgbppCellCapacity() +
+  const launchCellCapacity = calculateRgbppCellCapacity() +
     calculateRgbppTokenInfoCellCapacity(rgbppTokenInfo, isMainnet);
 
   let emptyCells = await collector.getCells({
@@ -357,7 +356,9 @@ export const prepareLaunchCellTransaction = async ({
   btcTestnetType,
   outIndex,
   btcTxId,
-}: PrepareLaunchCellTransactionParams): Promise<CKBComponents.RawTransactionToSign> => {
+}: PrepareLaunchCellTransactionParams): Promise<
+  CKBComponents.RawTransactionToSign
+> => {
   const prepareLaunchCellTx = await prepareLaunchCell({
     outIndex,
     btcTxId,

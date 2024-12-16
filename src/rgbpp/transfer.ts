@@ -1,5 +1,5 @@
 import { bitcoin, DataSource } from "@rgbpp-sdk/btc";
-import { BTCTestnetType, Collector, getXudtTypeScript } from "@rgbpp-sdk/ckb";
+import { BTCTestnetType, Collector } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi, buildRgbppTransferTx } from "rgbpp";
 import { AbstractWallet, TxResult } from "../helper";
 import { signAndSendPsbt } from "../wallet";
@@ -8,7 +8,7 @@ import { getRgbppLockArgsList } from "./distribute";
 interface RgbppTransferParams {
   rgbppLockArgsList: string[];
   toBtcAddress: string;
-  xudtTypeArgs: string;
+  xudtType: CKBComponents.Script;
   transferAmount: bigint;
   collector: Collector;
   btcDataSource: DataSource;
@@ -24,7 +24,7 @@ const transfer = async (
   {
     rgbppLockArgsList,
     toBtcAddress,
-    xudtTypeArgs,
+    xudtType,
     transferAmount,
     collector,
     btcDataSource,
@@ -40,7 +40,7 @@ const transfer = async (
   const { ckbVirtualTxResult, btcPsbtHex } = await buildRgbppTransferTx({
     ckb: {
       collector,
-      xudtTypeArgs,
+      xudtTypeArgs: xudtType.args,
       rgbppLockArgsList,
       transferAmount,
     },
@@ -103,8 +103,8 @@ const transfer = async (
 export interface RgbppTransferCombinedParams {
   /** The Bitcoin address to which the assets will be transferred. */
   toBtcAddress: string;
-  /** The type arguments for the XUDT script. */
-  xudtTypeArgs: string;
+  /** The type script for the XUDT. */
+  xudtType: CKBComponents.Script;
   /** The amount of assets to transfer, represented as a bigint. */
   transferAmount: bigint;
   /** The collector instance used for collecting assets. */
@@ -129,7 +129,7 @@ export interface RgbppTransferCombinedParams {
  *
  * @param {RgbppTransferCombinedParams} params - Parameters for the transfer operation.
  * @param {string} params.toBtcAddress - The Bitcoin address to which the assets will be transferred.
- * @param {string} params.xudtTypeArgs - The type arguments for the XUDT script.
+ * @param {CKBComponents.Script} params.xudtType - The type script for the XUDT.
  * @param {bigint} params.transferAmount - The amount of assets to transfer, represented as a bigint.
  * @param {Collector} params.collector - The collector instance used for collecting assets.
  * @param {DataSource} params.btcDataSource - The data source for Bitcoin transactions.
@@ -145,7 +145,7 @@ export interface RgbppTransferCombinedParams {
 export const transferCombined = async (
   {
     toBtcAddress,
-    xudtTypeArgs,
+    xudtType,
     transferAmount,
     collector,
     btcDataSource,
@@ -159,7 +159,7 @@ export const transferCombined = async (
   btcFeeRate?: number,
 ): Promise<TxResult> => {
   const lockArgsListResponse = await getRgbppLockArgsList({
-    xudtTypeArgs,
+    xudtType,
     fromBtcAccount,
     isMainnet,
     btcService,
@@ -169,7 +169,7 @@ export const transferCombined = async (
     {
       rgbppLockArgsList: lockArgsListResponse.rgbppLockArgsList,
       toBtcAddress,
-      xudtTypeArgs,
+      xudtType,
       transferAmount,
       collector,
       btcDataSource,
@@ -193,8 +193,8 @@ export const transferCombined = async (
 export interface PrepareTransferUnsignedPsbtParams {
   /** The recipient's BTC address. */
   toBtcAddress: string;
-  /** Type arguments for the XUDT script. */
-  xudtTypeArgs: string;
+  /** Type script for the XUDT. */
+  xudtType: CKBComponents.Script;
   /** The amount of assets to transfer. */
   transferAmount: bigint;
   /** Collector instance used to gather cells for the transaction. */
@@ -221,7 +221,7 @@ export interface PrepareTransferUnsignedPsbtParams {
  *
  * @param {PrepareTransferUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {string} params.toBtcAddress - The recipient's BTC address.
- * @param {string} params.xudtTypeArgs - Type arguments for the XUDT script.
+ * @param {CKBComponents.Script} params.xudtType - Type script for the XUDT.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {DataSource} params.btcDataSource - Data source for BTC transactions.
@@ -236,7 +236,7 @@ export interface PrepareTransferUnsignedPsbtParams {
 export const prepareTransferUnsignedPsbt = async ({
   btcService,
   toBtcAddress,
-  xudtTypeArgs,
+  xudtType,
   transferAmount,
   collector,
   btcDataSource,
@@ -247,7 +247,7 @@ export const prepareTransferUnsignedPsbt = async ({
   btcFeeRate = 30,
 }: PrepareTransferUnsignedPsbtParams): Promise<bitcoin.Psbt> => {
   const lockArgsListResponse = await getRgbppLockArgsList({
-    xudtTypeArgs,
+    xudtType,
     fromBtcAccount,
     isMainnet,
     btcService,
@@ -255,7 +255,7 @@ export const prepareTransferUnsignedPsbt = async ({
   const { btcPsbtHex } = await buildRgbppTransferTx({
     ckb: {
       collector,
-      xudtTypeArgs,
+      xudtTypeArgs: xudtType.args,
       rgbppLockArgsList: lockArgsListResponse.rgbppLockArgsList,
       transferAmount,
     },

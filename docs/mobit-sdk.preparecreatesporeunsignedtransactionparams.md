@@ -177,23 +177,4 @@ The list of receivers with their BTC addresses and spore data.
 
 
 </td></tr>
-<tr><td>
-
-[witnessLockPlaceholderSize?](./mobit-sdk.preparecreatesporeunsignedtransactionparams.witnesslockplaceholdersize.md)
-
-
-</td><td>
-
-
-</td><td>
-
-number
-
-
-</td><td>
-
-_(Optional)_ The size of the witness lock placeholder (optional). This parameter is used to estimate the transaction size when the witness lock placeholder size is known.
-
-
-</td></tr>
 </tbody></table>

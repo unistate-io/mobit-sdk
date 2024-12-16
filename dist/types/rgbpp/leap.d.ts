@@ -8,8 +8,8 @@ import { bitcoin } from "@rgbpp-sdk/btc";
 export interface RgbppLeapFromBtcToCkbCombinedParams {
     /** The destination CKB address. */
     toCkbAddress: string;
-    /** The arguments for the XUDT type script. */
-    xudtTypeArgs: string;
+    /** The XUDT type script. */
+    xudtType: CKBComponents.Script;
     /** The amount of assets to transfer. */
     transferAmount: bigint;
     /** The collector instance for CKB operations. */
@@ -34,7 +34,7 @@ export interface RgbppLeapFromBtcToCkbCombinedParams {
  *
  * @param {RgbppLeapFromBtcToCkbCombinedParams} params - The parameters for the leap operation.
  * @param {string} params.toCkbAddress - The destination CKB address.
- * @param {string} params.xudtTypeArgs - The arguments for the XUDT type script.
+ * @param {CKBComponents.Script} params.xudtType - The XUDT type script.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
  * @param {Collector} params.collector - The collector instance for CKB operations.
  * @param {DataSource} params.btcDataSource - The data source for BTC operations.
@@ -48,7 +48,7 @@ export interface RgbppLeapFromBtcToCkbCombinedParams {
  *
  * @returns {Promise<TxResult>} - The result of the transaction.
  */
-export declare const leapFromBtcToCkbCombined: ({ toCkbAddress, xudtTypeArgs, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService, }: RgbppLeapFromBtcToCkbCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
+export declare const leapFromBtcToCkbCombined: ({ toCkbAddress, xudtType, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService, }: RgbppLeapFromBtcToCkbCombinedParams, btcFeeRate?: number) => Promise<TxResult>;
 /**
  * Parameters for preparing an unsigned PSBT (Partially Signed Bitcoin Transaction) for leaping RGBPP assets from Bitcoin to CKB.
  */
@@ -57,8 +57,8 @@ export interface PrepareLeapUnsignedPsbtParams {
     btcService: BtcAssetsApi;
     /** The destination CKB address. */
     toCkbAddress: string;
-    /** Type arguments for the XUDT type script. */
-    xudtTypeArgs: string;
+    /** The XUDT type script. */
+    xudtType: CKBComponents.Script;
     /** The amount of assets to transfer. */
     transferAmount: bigint;
     /** Indicates whether the operation is on the mainnet. */
@@ -83,7 +83,7 @@ export interface PrepareLeapUnsignedPsbtParams {
  * @param {PrepareLeapUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {BtcAssetsApi} params.btcService - The BTC assets service instance.
  * @param {string} params.toCkbAddress - The destination CKB address.
- * @param {string} params.xudtTypeArgs - Type arguments for the XUDT type script.
+ * @param {CKBComponents.Script} params.xudtType - The XUDT type script.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
@@ -94,5 +94,5 @@ export interface PrepareLeapUnsignedPsbtParams {
  * @param {number} [params.btcFeeRate] - Fee rate for the BTC transaction (optional, default is 30).
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareLeapUnsignedPsbt: ({ btcService, toCkbAddress, xudtTypeArgs, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate, }: PrepareLeapUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareLeapUnsignedPsbt: ({ btcService, toCkbAddress, xudtType, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate, }: PrepareLeapUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 //# sourceMappingURL=leap.d.ts.map

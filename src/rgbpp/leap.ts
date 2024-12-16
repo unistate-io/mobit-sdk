@@ -2,7 +2,6 @@ import {
   BTCTestnetType,
   Collector,
   genBtcJumpCkbVirtualTx,
-  getXudtTypeScript,
   serializeScript,
 } from "@rgbpp-sdk/ckb";
 import { BtcAssetsApi, DataSource, sendRgbppUtxos } from "rgbpp";
@@ -14,7 +13,7 @@ import { bitcoin } from "@rgbpp-sdk/btc";
 interface LeapToCkbParams {
   rgbppLockArgsList: string[];
   toCkbAddress: string;
-  xudtTypeArgs: string;
+  xudtType: CKBComponents.Script;
   transferAmount: bigint;
   isMainnet: boolean;
   collector: Collector;
@@ -30,7 +29,7 @@ const leapFromBtcToCKB = async (
   {
     rgbppLockArgsList,
     toCkbAddress,
-    xudtTypeArgs,
+    xudtType,
     transferAmount,
     isMainnet,
     collector,
@@ -43,11 +42,6 @@ const leapFromBtcToCKB = async (
   }: LeapToCkbParams,
   btcFeeRate?: number,
 ): Promise<TxResult> => {
-  const xudtType: CKBComponents.Script = {
-    ...getXudtTypeScript(isMainnet),
-    args: xudtTypeArgs,
-  };
-
   const ckbVirtualTxResult = await genBtcJumpCkbVirtualTx({
     collector,
     rgbppLockArgsList,
@@ -116,8 +110,8 @@ const leapFromBtcToCKB = async (
 export interface RgbppLeapFromBtcToCkbCombinedParams {
   /** The destination CKB address. */
   toCkbAddress: string;
-  /** The arguments for the XUDT type script. */
-  xudtTypeArgs: string;
+  /** The XUDT type script. */
+  xudtType: CKBComponents.Script;
   /** The amount of assets to transfer. */
   transferAmount: bigint;
   /** The collector instance for CKB operations. */
@@ -143,7 +137,7 @@ export interface RgbppLeapFromBtcToCkbCombinedParams {
  *
  * @param {RgbppLeapFromBtcToCkbCombinedParams} params - The parameters for the leap operation.
  * @param {string} params.toCkbAddress - The destination CKB address.
- * @param {string} params.xudtTypeArgs - The arguments for the XUDT type script.
+ * @param {CKBComponents.Script} params.xudtType - The XUDT type script.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
  * @param {Collector} params.collector - The collector instance for CKB operations.
  * @param {DataSource} params.btcDataSource - The data source for BTC operations.
@@ -160,7 +154,7 @@ export interface RgbppLeapFromBtcToCkbCombinedParams {
 export const leapFromBtcToCkbCombined = async (
   {
     toCkbAddress,
-    xudtTypeArgs,
+    xudtType,
     transferAmount,
     collector,
     btcDataSource,
@@ -174,7 +168,7 @@ export const leapFromBtcToCkbCombined = async (
   btcFeeRate?: number,
 ): Promise<TxResult> => {
   const lockArgsListResponse = await getRgbppLockArgsList({
-    xudtTypeArgs,
+    xudtType,
     fromBtcAccount,
     isMainnet,
     btcService,
@@ -184,7 +178,7 @@ export const leapFromBtcToCkbCombined = async (
     {
       rgbppLockArgsList: lockArgsListResponse.rgbppLockArgsList,
       toCkbAddress,
-      xudtTypeArgs,
+      xudtType,
       transferAmount,
       collector,
       btcDataSource,
@@ -209,8 +203,8 @@ export interface PrepareLeapUnsignedPsbtParams {
   btcService: BtcAssetsApi;
   /** The destination CKB address. */
   toCkbAddress: string;
-  /** Type arguments for the XUDT type script. */
-  xudtTypeArgs: string;
+  /** The XUDT type script. */
+  xudtType: CKBComponents.Script;
   /** The amount of assets to transfer. */
   transferAmount: bigint;
   /** Indicates whether the operation is on the mainnet. */
@@ -236,7 +230,7 @@ export interface PrepareLeapUnsignedPsbtParams {
  * @param {PrepareLeapUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {BtcAssetsApi} params.btcService - The BTC assets service instance.
  * @param {string} params.toCkbAddress - The destination CKB address.
- * @param {string} params.xudtTypeArgs - Type arguments for the XUDT type script.
+ * @param {CKBComponents.Script} params.xudtType - The XUDT type script.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
@@ -250,7 +244,7 @@ export interface PrepareLeapUnsignedPsbtParams {
 export const prepareLeapUnsignedPsbt = async ({
   btcService,
   toCkbAddress,
-  xudtTypeArgs,
+  xudtType,
   transferAmount,
   isMainnet,
   collector,
@@ -261,16 +255,11 @@ export const prepareLeapUnsignedPsbt = async ({
   btcFeeRate = 30,
 }: PrepareLeapUnsignedPsbtParams): Promise<bitcoin.Psbt> => {
   const lockArgsListResponse = await getRgbppLockArgsList({
-    xudtTypeArgs,
+    xudtType,
     fromBtcAccount,
     isMainnet,
     btcService,
   });
-
-  const xudtType: CKBComponents.Script = {
-    ...getXudtTypeScript(isMainnet),
-    args: xudtTypeArgs,
-  };
 
   const ckbVirtualTxResult = await genBtcJumpCkbVirtualTx({
     collector,

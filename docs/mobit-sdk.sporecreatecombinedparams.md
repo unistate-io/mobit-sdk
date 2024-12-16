@@ -132,7 +132,7 @@ The CKB address.
 </td></tr>
 <tr><td>
 
-[clusterTypeScriptArgs](./mobit-sdk.sporecreatecombinedparams.clustertypescriptargs.md)
+[clusterType](./mobit-sdk.sporecreatecombinedparams.clustertype.md)
 
 
 </td><td>
@@ -140,12 +140,12 @@ The CKB address.
 
 </td><td>
 
-string
+CKBComponents.Script
 
 
 </td><td>
 
-The arguments for the cluster type script.
+The cluster type script.
 
 
 </td></tr>

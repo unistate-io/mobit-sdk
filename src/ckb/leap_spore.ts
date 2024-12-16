@@ -3,7 +3,6 @@ import {
   buildRgbppLockArgs,
   Collector,
   genLeapSporeFromCkbToBtcRawTx,
-  getSporeTypeScript,
   serializeScript,
 } from "@rgbpp-sdk/ckb";
 
@@ -20,9 +19,9 @@ export interface LeapSporeToBtcTransactionParams {
    */
   btcTxId: string;
   /**
-   * The type arguments for the spore.
+   * The type script for the spore.
    */
-  sporeTypeArgs: string;
+  sporeType: CKBComponents.Script;
   /**
    * A flag indicating whether the operation is on the mainnet.
    */
@@ -47,7 +46,7 @@ export interface LeapSporeToBtcTransactionParams {
  * @param {LeapSporeToBtcTransactionParams} params - The parameters for leaping a spore from CKB to BTC.
  * @param {number} params.outIndex - The output index of the spore.
  * @param {string} params.btcTxId - The transaction ID of the BTC transaction.
- * @param {string} params.sporeTypeArgs - The type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - The type script for the spore.
  * @param {boolean} params.isMainnet - A flag indicating whether the operation is on the mainnet.
  * @param {Collector} params.collector - The collector instance.
  * @param {string} params.ckbAddress - The CKB address.
@@ -57,18 +56,15 @@ export interface LeapSporeToBtcTransactionParams {
 export const leapSporeFromCkbToBtcTransaction = async ({
   outIndex,
   btcTxId,
-  sporeTypeArgs,
+  sporeType,
   isMainnet,
   collector,
   ckbAddress,
   btcTestnetType,
-}: LeapSporeToBtcTransactionParams): Promise<CKBComponents.RawTransactionToSign> => {
+}: LeapSporeToBtcTransactionParams): Promise<
+  CKBComponents.RawTransactionToSign
+> => {
   const toRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
-
-  const sporeType: CKBComponents.Script = {
-    ...getSporeTypeScript(isMainnet),
-    args: sporeTypeArgs,
-  };
 
   const ckbRawTx = await genLeapSporeFromCkbToBtcRawTx({
     collector,

@@ -11,7 +11,7 @@ This function constructs a transaction that burns a specified amount of xUDT tok
 **Signature:**
 
 ```typescript
-export declare function createBurnXudtTransaction({ xudtArgs, burnAmount, ckbAddress, collector, isMainnet, }: CreateBurnXudtTransactionParams, feeRate?: bigint, maxFee?: bigint, witnessLockPlaceholderSize?: number): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createBurnXudtTransaction({ xudtType, burnAmount, ckbAddress, collector, isMainnet, }: CreateBurnXudtTransactionParams): Promise<CKBComponents.RawTransactionToSign>;
 ```
 
 ## Parameters
@@ -34,7 +34,7 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-{ xudtArgs, burnAmount, ckbAddress, collector, isMainnet, }
+{ xudtType, burnAmount, ckbAddress, collector, isMainnet, }
 
 
 </td><td>
@@ -43,54 +43,6 @@ Description
 
 
 </td><td>
-
-
-</td></tr>
-<tr><td>
-
-feeRate
-
-
-</td><td>
-
-bigint
-
-
-</td><td>
-
-_(Optional)_ An optional parameter specifying the fee rate for the transaction. If not provided, a default fee rate will be used.
-
-
-</td></tr>
-<tr><td>
-
-maxFee
-
-
-</td><td>
-
-bigint
-
-
-</td><td>
-
-_(Optional)_ An optional parameter specifying the maximum fee for the transaction. Defaults to MAX\_FEE if not provided.
-
-
-</td></tr>
-<tr><td>
-
-witnessLockPlaceholderSize
-
-
-</td><td>
-
-number
-
-
-</td><td>
-
-_(Optional)_ An optional parameter specifying the size of the witness lock placeholder.
 
 
 </td></tr>

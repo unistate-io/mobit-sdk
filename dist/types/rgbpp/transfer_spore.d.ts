@@ -8,8 +8,8 @@ import { bitcoin } from "@rgbpp-sdk/btc";
 export interface SporeTransferCombinedParams {
     /** The recipient's BTC address. */
     toBtcAddress: string;
-    /** Type arguments for the spore. */
-    sporeTypeArgs: Hex;
+    /** Type script for the spore. */
+    sporeType: CKBComponents.Script;
     /** Collector instance used to gather cells for the transaction. */
     collector: Collector;
     /** Indicates whether the operation is on the mainnet. */
@@ -32,7 +32,7 @@ export interface SporeTransferCombinedParams {
  *
  * @param {SporeTransferCombinedParams} params - The parameters for the spore transfer.
  * @param {string} params.toBtcAddress - The recipient's BTC address.
- * @param {Hex} params.sporeTypeArgs - The type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - The type script for the spore.
  * @param {Collector} params.collector - The collector object.
  * @param {boolean} params.isMainnet - Indicates if the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet (optional).
@@ -44,7 +44,7 @@ export interface SporeTransferCombinedParams {
  * @param {number} [btcFeeRate=30] - The fee rate for the BTC transaction (optional, default is 30).
  * @returns {Promise<{ btcTxId: string }>} - The result of the spore transfer, including the BTC transaction ID.
  */
-export declare const transferSporeCombined: ({ toBtcAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService, }: SporeTransferCombinedParams, btcFeeRate?: number) => Promise<{
+export declare const transferSporeCombined: ({ toBtcAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService, }: SporeTransferCombinedParams, btcFeeRate?: number) => Promise<{
     btcTxId: string;
 }>;
 /**
@@ -53,8 +53,8 @@ export declare const transferSporeCombined: ({ toBtcAddress, sporeTypeArgs, coll
 export interface GetSporeRgbppLockArgsParams {
     /** The BTC address from which the spore will be transferred. */
     fromBtcAddress: string;
-    /** Type arguments for the spore. */
-    sporeTypeArgs: Hex;
+    /** Type script for the spore. */
+    sporeType: CKBComponents.Script;
     /** Indicates whether the operation is on the mainnet. */
     isMainnet: boolean;
     /** The BTC assets API service. */
@@ -64,20 +64,20 @@ export interface GetSporeRgbppLockArgsParams {
  * Retrieves the spore RGBPP lock arguments based on the provided parameters.
  * @param {GetSporeRgbppLockArgsParams} params - The parameters for retrieving the spore RGBPP lock arguments.
  * @param {string} params.fromBtcAddress - The BTC address from which the spore will be transferred.
- * @param {Hex} params.sporeTypeArgs - Type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - Type script for the spore.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @returns {Promise<Hex>} - A promise that resolves to the spore RGBPP lock arguments.
  */
-export declare const getSporeRgbppLockArgs: ({ fromBtcAddress, sporeTypeArgs, isMainnet, btcService, }: GetSporeRgbppLockArgsParams) => Promise<Hex>;
+export declare const getSporeRgbppLockArgs: ({ fromBtcAddress, sporeType, isMainnet, btcService, }: GetSporeRgbppLockArgsParams) => Promise<Hex>;
 /**
  * Interface for parameters required to prepare an unsigned PSBT for transferring a spore.
  */
 export interface PrepareTransferSporeUnsignedPsbtParams {
     /** The recipient's BTC address. */
     toBtcAddress: string;
-    /** Type arguments for the spore. */
-    sporeTypeArgs: Hex;
+    /** Type script for the spore. */
+    sporeType: CKBComponents.Script;
     /** Collector instance used to gather cells for the transaction. */
     collector: Collector;
     /** Indicates whether the operation is on the mainnet. */
@@ -101,7 +101,7 @@ export interface PrepareTransferSporeUnsignedPsbtParams {
  *
  * @param {PrepareTransferSporeUnsignedPsbtParams} params - Parameters required to generate the unsigned PSBT.
  * @param {string} params.toBtcAddress - The recipient's BTC address.
- * @param {Hex} params.sporeTypeArgs - Type arguments for the spore.
+ * @param {CKBComponents.Script} params.sporeType - Type script for the spore.
  * @param {Collector} params.collector - Collector instance used to gather cells for the transaction.
  * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {BTCTestnetType} [params.btcTestnetType] - Type of BTC testnet (optional).
@@ -112,5 +112,5 @@ export interface PrepareTransferSporeUnsignedPsbtParams {
  * @param {BtcAssetsApi} params.btcService - The BTC assets API service.
  * @returns {Promise<bitcoin.Psbt>} - Promise that resolves to the unsigned PSBT.
  */
-export declare const prepareTransferSporeUnsignedPsbt: ({ toBtcAddress, sporeTypeArgs, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcService, btcFeeRate, }: PrepareTransferSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
+export declare const prepareTransferSporeUnsignedPsbt: ({ toBtcAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcService, btcFeeRate, }: PrepareTransferSporeUnsignedPsbtParams) => Promise<bitcoin.Psbt>;
 //# sourceMappingURL=transfer_spore.d.ts.map

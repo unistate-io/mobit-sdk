@@ -9,7 +9,7 @@ Leap a spore from CKB to BTC.
 **Signature:**
 
 ```typescript
-leapSporeFromCkbToBtcTransaction: ({ outIndex, btcTxId, sporeTypeArgs, isMainnet, collector, ckbAddress, btcTestnetType, }: LeapSporeToBtcTransactionParams, feeRate?: bigint, witnessLockPlaceholderSize?: number) => Promise<CKBComponents.RawTransactionToSign>
+leapSporeFromCkbToBtcTransaction: ({ outIndex, btcTxId, sporeType, isMainnet, collector, ckbAddress, btcTestnetType, }: LeapSporeToBtcTransactionParams) => Promise<CKBComponents.RawTransactionToSign>
 ```
 
 ## Parameters
@@ -32,7 +32,7 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-{ outIndex, btcTxId, sporeTypeArgs, isMainnet, collector, ckbAddress, btcTestnetType, }
+{ outIndex, btcTxId, sporeType, isMainnet, collector, ckbAddress, btcTestnetType, }
 
 
 </td><td>
@@ -41,38 +41,6 @@ Description
 
 
 </td><td>
-
-
-</td></tr>
-<tr><td>
-
-feeRate
-
-
-</td><td>
-
-bigint
-
-
-</td><td>
-
-_(Optional)_ (Optional) The fee rate for the transaction.
-
-
-</td></tr>
-<tr><td>
-
-witnessLockPlaceholderSize
-
-
-</td><td>
-
-number
-
-
-</td><td>
-
-_(Optional)_ (Optional) The size of the witness lock placeholder.
 
 
 </td></tr>

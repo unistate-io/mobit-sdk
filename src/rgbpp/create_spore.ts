@@ -6,7 +6,6 @@ import {
   Collector,
   genCreateSporeCkbVirtualTx,
   generateSporeCreateCoBuild,
-  getClusterTypeScript,
   Hex,
   RawSporeData,
   updateCkbTxWithRealBtcTxId,
@@ -173,9 +172,9 @@ const createSpores = async (
  */
 export interface SporeCreateCombinedParams {
   /**
-   * The arguments for the cluster type script.
+   * The cluster type script.
    */
-  clusterTypeScriptArgs: string;
+  clusterType: CKBComponents.Script;
   /**
    * The list of receivers with their BTC addresses and spore data.
    */
@@ -235,7 +234,7 @@ export interface SporeCreateCombinedParams {
  * Creates spores combined with the given parameters.
  *
  * @param {SporeCreateCombinedParams} params - The parameters for creating spores.
- * @param {string} params.clusterTypeScriptArgs - The arguments for the cluster type script.
+ * @param {CKBComponents.Script} params.clusterType - The cluster type script.
  * @param {Array<{ toBtcAddress: string, sporeData: RawSporeData }>} params.receivers - The list of receivers with their BTC addresses and spore data.
  * @param {Collector} params.collector - The collector instance.
  * @param {boolean} params.isMainnet - Indicates if the operation is on mainnet.
@@ -252,7 +251,7 @@ export interface SporeCreateCombinedParams {
  */
 export const createSporesCombined = async (
   {
-    clusterTypeScriptArgs,
+    clusterType,
     receivers,
     collector,
     isMainnet,
@@ -270,8 +269,7 @@ export const createSporesCombined = async (
 ): Promise<TxResult> => {
   const clusterRgbppLockArgs = await fetchAndValidateAssets(
     fromBtcAccount,
-    clusterTypeScriptArgs,
-    isMainnet,
+    clusterType,
     btcService,
   );
 
@@ -383,7 +381,9 @@ export const prepareCreateSporeUnsignedTransaction = async ({
   btcTestnetType,
   ckbAddress,
   ckbFeeRate,
-}: PrepareCreateSporeUnsignedTransactionParams): Promise<CKBComponents.RawTransactionToSign> => {
+}: PrepareCreateSporeUnsignedTransactionParams): Promise<
+  CKBComponents.RawTransactionToSign
+> => {
   const ckbVirtualTxResult = await genCreateSporeCkbVirtualTx({
     collector,
     sporeDataList: receivers.map((receiver) => receiver.sporeData),
@@ -538,33 +538,26 @@ export const prepareCreateSporeUnsignedPsbt = async ({
 };
 
 /**
- * Fetches RGBPP assets for a given BTC address and type script args, and validates the result.
+ * Fetches RGBPP assets for a given BTC address and type script, and validates the result.
  *
  * @param {string} fromBtcAccount - The BTC account from which the assets are being fetched.
- * @param {string} clusterTypeScriptArgs - The arguments for the cluster type script.
- * @param {boolean} isMainnet - Indicates if the operation is on mainnet.
+ * @param {CKBComponents.Script} clusterType - The cluster type script.
  * @param {BtcAssetsApi} btcService - The BTC assets API service.
  * @returns {Promise<string>} - The cluster RGBPP lock args.
- * @throws {Error} - Throws an error if no assets are found for the given BTC address and type script args.
+ * @throws {Error} - Throws an error if no assets are found for the given BTC address and type script.
  */
 export const fetchAndValidateAssets = async (
   fromBtcAccount: string,
-  clusterTypeScriptArgs: string,
-  isMainnet: boolean,
+  clusterType: CKBComponents.Script,
   btcService: BtcAssetsApi,
 ): Promise<string> => {
   const assets = await btcService.getRgbppAssetsByBtcAddress(fromBtcAccount, {
-    type_script: encodeURIComponent(
-      JSON.stringify({
-        ...getClusterTypeScript(isMainnet),
-        args: clusterTypeScriptArgs,
-      }),
-    ),
+    type_script: encodeURIComponent(JSON.stringify(clusterType)),
   });
 
   if (assets.length === 0) {
     throw new Error(
-      "No assets found for the given BTC address and type script args.",
+      "No assets found for the given BTC address and type script.",
     );
   }
 
