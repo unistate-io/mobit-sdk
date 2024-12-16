@@ -1,7 +1,6 @@
 import { addressToScript } from "@nervosnetwork/ckb-sdk-utils";
 import {
   append0x,
-  calculateUdtCellCapacity,
   Collector,
   NoXudtLiveCellError,
   u128ToLe,
@@ -58,9 +57,7 @@ export async function createBurnXudtTransaction({
   ckbAddress,
   collector,
   isMainnet,
-}: CreateBurnXudtTransactionParams): Promise<
-  CKBComponents.RawTransactionToSign
-> {
+}: CreateBurnXudtTransactionParams): Promise<CKBComponents.RawTransactionToSign> {
   const fromLock = addressToScript(ckbAddress);
   const xudtCells = await collector.getCells({
     lock: fromLock,
@@ -73,11 +70,7 @@ export async function createBurnXudtTransaction({
     throw new NoXudtLiveCellError("The address has no xudt cells");
   }
 
-  const {
-    inputs: udtInputs,
-    sumInputsCapacity,
-    sumAmount,
-  } = collector.collectUdtInputs({
+  const { inputs: udtInputs, sumAmount } = collector.collectUdtInputs({
     liveCells: xudtCells,
     needAmount: burnAmount,
   });
@@ -85,7 +78,6 @@ export async function createBurnXudtTransaction({
   let inputs = udtInputs;
 
   console.debug("Collected inputs:", inputs);
-  console.debug("Sum of inputs capacity:", sumInputsCapacity);
   console.debug("Sum of amount:", sumAmount);
 
   if (sumAmount < burnAmount) {
@@ -95,19 +87,14 @@ export async function createBurnXudtTransaction({
   const outputs: CKBComponents.CellOutput[] = [];
   const outputsData: string[] = [];
 
-  let sumXudtOutputCapacity = BigInt(0);
-
   if (sumAmount > burnAmount) {
-    const xudtChangeCapacity = calculateUdtCellCapacity(fromLock);
     outputs.push({
       lock: fromLock,
       type: xudtType,
-      capacity: append0x(xudtChangeCapacity.toString(16)),
+      capacity: "0x0",
     });
     outputsData.push(append0x(u128ToLe(sumAmount - burnAmount)));
-    sumXudtOutputCapacity += xudtChangeCapacity;
 
-    console.debug("XUDT change capacity:", xudtChangeCapacity);
     console.debug("Updated outputs:", outputs);
     console.debug("Updated outputs data:", outputsData);
   }

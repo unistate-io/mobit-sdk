@@ -94,7 +94,7 @@ A boolean indicating whether the transaction is for the mainnet or testnet.
 </td></tr>
 <tr><td>
 
-[xudtArgs](./mobit-sdk.createmergexudttransactionparams.xudtargs.md)
+[xudtType](./mobit-sdk.createmergexudttransactionparams.xudttype.md)
 
 
 </td><td>
@@ -102,12 +102,12 @@ A boolean indicating whether the transaction is for the mainnet or testnet.
 
 </td><td>
 
-string
+CKBComponents.Script
 
 
 </td><td>
 
-The xUDT type script args.
+The xUDT type script.
 
 
 </td></tr>

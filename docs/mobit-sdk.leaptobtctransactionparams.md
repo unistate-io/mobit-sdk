@@ -113,25 +113,6 @@ The collector instance used for collecting cells.
 </td></tr>
 <tr><td>
 
-[isMainnet](./mobit-sdk.leaptobtctransactionparams.ismainnet.md)
-
-
-</td><td>
-
-
-</td><td>
-
-boolean
-
-
-</td><td>
-
-Indicates whether the operation is on the mainnet.
-
-
-</td></tr>
-<tr><td>
-
 [outIndex](./mobit-sdk.leaptobtctransactionparams.outindex.md)
 
 
@@ -170,7 +151,7 @@ The amount of assets to transfer.
 </td></tr>
 <tr><td>
 
-[xudtTypeArgs](./mobit-sdk.leaptobtctransactionparams.xudttypeargs.md)
+[xudtType](./mobit-sdk.leaptobtctransactionparams.xudttype.md)
 
 
 </td><td>
@@ -178,12 +159,12 @@ The amount of assets to transfer.
 
 </td><td>
 
-string
+CKBComponents.Script
 
 
 </td><td>
 
-The type arguments for the XUDT (User Defined Token) on CKB.
+The type script for the XUDT (User Defined Token) on CKB.
 
 
 </td></tr>

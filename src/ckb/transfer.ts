@@ -80,7 +80,7 @@ export async function createTransferXudtTransaction(
 
   let sumXudtOutputCapacity = receivers
     .map(({ toAddress }) =>
-      calculateUdtCellCapacity(addressToScript(toAddress))
+      calculateUdtCellCapacity(addressToScript(toAddress)),
     )
     .reduce((prev, current) => prev + current, BigInt(0));
 
@@ -104,32 +104,25 @@ export async function createTransferXudtTransaction(
     ({ toAddress }) => ({
       lock: addressToScript(toAddress),
       type: xudtType,
-      capacity: append0x(
-        calculateUdtCellCapacity(addressToScript(toAddress)).toString(16),
-      ),
+      capacity: "0x0",
     }),
   );
 
   const outputsData = receivers.map(({ transferAmount }) =>
-    append0x(u128ToLe(transferAmount))
+    append0x(u128ToLe(transferAmount)),
   );
 
   console.debug("Outputs:", outputs);
   console.debug("Outputs Data:", outputsData);
 
   if (sumAmount > sumTransferAmount) {
-    const xudtChangeCapacity = calculateUdtCellCapacity(
-      addressToScript(ckbAddress),
-    );
     outputs.push({
       lock: addressToScript(ckbAddress),
       type: xudtType,
-      capacity: append0x(xudtChangeCapacity.toString(16)),
+      capacity: "0x0",
     });
     outputsData.push(append0x(u128ToLe(sumAmount - sumTransferAmount)));
-    sumXudtOutputCapacity += xudtChangeCapacity;
 
-    console.debug("XUDT Change Capacity:", xudtChangeCapacity);
     console.debug("Updated Outputs:", outputs);
     console.debug("Updated Outputs Data:", outputsData);
   }

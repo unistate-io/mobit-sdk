@@ -477,27 +477,23 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, core_namespaceObject.gql)`
     });
     console.debug("Fetched xudt cells:", xudtCells);
     if (!xudtCells || 0 === xudtCells.length) throw new ckb_namespaceObject.NoXudtLiveCellError("The address has no xudt cells");
-    const { inputs: udtInputs, sumInputsCapacity, sumAmount } = collector.collectUdtInputs({
+    const { inputs: udtInputs, sumAmount } = collector.collectUdtInputs({
         liveCells: xudtCells,
         needAmount: burnAmount
     });
     let inputs = udtInputs;
     console.debug("Collected inputs:", inputs);
-    console.debug("Sum of inputs capacity:", sumInputsCapacity);
     console.debug("Sum of amount:", sumAmount);
     if (sumAmount < burnAmount) throw new Error("Not enough xUDT tokens to burn");
     const outputs = [];
     const outputsData = [];
-    let sumXudtOutputCapacity = BigInt(0);
     if (sumAmount > burnAmount) {
-        const xudtChangeCapacity = (0, ckb_namespaceObject.calculateUdtCellCapacity)(fromLock);
         outputs.push({
             lock: fromLock,
             type: xudtType,
-            capacity: (0, ckb_namespaceObject.append0x)(xudtChangeCapacity.toString(16))
+            capacity: "0x0"
         });
         outputsData.push((0, ckb_namespaceObject.append0x)((0, ckb_namespaceObject.u128ToLe)(sumAmount - burnAmount)));
-        console.debug("XUDT change capacity:", xudtChangeCapacity);
         console.debug("Updated outputs:", outputs);
         console.debug("Updated outputs data:", outputsData);
     }
@@ -539,17 +535,11 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, core_namespaceObject.gql)`
     emptyCells = emptyCells.filter((cell)=>!cell.output.type);
     console.debug("Filtered empty cells without a type:", emptyCells);
     // Calculate the capacity required for the xUDT cell and add debug information
-    const xudtCapacity = (0, ckb_namespaceObject.calculateUdtCellCapacity)(issueLock);
-    console.debug("Calculated xUDT cell capacity:", xudtCapacity);
-    // Calculate the capacity required for the xUDT token info cell and add debug information
-    const xudtInfoCapacity = (0, ckb_namespaceObject.calculateXudtTokenInfoCellCapacity)(tokenInfo, issueLock);
-    console.debug("Calculated xUDT token info cell capacity:", xudtInfoCapacity);
     // Collect inputs for the transaction and add debug information
-    const { inputs, sumInputsCapacity } = collector.collectInputs(emptyCells, xudtCapacity + xudtInfoCapacity, BigInt(0), {
+    const { inputs } = collector.collectInputs(emptyCells, BigInt(0), BigInt(0), {
         minCapacity: ckb_namespaceObject.MIN_CAPACITY
     });
     console.debug("Collected inputs:", inputs);
-    console.debug("Sum of inputs capacity:", sumInputsCapacity);
     // Define the xUDT type script and add debug information
     const xudtType = {
         ...(0, ckb_namespaceObject.getXudtTypeScript)(isMainnet),
@@ -558,14 +548,12 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, core_namespaceObject.gql)`
     console.debug("Defined xUDT type script:", xudtType);
     console.log("xUDT type script", xudtType);
     // Calculate the change capacity and add debug information
-    let changeCapacity = sumInputsCapacity - xudtCapacity - xudtInfoCapacity;
-    console.debug("Calculated change capacity:", changeCapacity);
     // Define the outputs and add debug information
     const outputs = [
         {
             lock: issueLock,
             type: xudtType,
-            capacity: (0, ckb_namespaceObject.append0x)(xudtCapacity.toString(16))
+            capacity: "0x0"
         },
         {
             lock: issueLock,
@@ -573,11 +561,11 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, core_namespaceObject.gql)`
                 ...(0, ckb_namespaceObject.getUniqueTypeScript)(isMainnet),
                 args: (0, ckb_namespaceObject.generateUniqueTypeArgs)(inputs[0], 1)
             },
-            capacity: (0, ckb_namespaceObject.append0x)(xudtInfoCapacity.toString(16))
+            capacity: "0x0"
         },
         {
             lock: issueLock,
-            capacity: (0, ckb_namespaceObject.append0x)(changeCapacity.toString(16))
+            capacity: "0x0"
         }
     ];
     console.debug("Defined outputs:", outputs);
@@ -616,26 +604,21 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, core_namespaceObject.gql)`
  * Leap from CKB to BTC
  *
  * This function facilitates the transfer of assets from the CKB (Nervos Network) blockchain to the BTC (Bitcoin) blockchain.
- * It constructs the necessary arguments and transactions to move the specified amount of assets, identified by their type arguments,
+ * It constructs the necessary arguments and transactions to move the specified amount of assets, identified by their type script,
  * from a CKB address to a BTC transaction. The function also handles the signing and sending of the transaction.
  *
  * @param {LeapToBtcTransactionParams} params - The parameters required for the leap operation.
  * @param {number} params.outIndex - The output index in the BTC transaction.
  * @param {string} params.btcTxId - The transaction ID of the BTC transaction.
- * @param {string} params.xudtTypeArgs - The type arguments for the XUDT (User Defined Token) on CKB.
+ * @param {CKBComponents.Script} params.xudtType - The type script for the XUDT (User Defined Token) on CKB.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
- * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {Collector} params.collector - The collector instance used for collecting cells.
  * @param {string} params.ckbAddress - The CKB address from which the assets are being transferred.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet, if applicable.
  *
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - The unsigned raw transaction to sign.
- */ const leapFromCkbToBtcTransaction = async ({ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType })=>{
+ */ const leapFromCkbToBtcTransaction = async ({ outIndex, btcTxId, xudtType, transferAmount, collector, ckbAddress, btcTestnetType })=>{
     const toRgbppLockArgs = (0, ckb_namespaceObject.buildRgbppLockArgs)(outIndex, btcTxId);
-    const xudtType = {
-        ...(0, ckb_namespaceObject.getXudtTypeScript)(isMainnet),
-        args: xudtTypeArgs
-    };
     const ckbRawTx = await (0, ckb_namespaceObject.genCkbJumpBtcVirtualTx)({
         collector,
         fromCkbAddress: ckbAddress,
@@ -691,18 +674,14 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, core_namespaceObject.gql)`
 /**
  * Merges multiple xUDT cells into a single xUDT cell and returns the remaining capacity as a separate cell.
  * @param {CreateMergeXudtTransactionParams} params - The parameters object.
- * @param {string} params.xudtArgs - The xUDT type script args.
+ * @param {CKBComponents.Script} params.xudtType - The xUDT type script.
  * @param {string[]} params.ckbAddresses - The CKB addresses involved in the transaction.
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
  * @param {boolean} params.isMainnet - A boolean indicating whether the transaction is for the mainnet or testnet.
  * @param {string} [ckbAddress=params.ckbAddresses[0]] - The address for the output cell, defaulting to the first address in the input address set.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} An unsigned transaction object.
- */ async function createMergeXudtTransaction({ xudtArgs, ckbAddresses, collector, isMainnet }, ckbAddress = ckbAddresses[0]) {
+ */ async function createMergeXudtTransaction({ xudtType, ckbAddresses, collector, isMainnet }, ckbAddress = ckbAddresses[0]) {
     const fromLock = (0, ckb_sdk_utils_namespaceObject.addressToScript)(ckbAddress);
-    const xudtType = {
-        ...(0, ckb_namespaceObject.getXudtTypeScript)(isMainnet),
-        args: xudtArgs
-    };
     const xudtCells = await getIndexerCells({
         ckbAddresses,
         type: xudtType,
@@ -716,12 +695,11 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, core_namespaceObject.gql)`
     console.debug("Collected inputs:", inputs);
     console.debug("Sum of inputs capacity:", sumInputsCapacity);
     console.debug("Sum of amount:", sumAmount);
-    const mergedXudtCapacity = (0, ckb_namespaceObject.calculateUdtCellCapacity)(fromLock);
     const outputs = [
         {
             lock: fromLock,
             type: xudtType,
-            capacity: (0, ckb_namespaceObject.append0x)(mergedXudtCapacity.toString(16))
+            capacity: "0x0"
         }
     ];
     const outputsData = [
@@ -806,21 +784,18 @@ function collectAllUdtInputs(liveCells) {
     const outputs = receivers.map(({ toAddress })=>({
             lock: (0, ckb_sdk_utils_namespaceObject.addressToScript)(toAddress),
             type: xudtType,
-            capacity: (0, ckb_namespaceObject.append0x)((0, ckb_namespaceObject.calculateUdtCellCapacity)((0, ckb_sdk_utils_namespaceObject.addressToScript)(toAddress)).toString(16))
+            capacity: "0x0"
         }));
     const outputsData = receivers.map(({ transferAmount })=>(0, ckb_namespaceObject.append0x)((0, ckb_namespaceObject.u128ToLe)(transferAmount)));
     console.debug("Outputs:", outputs);
     console.debug("Outputs Data:", outputsData);
     if (sumAmount > sumTransferAmount) {
-        const xudtChangeCapacity = (0, ckb_namespaceObject.calculateUdtCellCapacity)((0, ckb_sdk_utils_namespaceObject.addressToScript)(ckbAddress));
         outputs.push({
             lock: (0, ckb_sdk_utils_namespaceObject.addressToScript)(ckbAddress),
             type: xudtType,
-            capacity: (0, ckb_namespaceObject.append0x)(xudtChangeCapacity.toString(16))
+            capacity: "0x0"
         });
         outputsData.push((0, ckb_namespaceObject.append0x)((0, ckb_namespaceObject.u128ToLe)(sumAmount - sumTransferAmount)));
-        sumXudtOutputCapacity += xudtChangeCapacity;
-        console.debug("XUDT Change Capacity:", xudtChangeCapacity);
         console.debug("Updated Outputs:", outputs);
         console.debug("Updated Outputs Data:", outputsData);
     }

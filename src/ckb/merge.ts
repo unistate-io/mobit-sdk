@@ -4,7 +4,6 @@ import {
   calculateUdtCellCapacity,
   Collector,
   fetchTypeIdCellDeps,
-  getXudtTypeScript,
   IndexerCell,
   leToU128,
   NoXudtLiveCellError,
@@ -18,9 +17,9 @@ import { getIndexerCells } from "../helper";
  */
 export interface CreateMergeXudtTransactionParams {
   /**
-   * The xUDT type script args.
+   * The xUDT type script.
    */
-  xudtArgs: string;
+  xudtType: CKBComponents.Script;
   /**
    * The CKB addresses involved in the transaction.
    */
@@ -38,7 +37,7 @@ export interface CreateMergeXudtTransactionParams {
 /**
  * Merges multiple xUDT cells into a single xUDT cell and returns the remaining capacity as a separate cell.
  * @param {CreateMergeXudtTransactionParams} params - The parameters object.
- * @param {string} params.xudtArgs - The xUDT type script args.
+ * @param {CKBComponents.Script} params.xudtType - The xUDT type script.
  * @param {string[]} params.ckbAddresses - The CKB addresses involved in the transaction.
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
  * @param {boolean} params.isMainnet - A boolean indicating whether the transaction is for the mainnet or testnet.
@@ -47,7 +46,7 @@ export interface CreateMergeXudtTransactionParams {
  */
 export async function createMergeXudtTransaction(
   {
-    xudtArgs,
+    xudtType,
     ckbAddresses,
     collector,
     isMainnet,
@@ -55,10 +54,6 @@ export async function createMergeXudtTransaction(
   ckbAddress: string = ckbAddresses[0],
 ): Promise<CKBComponents.RawTransactionToSign> {
   const fromLock = addressToScript(ckbAddress);
-  const xudtType: CKBComponents.Script = {
-    ...getXudtTypeScript(isMainnet),
-    args: xudtArgs,
-  };
 
   const xudtCells = await getIndexerCells({
     ckbAddresses,
@@ -88,12 +83,11 @@ export async function createMergeXudtTransaction(
   console.debug("Sum of inputs capacity:", sumInputsCapacity);
   console.debug("Sum of amount:", sumAmount);
 
-  const mergedXudtCapacity = calculateUdtCellCapacity(fromLock);
   const outputs: CKBComponents.CellOutput[] = [
     {
       lock: fromLock,
       type: xudtType,
-      capacity: append0x(mergedXudtCapacity.toString(16)),
+      capacity: "0x0",
     },
   ];
   const outputsData: string[] = [append0x(u128ToLe(sumAmount))];

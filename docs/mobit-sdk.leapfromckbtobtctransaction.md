@@ -6,12 +6,12 @@
 
 Leap from CKB to BTC
 
-This function facilitates the transfer of assets from the CKB (Nervos Network) blockchain to the BTC (Bitcoin) blockchain. It constructs the necessary arguments and transactions to move the specified amount of assets, identified by their type arguments, from a CKB address to a BTC transaction. The function also handles the signing and sending of the transaction.
+This function facilitates the transfer of assets from the CKB (Nervos Network) blockchain to the BTC (Bitcoin) blockchain. It constructs the necessary arguments and transactions to move the specified amount of assets, identified by their type script, from a CKB address to a BTC transaction. The function also handles the signing and sending of the transaction.
 
 **Signature:**
 
 ```typescript
-leapFromCkbToBtcTransaction: ({ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType, }: LeapToBtcTransactionParams) => Promise<CKBComponents.RawTransactionToSign>
+leapFromCkbToBtcTransaction: ({ outIndex, btcTxId, xudtType, transferAmount, collector, ckbAddress, btcTestnetType, }: LeapToBtcTransactionParams) => Promise<CKBComponents.RawTransactionToSign>
 ```
 
 ## Parameters
@@ -34,7 +34,7 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-{ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType, }
+{ outIndex, btcTxId, xudtType, transferAmount, collector, ckbAddress, btcTestnetType, }
 
 
 </td><td>

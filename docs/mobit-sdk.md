@@ -124,7 +124,7 @@ Creates an unsigned transaction for issuing xUDT assets with a unique cell as th
 </td></tr>
 <tr><td>
 
-[createMergeXudtTransaction({ xudtArgs, ckbAddresses, collector, isMainnet, }, ckbAddress)](./mobit-sdk.createmergexudttransaction.md)
+[createMergeXudtTransaction({ xudtType, ckbAddresses, collector, isMainnet, }, ckbAddress)](./mobit-sdk.createmergexudttransaction.md)
 
 
 </td><td>
@@ -212,14 +212,14 @@ Combines the parameters for leaping RGBPP assets from Bitcoin to CKB and execute
 </td></tr>
 <tr><td>
 
-[leapFromCkbToBtcTransaction({ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType, })](./mobit-sdk.leapfromckbtobtctransaction.md)
+[leapFromCkbToBtcTransaction({ outIndex, btcTxId, xudtType, transferAmount, collector, ckbAddress, btcTestnetType, })](./mobit-sdk.leapfromckbtobtctransaction.md)
 
 
 </td><td>
 
 Leap from CKB to BTC
 
-This function facilitates the transfer of assets from the CKB (Nervos Network) blockchain to the BTC (Bitcoin) blockchain. It constructs the necessary arguments and transactions to move the specified amount of assets, identified by their type arguments, from a CKB address to a BTC transaction. The function also handles the signing and sending of the transaction.
+This function facilitates the transfer of assets from the CKB (Nervos Network) blockchain to the BTC (Bitcoin) blockchain. It constructs the necessary arguments and transactions to move the specified amount of assets, identified by their type script, from a CKB address to a BTC transaction. The function also handles the signing and sending of the transaction.
 
 
 </td></tr>

@@ -9,7 +9,7 @@ Merges multiple xUDT cells into a single xUDT cell and returns the remaining cap
 **Signature:**
 
 ```typescript
-export declare function createMergeXudtTransaction({ xudtArgs, ckbAddresses, collector, isMainnet, }: CreateMergeXudtTransactionParams, ckbAddress?: string): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createMergeXudtTransaction({ xudtType, ckbAddresses, collector, isMainnet, }: CreateMergeXudtTransactionParams, ckbAddress?: string): Promise<CKBComponents.RawTransactionToSign>;
 ```
 
 ## Parameters
@@ -32,7 +32,7 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-{ xudtArgs, ckbAddresses, collector, isMainnet, }
+{ xudtType, ckbAddresses, collector, isMainnet, }
 
 
 </td><td>

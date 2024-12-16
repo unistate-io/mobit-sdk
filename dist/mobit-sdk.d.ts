@@ -364,23 +364,23 @@ export declare interface CreateIssueXudtTransactionParams {
 /**
  * Merges multiple xUDT cells into a single xUDT cell and returns the remaining capacity as a separate cell.
  * @param {CreateMergeXudtTransactionParams} params - The parameters object.
- * @param {string} params.xudtArgs - The xUDT type script args.
+ * @param {CKBComponents.Script} params.xudtType - The xUDT type script.
  * @param {string[]} params.ckbAddresses - The CKB addresses involved in the transaction.
  * @param {Collector} params.collector - The collector instance used to fetch cells and collect inputs.
  * @param {boolean} params.isMainnet - A boolean indicating whether the transaction is for the mainnet or testnet.
  * @param {string} [ckbAddress=params.ckbAddresses[0]] - The address for the output cell, defaulting to the first address in the input address set.
  * @returns {Promise<CKBComponents.RawTransactionToSign>} An unsigned transaction object.
  */
-export declare function createMergeXudtTransaction({ xudtArgs, ckbAddresses, collector, isMainnet, }: CreateMergeXudtTransactionParams, ckbAddress?: string): Promise<CKBComponents.RawTransactionToSign>;
+export declare function createMergeXudtTransaction({ xudtType, ckbAddresses, collector, isMainnet, }: CreateMergeXudtTransactionParams, ckbAddress?: string): Promise<CKBComponents.RawTransactionToSign>;
 
 /**
  * Parameters for creating a merged xUDT transaction.
  */
 export declare interface CreateMergeXudtTransactionParams {
     /**
-     * The xUDT type script args.
+     * The xUDT type script.
      */
-    xudtArgs: string;
+    xudtType: CKBComponents.Script;
     /**
      * The CKB addresses involved in the transaction.
      */
@@ -581,22 +581,21 @@ export declare const leapFromBtcToCkbCombined: ({ toCkbAddress, xudtType, transf
  * Leap from CKB to BTC
  *
  * This function facilitates the transfer of assets from the CKB (Nervos Network) blockchain to the BTC (Bitcoin) blockchain.
- * It constructs the necessary arguments and transactions to move the specified amount of assets, identified by their type arguments,
+ * It constructs the necessary arguments and transactions to move the specified amount of assets, identified by their type script,
  * from a CKB address to a BTC transaction. The function also handles the signing and sending of the transaction.
  *
  * @param {LeapToBtcTransactionParams} params - The parameters required for the leap operation.
  * @param {number} params.outIndex - The output index in the BTC transaction.
  * @param {string} params.btcTxId - The transaction ID of the BTC transaction.
- * @param {string} params.xudtTypeArgs - The type arguments for the XUDT (User Defined Token) on CKB.
+ * @param {CKBComponents.Script} params.xudtType - The type script for the XUDT (User Defined Token) on CKB.
  * @param {bigint} params.transferAmount - The amount of assets to transfer.
- * @param {boolean} params.isMainnet - Indicates whether the operation is on the mainnet.
  * @param {Collector} params.collector - The collector instance used for collecting cells.
  * @param {string} params.ckbAddress - The CKB address from which the assets are being transferred.
  * @param {BTCTestnetType} [params.btcTestnetType] - The type of BTC testnet, if applicable.
  *
  * @returns {Promise<CKBComponents.RawTransactionToSign>} - The unsigned raw transaction to sign.
  */
-export declare const leapFromCkbToBtcTransaction: ({ outIndex, btcTxId, xudtTypeArgs, transferAmount, isMainnet, collector, ckbAddress, btcTestnetType, }: LeapToBtcTransactionParams) => Promise<CKBComponents.RawTransactionToSign>;
+export declare const leapFromCkbToBtcTransaction: ({ outIndex, btcTxId, xudtType, transferAmount, collector, ckbAddress, btcTestnetType, }: LeapToBtcTransactionParams) => Promise<CKBComponents.RawTransactionToSign>;
 
 /**
  * Combines the process of leaping a spore from BTC to CKB with the necessary parameters.
@@ -681,17 +680,13 @@ export declare interface LeapToBtcTransactionParams {
      */
     btcTxId: string;
     /**
-     * The type arguments for the XUDT (User Defined Token) on CKB.
+     * The type script for the XUDT (User Defined Token) on CKB.
      */
-    xudtTypeArgs: string;
+    xudtType: CKBComponents.Script;
     /**
      * The amount of assets to transfer.
      */
     transferAmount: bigint;
-    /**
-     * Indicates whether the operation is on the mainnet.
-     */
-    isMainnet: boolean;
     /**
      * The collector instance used for collecting cells.
      */
