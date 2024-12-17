@@ -1412,6 +1412,14 @@ declare interface ProcessedXudtCell {
          * The script arguments associated with the address.
          */
         script_args: string;
+        /**
+         * The script code hash associated with the address.
+         */
+        script_code_hash: string;
+        /**
+         * The script hash type.
+         */
+        script_hash_type: number;
     };
 }
 

@@ -61,7 +61,9 @@ export const leapSporeFromCkbToBtcTransaction = async ({
   collector,
   ckbAddress,
   btcTestnetType,
-}: LeapSporeToBtcTransactionParams): Promise<CKBComponents.RawTransactionToSign> => {
+}: LeapSporeToBtcTransactionParams): Promise<
+  CKBComponents.RawTransactionToSign
+> => {
   const toRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
 
   const ckbRawTx = await genLeapSporeFromCkbToBtcRawTx({

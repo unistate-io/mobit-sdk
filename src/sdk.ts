@@ -111,6 +111,14 @@ export interface XudtCell {
      * The script arguments associated with the address.
      */
     script_args: string;
+    /**
+     * The script code hash associated with the address.
+     */
+    script_code_hash: string;
+    /**
+     * The script hash type.
+     */
+    script_hash_type: number;
   };
 }
 /**
@@ -166,6 +174,14 @@ export interface ProcessedXudtCell {
      * The script arguments associated with the address.
      */
     script_args: string;
+    /**
+     * The script code hash associated with the address.
+     */
+    script_code_hash: string;
+    /**
+     * The script hash type.
+     */
+    script_hash_type: number;
   };
 }
 
@@ -385,6 +401,8 @@ const ASSET_DETAILS_QUERY = gql`
       type_id
       addressByTypeId {
         script_args
+        script_code_hash
+        script_hash_type
         token_info {
           decimal
           name
@@ -557,7 +575,7 @@ export class RgbppSDK {
       const assetsResult: AssetDetails = {
         xudtCells: processedXudtCells,
         sporeActions: assetDetails.flatMap((result) =>
-          result.sporeActions ? [result.sporeActions] : []
+          result.sporeActions ? [result.sporeActions] : [],
         ),
       };
 
@@ -662,6 +680,8 @@ export class RgbppSDK {
           mint_status: this.validateMintStatus(info.mint_status),
         })),
         script_args: cell.addressByTypeId.script_args,
+        script_code_hash: cell.addressByTypeId.script_code_hash,
+        script_hash_type: cell.addressByTypeId.script_hash_type,
       },
     };
   }

@@ -57,7 +57,9 @@ export async function createBurnXudtTransaction({
   ckbAddress,
   collector,
   isMainnet,
-}: CreateBurnXudtTransactionParams): Promise<CKBComponents.RawTransactionToSign> {
+}: CreateBurnXudtTransactionParams): Promise<
+  CKBComponents.RawTransactionToSign
+> {
   const fromLock = addressToScript(ckbAddress);
   const xudtCells = await collector.getCells({
     lock: fromLock,

@@ -57,7 +57,9 @@ export async function createIssueXudtTransaction({
   ckbAddress,
   collector,
   isMainnet,
-}: CreateIssueXudtTransactionParams): Promise<CKBComponents.RawTransactionToSign> {
+}: CreateIssueXudtTransactionParams): Promise<
+  CKBComponents.RawTransactionToSign
+> {
   const issueLock = addressToScript(ckbAddress);
 
   // Fetching empty cells and adding debug information

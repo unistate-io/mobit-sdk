@@ -114,14 +114,16 @@ const distribute = async (
   // TODO： 错误处理，不清楚前端怎么处理会更好一些
   try {
     const interval = setInterval(async () => {
-      const { state, failedReason } =
-        await btcService.getRgbppTransactionState(btcTxId);
+      const { state, failedReason } = await btcService.getRgbppTransactionState(
+        btcTxId,
+      );
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
-          const { txhash: txHash } =
-            await btcService.getRgbppTransactionHash(btcTxId);
+          const { txhash: txHash } = await btcService.getRgbppTransactionHash(
+            btcTxId,
+          );
           console.info(
             `Rgbpp asset has been transferred on BTC and the related CKB tx hash is ${txHash}`,
           );
