@@ -13,7 +13,6 @@ import { signAndSendPsbt } from "../wallet";
 interface RgbppLockArgsListParams {
   xudtType: CKBComponents.Script;
   fromBtcAccount: string;
-  isMainnet: boolean;
   btcService: BtcAssetsApi;
 }
 
@@ -24,7 +23,6 @@ interface RgbppLockArgsListResponse {
 export const getRgbppLockArgsList = async ({
   xudtType,
   fromBtcAccount,
-  isMainnet,
   btcService,
 }: RgbppLockArgsListParams): Promise<RgbppLockArgsListResponse> => {
   const type_script = encodeURIComponent(
@@ -116,16 +114,14 @@ const distribute = async (
   // TODO： 错误处理，不清楚前端怎么处理会更好一些
   try {
     const interval = setInterval(async () => {
-      const { state, failedReason } = await btcService.getRgbppTransactionState(
-        btcTxId,
-      );
+      const { state, failedReason } =
+        await btcService.getRgbppTransactionState(btcTxId);
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
-          const { txhash: txHash } = await btcService.getRgbppTransactionHash(
-            btcTxId,
-          );
+          const { txhash: txHash } =
+            await btcService.getRgbppTransactionHash(btcTxId);
           console.info(
             `Rgbpp asset has been transferred on BTC and the related CKB tx hash is ${txHash}`,
           );
@@ -231,7 +227,6 @@ export const distributeCombined = async (
   const lockArgsListResponse = await getRgbppLockArgsList({
     xudtType,
     fromBtcAccount,
-    isMainnet,
     btcService,
   });
   const filteredLockArgsList = await filterRgbppArgslist(
@@ -342,7 +337,6 @@ export const prepareDistributeUnsignedPsbt = async ({
   const lockArgsListResponse = await getRgbppLockArgsList({
     xudtType,
     fromBtcAccount,
-    isMainnet,
     btcService,
   });
   const filteredLockArgsList = await filterRgbppArgslist(

@@ -69,16 +69,14 @@ const transfer = async (
 
   try {
     const interval = setInterval(async () => {
-      const { state, failedReason } = await btcService.getRgbppTransactionState(
-        btcTxId,
-      );
+      const { state, failedReason } =
+        await btcService.getRgbppTransactionState(btcTxId);
       console.log("state", state);
       if (state === "completed" || state === "failed") {
         clearInterval(interval);
         if (state === "completed") {
-          const { txhash: txHash } = await btcService.getRgbppTransactionHash(
-            btcTxId,
-          );
+          const { txhash: txHash } =
+            await btcService.getRgbppTransactionHash(btcTxId);
           console.info(
             `Rgbpp asset has been transferred on BTC and the related CKB tx hash is ${txHash}`,
           );
@@ -161,7 +159,6 @@ export const transferCombined = async (
   const lockArgsListResponse = await getRgbppLockArgsList({
     xudtType,
     fromBtcAccount,
-    isMainnet,
     btcService,
   });
 
@@ -249,7 +246,6 @@ export const prepareTransferUnsignedPsbt = async ({
   const lockArgsListResponse = await getRgbppLockArgsList({
     xudtType,
     fromBtcAccount,
-    isMainnet,
     btcService,
   });
   const { btcPsbtHex } = await buildRgbppTransferTx({

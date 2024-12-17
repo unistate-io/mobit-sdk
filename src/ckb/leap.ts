@@ -80,8 +80,18 @@ export const leapFromCkbToBtcTransaction = async ({
     witnessLockPlaceholderSize: 0,
   });
 
+  // Filter out outputs without a type and remove corresponding outputsData
+  const filteredOutputs = ckbRawTx.outputs.filter(
+    (output, index) => output.type !== undefined,
+  );
+  const filteredOutputsData = ckbRawTx.outputsData.filter(
+    (_, index) => ckbRawTx.outputs[index].type !== undefined,
+  );
+
   const unsignedTx: CKBComponents.RawTransactionToSign = {
     ...ckbRawTx,
+    outputs: filteredOutputs,
+    outputsData: filteredOutputsData,
     cellDeps: [...ckbRawTx.cellDeps],
     witnesses: [],
   };

@@ -5,13 +5,12 @@ import { AbstractWallet, TxResult } from "../helper";
 interface RgbppLockArgsListParams {
     xudtType: CKBComponents.Script;
     fromBtcAccount: string;
-    isMainnet: boolean;
     btcService: BtcAssetsApi;
 }
 interface RgbppLockArgsListResponse {
     rgbppLockArgsList: string[];
 }
-export declare const getRgbppLockArgsList: ({ xudtType, fromBtcAccount, isMainnet, btcService, }: RgbppLockArgsListParams) => Promise<RgbppLockArgsListResponse>;
+export declare const getRgbppLockArgsList: ({ xudtType, fromBtcAccount, btcService, }: RgbppLockArgsListParams) => Promise<RgbppLockArgsListResponse>;
 /**
  * Interface for parameters required to distribute RGBPP assets combined.
  */

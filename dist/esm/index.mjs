@@ -563,8 +563,13 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, __WEBPACK_EXTERNAL_MODULE__apollo_client_
         ckbFeeRate: BigInt(0),
         witnessLockPlaceholderSize: 0
     });
+    // Filter out outputs without a type and remove corresponding outputsData
+    const filteredOutputs = ckbRawTx.outputs.filter((output, index)=>void 0 !== output.type);
+    const filteredOutputsData = ckbRawTx.outputsData.filter((_, index)=>void 0 !== ckbRawTx.outputs[index].type);
     const unsignedTx = {
         ...ckbRawTx,
+        outputs: filteredOutputs,
+        outputsData: filteredOutputsData,
         cellDeps: [
             ...ckbRawTx.cellDeps
         ],
@@ -596,8 +601,13 @@ const RAW_INSCRIPTION_INFO_QUERY = (0, __WEBPACK_EXTERNAL_MODULE__apollo_client_
         ckbFeeRate: BigInt(0),
         witnessLockPlaceholderSize: 0
     });
+    // Filter out outputs without a type and remove corresponding outputsData
+    const filteredOutputs = ckbRawTx.outputs.filter((output, index)=>void 0 !== output.type);
+    const filteredOutputsData = ckbRawTx.outputsData.filter((_, index)=>void 0 !== ckbRawTx.outputs[index].type);
     const unsignedTx = {
         ...ckbRawTx,
+        outputs: filteredOutputs,
+        outputsData: filteredOutputsData,
         cellDeps: [
             ...ckbRawTx.cellDeps
         ],
@@ -1575,7 +1585,7 @@ const createSpores = async ({ clusterRgbppLockArgs, receivers, collector, isMain
     if (0 === assets.length) throw new Error("No assets found for the given BTC address and type script.");
     return assets[0].cellOutput.lock.args;
 };
-const getRgbppLockArgsList = async ({ xudtType, fromBtcAccount, isMainnet, btcService })=>{
+const getRgbppLockArgsList = async ({ xudtType, fromBtcAccount, btcService })=>{
     const type_script = encodeURIComponent(JSON.stringify({
         codeHash: xudtType.codeHash,
         args: xudtType.args,
@@ -1663,7 +1673,6 @@ const distribute = async ({ rgbppLockArgsList, receivers, xudtType, collector, b
     const lockArgsListResponse = await getRgbppLockArgsList({
         xudtType,
         fromBtcAccount,
-        isMainnet,
         btcService
     });
     const filteredLockArgsList = await filterRgbppArgslist(lockArgsListResponse.rgbppLockArgsList);
@@ -1703,7 +1712,6 @@ const distribute = async ({ rgbppLockArgsList, receivers, xudtType, collector, b
     const lockArgsListResponse = await getRgbppLockArgsList({
         xudtType,
         fromBtcAccount,
-        isMainnet,
         btcService
     });
     const filteredLockArgsList = await filterRgbppArgslist(lockArgsListResponse.rgbppLockArgsList);
@@ -1802,7 +1810,6 @@ const leapFromBtcToCKB = async ({ rgbppLockArgsList, toCkbAddress, xudtType, tra
     const lockArgsListResponse = await getRgbppLockArgsList({
         xudtType,
         fromBtcAccount,
-        isMainnet,
         btcService
     });
     const res = await leapFromBtcToCKB({
@@ -1842,7 +1849,6 @@ const leapFromBtcToCKB = async ({ rgbppLockArgsList, toCkbAddress, xudtType, tra
     const lockArgsListResponse = await getRgbppLockArgsList({
         xudtType,
         fromBtcAccount,
-        isMainnet,
         btcService
     });
     const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb__.genBtcJumpCkbVirtualTx)({
@@ -2247,7 +2253,6 @@ const transfer = async ({ rgbppLockArgsList, toBtcAddress, xudtType, transferAmo
     const lockArgsListResponse = await getRgbppLockArgsList({
         xudtType,
         fromBtcAccount,
-        isMainnet,
         btcService
     });
     const res = await transfer({
@@ -2287,7 +2292,6 @@ const transfer = async ({ rgbppLockArgsList, toBtcAddress, xudtType, transferAmo
     const lockArgsListResponse = await getRgbppLockArgsList({
         xudtType,
         fromBtcAccount,
-        isMainnet,
         btcService
     });
     const { btcPsbtHex } = await (0, __WEBPACK_EXTERNAL_MODULE_rgbpp__.buildRgbppTransferTx)({

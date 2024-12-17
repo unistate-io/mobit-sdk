@@ -61,9 +61,7 @@ export const leapSporeFromCkbToBtcTransaction = async ({
   collector,
   ckbAddress,
   btcTestnetType,
-}: LeapSporeToBtcTransactionParams): Promise<
-  CKBComponents.RawTransactionToSign
-> => {
+}: LeapSporeToBtcTransactionParams): Promise<CKBComponents.RawTransactionToSign> => {
   const toRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
 
   const ckbRawTx = await genLeapSporeFromCkbToBtcRawTx({
@@ -77,8 +75,18 @@ export const leapSporeFromCkbToBtcTransaction = async ({
     witnessLockPlaceholderSize: 0,
   });
 
+  // Filter out outputs without a type and remove corresponding outputsData
+  const filteredOutputs = ckbRawTx.outputs.filter(
+    (output, index) => output.type !== undefined,
+  );
+  const filteredOutputsData = ckbRawTx.outputsData.filter(
+    (_, index) => ckbRawTx.outputs[index].type !== undefined,
+  );
+
   const unsignedTx: CKBComponents.RawTransactionToSign = {
     ...ckbRawTx,
+    outputs: filteredOutputs,
+    outputsData: filteredOutputsData,
     cellDeps: [...ckbRawTx.cellDeps],
     witnesses: [],
   };
