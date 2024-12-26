@@ -496,8 +496,8 @@ export class RgbppSDK {
     this.isMainnet = isMainnet;
     this.service = createBtcService(btcTestnetType);
     const graphqlEndpoint = isMainnet
-      ? "https://ckb-graph.unistate.io/v1/graphql"
-      : "https://unistate-ckb-test.unistate.io/v1/graphql";
+      ? "https://mainnet.unistate.io/v1/graphql"
+      : "https://testnet.unistate.io/v1/graphql";
 
     this.client = new ApolloClient({
       cache: new InMemoryCache(),

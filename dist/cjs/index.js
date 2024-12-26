@@ -251,7 +251,7 @@ class RgbppSDK {
     constructor(isMainnet, btcTestnetType){
         this.isMainnet = isMainnet;
         this.service = createBtcService(btcTestnetType);
-        const graphqlEndpoint = isMainnet ? "https://ckb-graph.unistate.io/v1/graphql" : "https://unistate-ckb-test.unistate.io/v1/graphql";
+        const graphqlEndpoint = isMainnet ? "https://mainnet.unistate.io/v1/graphql" : "https://testnet.unistate.io/v1/graphql";
         this.client = new core_namespaceObject.ApolloClient({
             cache: new cache_namespaceObject.InMemoryCache(),
             link: new batch_http_namespaceObject.BatchHttpLink({
