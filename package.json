@@ -1,6 +1,6 @@
 {
   "name": "mobit-sdk",
-  "version": "1.17.0",
+  "version": "1.17.1",
   "description": "",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.mjs",
@@ -27,14 +27,14 @@
   "devDependencies": {
     "@microsoft/api-documenter": "^7.26.3",
     "@microsoft/api-extractor": "^7.48.1",
-    "@rslib/core": "^0.2.1",
+    "@rslib/core": "^0.2.2",
     "@types/elliptic": "^6.4.18",
     "graphql": "^16.10.0",
     "typescript": "^5.7.2"
   },
   "dependencies": {
     "@apollo/client": "^3.12.4",
-    "@ckb-ccc/core": "1.0.1",
+    "@ckb-ccc/core": "^1.2.2",
     "@nervosnetwork/ckb-sdk-utils": "0.109.4",
     "@rgbpp-sdk/btc": "^0.6.0",
     "@rgbpp-sdk/ckb": "^0.6.0",
