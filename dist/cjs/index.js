@@ -570,18 +570,16 @@ function collectAllUdtInputs(liveCells) {
     const inputs = [];
     let sumInputsCapacity = BigInt(0);
     let sumAmount = BigInt(0);
-    for (const cell of liveCells){
-        if ("0x" !== cell.outputData) {
-            inputs.push({
-                previousOutput: {
-                    txHash: cell.outPoint.txHash,
-                    index: cell.outPoint.index
-                },
-                since: "0x0"
-            });
-            sumInputsCapacity += BigInt(cell.output.capacity);
-            sumAmount += (0, ckb_namespaceObject.leToU128)((0, ckb_namespaceObject.remove0x)(cell.outputData).slice(0, 32));
-        }
+    for (const cell of liveCells)if ("0x" !== cell.outputData) {
+        inputs.push({
+            previousOutput: {
+                txHash: cell.outPoint.txHash,
+                index: cell.outPoint.index
+            },
+            since: "0x0"
+        });
+        sumInputsCapacity += BigInt(cell.output.capacity);
+        sumAmount += (0, ckb_namespaceObject.leToU128)((0, ckb_namespaceObject.remove0x)(cell.outputData).slice(0, 32));
     }
     return {
         inputs,
