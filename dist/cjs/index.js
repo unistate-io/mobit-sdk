@@ -188,56 +188,46 @@ const MintStatusMap = {
 };
 const ASSET_DETAILS_QUERY = (0, core_namespaceObject.gql)`
   query AssetDetails($txHash: bytea!, $outputIndex: Int!) {
-    # Query the xudt_cells table using primary key components in the where clause
     xudt_cells(
       where: { tx_hash: { _eq: $txHash }, output_index: { _eq: $outputIndex } }
       limit: 1
     ) {
-      # Core fields from xudt_cells
       tx_hash
       output_index
-      amount # numeric
+      amount
       lock_address_id
       type_address_id
 
-      # Assumed Relationship to addresses table (via type_address_id)
-      # VERIFY NAME: 'address'
-      address {
+      address_by_type_address_id {
         script_code_hash
         script_hash_type
         script_args
       }
 
-      # Assumed Relationship to token_info table (via type_address_id)
-      # VERIFY NAME: 'token_info'
-      token_info {
+      token_info_by_type_address_id {
         decimal
         name
         symbol
-        expected_supply # numeric
-        mint_limit # numeric
-        mint_status # smallint
-        udt_hash # bytea
+        expected_supply
+        mint_limit
+        mint_status
+        udt_hash
       }
 
-      # Assumed Relationship to transaction_outputs_status table (via PK)
-      # VERIFY NAME: 'transaction_outputs_status'
-      transaction_outputs_status {
-        consumed_by_tx_hash # bytea
-        consumed_by_input_index # Int
+      consumption_status {
+        consumed_by_tx_hash
+        consumed_by_input_index
       }
     }
 
-    # Fetch any spore actions that occurred in the same transaction
-    # Uses the same tx_hash variable
     spore_actions(where: { tx_hash: { _eq: $txHash } }) {
-      tx_hash # bytea
-      action_type # spore_action_type
-      spore_id # bytea
-      cluster_id # bytea
-      from_address_id # String
-      to_address_id # String
-      tx_timestamp # timestamp
+      tx_hash
+      action_type
+      spore_id
+      cluster_id
+      from_address_id
+      to_address_id
+      tx_timestamp
     }
   }
 `;
@@ -436,17 +426,17 @@ class RgbppSDK {
     processRawXudtCell(rawCell) {
         const cellIdentifier = `${parseHexFromGraphQL(rawCell.tx_hash)}:${rawCell.output_index}`;
         try {
-            const statusInfo = rawCell.transaction_outputs_status;
+            const statusInfo = rawCell.consumption_status;
             const is_consumed = statusInfo?.consumed_by_tx_hash != null;
             let consumed_by = null;
             if (is_consumed && statusInfo?.consumed_by_tx_hash && statusInfo?.consumed_by_input_index !== null && statusInfo?.consumed_by_input_index !== void 0) consumed_by = {
                 tx_hash: parseHexFromGraphQL(statusInfo.consumed_by_tx_hash),
                 input_index: statusInfo.consumed_by_input_index
             };
-            else if (is_consumed) console.warn(`[RgbppSDK] Cell ${cellIdentifier} consumed, but consumption details missing in 'transaction_outputs_status' relationship data.`);
+            else if (is_consumed) console.warn(`[RgbppSDK] Cell ${cellIdentifier} consumed, but consumption details missing in 'consumption_status' relationship data.`);
             let tokenInfo = null;
-            if (rawCell.token_info) {
-                const rawToken = rawCell.token_info;
+            if (rawCell.token_info_by_type_address_id) {
+                const rawToken = rawCell.token_info_by_type_address_id;
                 const mintStatusRaw = rawToken.mint_status;
                 let mintStatus = null;
                 if (null != mintStatusRaw) try {
@@ -466,14 +456,14 @@ class RgbppSDK {
                 };
             }
             let typeScript = null;
-            if (rawCell.address) {
-                const rawAddress = rawCell.address;
+            if (rawCell.address_by_type_address_id) {
+                const rawAddress = rawCell.address_by_type_address_id;
                 typeScript = {
                     code_hash: parseHexFromGraphQL(rawAddress.script_code_hash),
                     hash_type: rawAddress.script_hash_type,
                     args: parseHexFromGraphQL(rawAddress.script_args)
                 };
-            } else console.warn(`[RgbppSDK] No 'address' relationship data for XUDT cell ${cellIdentifier} (Type Address: ${rawCell.type_address_id}). Cannot get type script details.`);
+            } else console.warn(`[RgbppSDK] No 'address_by_type_address_id' relationship data for XUDT cell ${cellIdentifier} (Type Address: ${rawCell.type_address_id}). Cannot get type script details.`);
             const amount = safeStringToBigInt(rawCell.amount);
             if (null === amount) throw new Error(`Failed to convert amount "${rawCell.amount}" to BigInt.`);
             return {

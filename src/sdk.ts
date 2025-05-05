@@ -1,9 +1,4 @@
-import {
-  ApolloClient,
-  ApolloQueryResult,
-  FetchResult,
-  gql,
-} from "@apollo/client/core";
+import { ApolloClient, ApolloQueryResult, gql } from "@apollo/client/core";
 import { InMemoryCache, NormalizedCacheObject } from "@apollo/client/cache";
 import { BatchHttpLink } from "@apollo/client/link/batch-http";
 import { BTCTestnetType } from "@rgbpp-sdk/ckb";
@@ -57,7 +52,7 @@ function parseHexFromGraphQL(
 /**
  * Safely converts a string representation of a number (potentially null/undefined)
  * from the API into a BigInt or null.
- * @param numericStr String representation of a number (e.g., from numeric or bigint types in GraphQL)
+ * @param numericStr String representation of a number (e.e., from numeric or bigint types in GraphQL)
  * @returns BigInt or null
  */
 function safeStringToBigInt(
@@ -150,17 +145,13 @@ interface RawXudtCell {
   lock_address_id: string; // String
   type_address_id: string; // String
 
-  // Assumed Relationship: xudt_cells -> addresses (via type_address_id)
-  // !! VERIFY NAME 'address' in live schema !!
-  address: {
+  address_by_type_address_id: {
     script_code_hash: string; // bytea -> \x...
     script_hash_type: number; // smallint
     script_args: string; // bytea -> \x...
   } | null;
 
-  // Assumed Relationship: xudt_cells -> token_info (via type_address_id)
-  // !! VERIFY NAME 'token_info' in live schema !!
-  token_info: {
+  token_info_by_type_address_id: {
     decimal: number; // smallint
     name: string;
     symbol: string;
@@ -170,9 +161,7 @@ interface RawXudtCell {
     udt_hash: string | null; // bytea -> \x...
   } | null;
 
-  // Assumed Relationship: xudt_cells -> transaction_outputs_status (via PK)
-  // !! VERIFY NAME 'transaction_outputs_status' in live schema !!
-  transaction_outputs_status: {
+  consumption_status: {
     consumed_by_tx_hash: string | null; // bytea -> \x...
     consumed_by_input_index: number | null; // Int
   } | null;
@@ -271,63 +260,48 @@ interface GraphQLAssetQueryResponse {
 
 // --- GraphQL Query (Targeting v1 Schema Structure) ---
 
-// !! MOST IMPORTANT !!
-// VERIFY THE RELATIONSHIP NAMES BELOW AGAINST YOUR LIVE 'v1/graphql' SCHEMA!
-// Replace 'address', 'token_info', 'transaction_outputs_status' with the actual
-// relationship field names exposed by Hasura on the `xudt_cells` type if they differ.
-// Use GraphiQL on https://mainnet.unistate.io/v1/graphql to check.
 const ASSET_DETAILS_QUERY = gql`
   query AssetDetails($txHash: bytea!, $outputIndex: Int!) {
-    # Query the xudt_cells table using primary key components in the where clause
     xudt_cells(
       where: { tx_hash: { _eq: $txHash }, output_index: { _eq: $outputIndex } }
       limit: 1
     ) {
-      # Core fields from xudt_cells
       tx_hash
       output_index
-      amount # numeric
+      amount
       lock_address_id
       type_address_id
 
-      # Assumed Relationship to addresses table (via type_address_id)
-      # VERIFY NAME: 'address'
-      address {
+      address_by_type_address_id {
         script_code_hash
         script_hash_type
         script_args
       }
 
-      # Assumed Relationship to token_info table (via type_address_id)
-      # VERIFY NAME: 'token_info'
-      token_info {
+      token_info_by_type_address_id {
         decimal
         name
         symbol
-        expected_supply # numeric
-        mint_limit # numeric
-        mint_status # smallint
-        udt_hash # bytea
+        expected_supply
+        mint_limit
+        mint_status
+        udt_hash
       }
 
-      # Assumed Relationship to transaction_outputs_status table (via PK)
-      # VERIFY NAME: 'transaction_outputs_status'
-      transaction_outputs_status {
-        consumed_by_tx_hash # bytea
-        consumed_by_input_index # Int
+      consumption_status {
+        consumed_by_tx_hash
+        consumed_by_input_index
       }
     }
 
-    # Fetch any spore actions that occurred in the same transaction
-    # Uses the same tx_hash variable
     spore_actions(where: { tx_hash: { _eq: $txHash } }) {
-      tx_hash # bytea
-      action_type # spore_action_type
-      spore_id # bytea
-      cluster_id # bytea
-      from_address_id # String
-      to_address_id # String
-      tx_timestamp # timestamp
+      tx_hash
+      action_type
+      spore_id
+      cluster_id
+      from_address_id
+      to_address_id
+      tx_timestamp
     }
   }
 `;
@@ -474,9 +448,8 @@ export class RgbppSDK {
       );
 
       // 3. Query GraphQL for details of each unique CKB UTXO concurrently
-      const graphqlResponses = await this.queryDetailsForAllOutPoints(
-        validOutPoints,
-      );
+      const graphqlResponses =
+        await this.queryDetailsForAllOutPoints(validOutPoints);
 
       // 4. Process the successful GraphQL responses
       const processedAssets = this.processGraphQLResponses(graphqlResponses);
@@ -549,7 +522,7 @@ export class RgbppSDK {
           `[RgbppSDK] Failed GraphQL query for UTXO ${outPoint.txHash}:${outPoint.index}. Error: ${error.message}`,
         );
         return null; // Indicate failure for this specific query
-      })
+      }),
     );
     return Promise.all(promises); // Wait for all to settle
   }
@@ -581,9 +554,9 @@ export class RgbppSDK {
           processedCellsCount++;
         } catch (processingError) {
           console.error(
-            `[RgbppSDK] Error processing XUDT Cell ${
-              parseHexFromGraphQL(rawCell.tx_hash)
-            }:${rawCell.output_index}:`,
+            `[RgbppSDK] Error processing XUDT Cell ${parseHexFromGraphQL(
+              rawCell.tx_hash,
+            )}:${rawCell.output_index}:`,
             processingError,
           );
         }
@@ -628,10 +601,9 @@ export class RgbppSDK {
         `Invalid output index provided for query: "${outPoint.index}"`,
       );
     }
-    // console.log(`[RgbppSDK] Executing GraphQL query for txHash: ${txHashForQuery}, index: ${outputIndex}`);
 
-    const result: ApolloQueryResult<GraphQLAssetQueryResponse> = await this
-      .client.query<GraphQLAssetQueryResponse>({
+    const result: ApolloQueryResult<GraphQLAssetQueryResponse> =
+      await this.client.query<GraphQLAssetQueryResponse>({
         query: ASSET_DETAILS_QUERY,
         variables: {
           txHash: txHashForQuery,
@@ -641,7 +613,6 @@ export class RgbppSDK {
 
     if (result.errors) {
       const errorMessages = result.errors.map((e) => e.message).join("; ");
-      // Note: Don't log full error object here in production if it might contain sensitive info
       console.error(
         `[RgbppSDK] GraphQL query errors for ${outPoint.txHash}:${outputIndex}: ${errorMessages}`,
       );
@@ -650,32 +621,26 @@ export class RgbppSDK {
       );
     }
 
-    // Ensure data structure is consistent, even if arrays are empty
     const data = result.data || { xudt_cells: [], spore_actions: [] };
     data.xudt_cells = data.xudt_cells || [];
     data.spore_actions = data.spore_actions || [];
 
-    // If query was by PK, we expect at most one cell
     if (data.xudt_cells.length > 1) {
       console.warn(
         `[RgbppSDK] Expected 0 or 1 XUDT cell for ${outPoint.txHash}:${outputIndex}, but received ${data.xudt_cells.length}. Using the first one.`,
       );
     }
 
-    // console.log(`[RgbppSDK] GraphQL data received for ${outPoint.txHash}:${outputIndex}:`, JSON.stringify(data));
     return data;
   }
 
   /** Processes a RawXudtCell from GraphQL into a ProcessedXudtCell. */
   private processRawXudtCell(rawCell: RawXudtCell): ProcessedXudtCell {
-    const cellIdentifier = `${
-      parseHexFromGraphQL(rawCell.tx_hash)
-    }:${rawCell.output_index}`;
-    // console.log(`[RgbppSDK] Processing raw cell: ${cellIdentifier}`);
+    const cellIdentifier = `${parseHexFromGraphQL(
+      rawCell.tx_hash,
+    )}:${rawCell.output_index}`;
     try {
-      // Consumption Status
-      // Use the relationship name verified against your schema ('transaction_outputs_status')
-      const statusInfo = rawCell.transaction_outputs_status;
+      const statusInfo = rawCell.consumption_status;
       const is_consumed = statusInfo?.consumed_by_tx_hash != null;
       let consumed_by: ProcessedXudtCell["consumed_by"] = null;
       if (
@@ -690,15 +655,13 @@ export class RgbppSDK {
         };
       } else if (is_consumed) {
         console.warn(
-          `[RgbppSDK] Cell ${cellIdentifier} consumed, but consumption details missing in 'transaction_outputs_status' relationship data.`,
+          `[RgbppSDK] Cell ${cellIdentifier} consumed, but consumption details missing in 'consumption_status' relationship data.`,
         );
       }
 
-      // Token Info
-      // Use the relationship name verified against your schema ('token_info')
       let tokenInfo: TokenInfo | null = null;
-      if (rawCell.token_info) {
-        const rawToken = rawCell.token_info;
+      if (rawCell.token_info_by_type_address_id) {
+        const rawToken = rawCell.token_info_by_type_address_id;
         const mintStatusRaw = rawToken.mint_status;
         let mintStatus: MintStatus | null = null;
         if (mintStatusRaw !== null && mintStatusRaw !== undefined) {
@@ -715,7 +678,7 @@ export class RgbppSDK {
           }
         }
         tokenInfo = {
-          type_address_id: rawCell.type_address_id, // Use address from cell
+          type_address_id: rawCell.type_address_id,
           decimal: rawToken.decimal,
           name: rawToken.name,
           symbol: rawToken.symbol,
@@ -724,37 +687,29 @@ export class RgbppSDK {
           mint_limit: safeStringToBigInt(rawToken.mint_limit),
           mint_status: mintStatus,
         };
-      } else {
-        // This is normal if the type script doesn't represent a registered token
-        // console.log(`[RgbppSDK] No 'token_info' relationship data for XUDT cell ${cellIdentifier}.`);
       }
 
-      // Type Script Info
-      // Use the relationship name verified against your schema ('address')
       let typeScript: ScriptInfo | null = null;
-      if (rawCell.address) {
-        const rawAddress = rawCell.address;
+      if (rawCell.address_by_type_address_id) {
+        const rawAddress = rawCell.address_by_type_address_id;
         typeScript = {
           code_hash: parseHexFromGraphQL(rawAddress.script_code_hash),
-          hash_type: rawAddress.script_hash_type, // Assume valid smallint
+          hash_type: rawAddress.script_hash_type,
           args: parseHexFromGraphQL(rawAddress.script_args),
         };
       } else {
         console.warn(
-          `[RgbppSDK] No 'address' relationship data for XUDT cell ${cellIdentifier} (Type Address: ${rawCell.type_address_id}). Cannot get type script details.`,
+          `[RgbppSDK] No 'address_by_type_address_id' relationship data for XUDT cell ${cellIdentifier} (Type Address: ${rawCell.type_address_id}). Cannot get type script details.`,
         );
       }
 
-      // Amount Conversion
       const amount = safeStringToBigInt(rawCell.amount);
       if (amount === null) {
-        // Throw error if amount conversion fails, as it's critical
         throw new Error(
           `Failed to convert amount "${rawCell.amount}" to BigInt.`,
         );
       }
 
-      // Final Assembly
       return {
         tx_hash: parseHexFromGraphQL(rawCell.tx_hash),
         output_index: rawCell.output_index,
@@ -767,9 +722,8 @@ export class RgbppSDK {
         consumed_by: consumed_by,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error
-        ? error.message
-        : "Unknown error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
       console.error(
         `[RgbppSDK] Critical error processing RawXudtCell ${cellIdentifier}:`,
         error,
@@ -793,12 +747,11 @@ export class RgbppSDK {
         cluster_id: parseHexFromGraphQL(rawAction.cluster_id),
         from_address_id: rawAction.from_address_id,
         to_address_id: rawAction.to_address_id,
-        tx_timestamp: rawAction.tx_timestamp, // Keep as ISO string
+        tx_timestamp: rawAction.tx_timestamp,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error
-        ? error.message
-        : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error(
         `[RgbppSDK] Error processing RawSporeAction from tx ${actionTxHash}:`,
         error,
@@ -814,9 +767,9 @@ export class RgbppSDK {
     const validStatus = MintStatusMap[status];
     if (validStatus === undefined) {
       console.warn(
-        `[RgbppSDK] Invalid MintStatus value received: ${status}. Valid values: ${
-          Object.keys(MintStatusMap).join(", ")
-        }.`,
+        `[RgbppSDK] Invalid MintStatus value received: ${status}. Valid values: ${Object.keys(
+          MintStatusMap,
+        ).join(", ")}.`,
       );
       throw new Error(`Invalid MintStatus value received from API: ${status}`);
     }
@@ -828,11 +781,10 @@ export class RgbppSDK {
 /*
 async function runSdkExample() {
     const IS_MAINNET = false; // Or true for mainnet
-    // !!! REPLACE WITH YOUR ACTUAL HASURA V1 ENDPOINT !!!
     const GRAPHQL_ENDPOINT = IS_MAINNET
-        ? "https://mainnet.unistate.io/v1/graphql" // Replace if different
-        : "YOUR_TESTNET_V1_GRAPHQL_ENDPOINT"; // e.g., "https://testnet.unistate.io/v1/graphql"
-    const BTC_ADDRESS = "YOUR_BTC_ADDRESS_HERE"; // Replace with address to test
+        ? "https://mainnet.unistate.io/v1/graphql"
+        : "YOUR_TESTNET_V1_GRAPHQL_ENDPOINT";
+    const BTC_ADDRESS = "YOUR_BTC_ADDRESS_HERE";
 
     if (GRAPHQL_ENDPOINT.includes("YOUR_")) {
         console.error("Error: Please replace placeholder GRAPHQL_ENDPOINT URL in the example code.");
@@ -842,7 +794,6 @@ async function runSdkExample() {
         console.error("Error: Please replace placeholder BTC_ADDRESS in the example code.");
         return;
     }
-
 
     console.log(`Running SDK example for ${BTC_ADDRESS} on ${IS_MAINNET ? 'mainnet' : 'testnet'}...`);
     const sdk = new RgbppSDK(IS_MAINNET, GRAPHQL_ENDPOINT);
