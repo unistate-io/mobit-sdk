@@ -1,38 +1,106 @@
-import { ApolloClient, gql } from "@apollo/client/core";
+import {
+  ApolloClient,
+  ApolloQueryResult,
+  FetchResult,
+  gql,
+} from "@apollo/client/core";
 import { InMemoryCache, NormalizedCacheObject } from "@apollo/client/cache";
 import { BatchHttpLink } from "@apollo/client/link/batch-http";
-import { BTCTestnetType, getXudtTypeScript } from "@rgbpp-sdk/ckb";
-import { BtcApiTransaction, BtcAssetsApi } from "@rgbpp-sdk/service";
-import { createBtcService } from "./helper";
-import { scriptToHash } from "@nervosnetwork/ckb-sdk-utils";
+import { BTCTestnetType } from "@rgbpp-sdk/ckb";
+import {
+  BtcApiBalance,
+  BtcApiTransaction,
+  BtcAssetsApi,
+  RgbppCell,
+} from "@rgbpp-sdk/service";
+import { createBtcService } from "./helper"; // Assuming this helper exists and works
+
+// --- Helper Functions ---
 
 /**
- * Represents an outpoint in a transaction.
+ * Adds the '\x' prefix to a hex string for GraphQL bytea input.
+ * Expects '0x...' or '...' input. Ensures output is '\x' + hex.
+ * Returns '\\x' for empty or invalid input.
  */
-type OutPoint = {
-  /**
-   * The transaction hash of the outpoint.
-   */
-  txHash: string;
-  /**
-   * The index of the outpoint in the transaction.
-   */
-  index: string;
-};
-
-/**
- * Enum representing the minting status of an inscription.
- */
-export enum MintStatus {
-  /** Inscription can continue to be minted */
-  MINTABLE = 0,
-  /** Inscription minting has ended */
-  MINT_CLOSED = 1,
-  /** Inscription has entered the rebase phase */
-  REBASE_STARTED = 2,
+function formatHexForGraphQL(hexString: string | undefined | null): string {
+  if (typeof hexString !== "string" || hexString.length === 0) {
+    // Handle null, undefined, or empty string
+    return "\\x"; // Represents empty bytea
+  }
+  const cleaned = hexString.startsWith("0x")
+    ? hexString.substring(2)
+    : hexString;
+  // Return \x even for an effectively empty string after cleaning '0x'
+  return cleaned.length === 0 ? "\\x" : `\\x${cleaned}`;
 }
 
-// Mapping for MintStatus, used for validation
+/**
+ * Parses a hex string from GraphQL (\x...) to '0x...' format.
+ * Returns '0x' for null/undefined/empty or invalid input (doesn't start with \x).
+ */
+function parseHexFromGraphQL(
+  prefixedHexString: string | undefined | null,
+): string {
+  if (
+    !prefixedHexString ||
+    typeof prefixedHexString !== "string" ||
+    !prefixedHexString.startsWith("\\x")
+  ) {
+    // Return '0x' for invalid, null, undefined, or empty inputs
+    return "0x";
+  }
+  // Remove "\\x" prefix
+  const hex = prefixedHexString.substring(2);
+  return `0x${hex}`;
+}
+
+/**
+ * Safely converts a string representation of a number (potentially null/undefined)
+ * from the API into a BigInt or null.
+ * @param numericStr String representation of a number (e.g., from numeric or bigint types in GraphQL)
+ * @returns BigInt or null
+ */
+function safeStringToBigInt(
+  numericStr: string | undefined | null,
+): bigint | null {
+  if (
+    numericStr === null ||
+    numericStr === undefined ||
+    typeof numericStr !== "string" ||
+    numericStr.trim() === ""
+  ) {
+    return null;
+  }
+  try {
+    // Handle potential decimal points in numeric strings by truncating
+    const integerPart = numericStr.split(".")[0];
+    return BigInt(integerPart);
+  } catch (error) {
+    console.warn(`Failed to convert string "${numericStr}" to BigInt:`, error);
+    return null;
+  }
+}
+
+// --- Core Interfaces ---
+
+/**
+ * Represents a CKB UTXO OutPoint.
+ */
+interface OutPoint {
+  txHash: string; // '0x...' format expected from rgbpp-sdk/service
+  index: string; // String representation of the index
+}
+
+/**
+ * Enum representing the minting status of a token, aligned with DB schema (smallint).
+ */
+export enum MintStatus {
+  MINTABLE = 0,
+  MINT_CLOSED = 1,
+  REBASE_STARTED = 2, // Or other status as defined in schema
+}
+
+// Map for validating MintStatus numbers received from API
 const MintStatusMap: Record<number, MintStatus> = {
   [MintStatus.MINTABLE]: MintStatus.MINTABLE,
   [MintStatus.MINT_CLOSED]: MintStatus.MINT_CLOSED,
@@ -40,662 +108,811 @@ const MintStatusMap: Record<number, MintStatus> = {
 };
 
 /**
- * Represents information about a token.
+ * Represents detailed information about a token type (XUDT, Inscription).
+ * Directly maps fields from the `token_info` table.
  */
 export interface TokenInfo {
-  /**
-   * The number of decimal places the token supports.
-   */
-  decimal: number;
-  /**
-   * The name of the token.
-   */
+  /** The type script address string (CKB format, e.g., ckt...) */
+  type_address_id: string;
+  decimal: number; // smallint
   name: string;
-  /**
-   * The symbol of the token.
-   */
   symbol: string;
+  /** Hash associated with the token, '0x...' format or null */
+  udt_hash: string | null; // bytea
+  /** Expected total supply or null */
+  expected_supply: bigint | null; // numeric -> bigint
+  /** Mint limit per transaction or null */
+  mint_limit: bigint | null; // numeric -> bigint
+  /** Minting status enum or null */
+  mint_status: MintStatus | null; // smallint -> enum
 }
 
 /**
- * Represents raw information about an inscription, extending TokenInfo.
+ * Represents the components of a CKB script derived from the `addresses` table.
  */
-export interface RawInscriptionInfo extends TokenInfo {
-  /**
-   * The expected total supply of the token.
-   */
-  expected_supply: bigint;
-  /**
-   * The limit on the number of tokens that can be minted.
-   */
-  mint_limit: bigint;
-  /**
-   * The status of the minting process, represented as a number.
-   */
-  mint_status: number;
-  /**
-   * The hash of the UDT (User Defined Token).
-   */
-  udt_hash: string;
+export interface ScriptInfo {
+  /** Script code hash, '0x...' format */
+  code_hash: string; // bytea
+  /** Script hash type (0: data, 1: type, 2: data1) */
+  hash_type: number; // smallint
+  /** Script arguments, '0x...' format */
+  args: string; // bytea
 }
 
 /**
- * Represents an XUDT cell, which contains information about a token cell.
+ * Represents a raw XUDT cell record fetched directly from GraphQL (based on `v1` schema).
+ * Internal type used before processing. Matches the fields requested in ASSET_DETAILS_QUERY.
  */
-export interface XudtCell {
-  /**
-   * The amount of the token in the cell.
-   */
-  amount: bigint;
-  /**
-   * Indicates whether the cell has been consumed.
-   */
-  is_consumed: boolean;
-  /**
-   * The type ID of the cell.
-   */
-  type_id: string;
-  /**
-   * Information about the address associated with the type ID.
-   */
-  addressByTypeId: {
-    /**
-     * The token information, if available.
-     */
-    token_info: TokenInfo | null;
-    /**
-     * An array of raw inscription information for the token.
-     */
-    token_infos: RawInscriptionInfo[];
-    /**
-     * The script arguments associated with the address.
-     */
-    script_args: string;
-    /**
-     * The script code hash associated with the address.
-     */
-    script_code_hash: string;
-    /**
-     * The script hash type.
-     */
-    script_hash_type: number;
-  };
+interface RawXudtCell {
+  tx_hash: string; // bytea -> \x...
+  output_index: number; // Int
+  amount: string; // numeric -> string
+  lock_address_id: string; // String
+  type_address_id: string; // String
+
+  // Assumed Relationship: xudt_cells -> addresses (via type_address_id)
+  // !! VERIFY NAME 'address' in live schema !!
+  address: {
+    script_code_hash: string; // bytea -> \x...
+    script_hash_type: number; // smallint
+    script_args: string; // bytea -> \x...
+  } | null;
+
+  // Assumed Relationship: xudt_cells -> token_info (via type_address_id)
+  // !! VERIFY NAME 'token_info' in live schema !!
+  token_info: {
+    decimal: number; // smallint
+    name: string;
+    symbol: string;
+    expected_supply: string | null; // numeric -> string
+    mint_limit: string | null; // numeric -> string
+    mint_status: number | null; // smallint
+    udt_hash: string | null; // bytea -> \x...
+  } | null;
+
+  // Assumed Relationship: xudt_cells -> transaction_outputs_status (via PK)
+  // !! VERIFY NAME 'transaction_outputs_status' in live schema !!
+  transaction_outputs_status: {
+    consumed_by_tx_hash: string | null; // bytea -> \x...
+    consumed_by_input_index: number | null; // Int
+  } | null;
 }
+
 /**
- * Represents information about an inscription, extending TokenInfo.
- */
-export interface InscriptionInfo extends TokenInfo {
-  /**
-   * The expected total supply of the token.
-   */
-  expected_supply: bigint;
-  /**
-   * The limit on the number of tokens that can be minted.
-   */
-  mint_limit: bigint;
-  /**
-   * The status of the minting process, represented as a MintStatus enum.
-   */
-  mint_status: MintStatus;
-  /**
-   * The hash of the UDT (User Defined Token).
-   */
-  udt_hash: string;
-}
-/**
- * Represents a processed XUDT cell, which contains information about a token cell.
+ * Represents a processed XUDT cell - the primary data structure for XUDT assets returned by the SDK.
  */
 export interface ProcessedXudtCell {
-  /**
-   * The amount of the token in the cell.
-   */
-  amount: bigint;
-  /**
-   * Indicates whether the cell has been consumed.
-   */
+  /** Transaction hash where this cell was created, '0x...' format */
+  tx_hash: string;
+  /** Output index in the creation transaction */
+  output_index: number;
+  /** Amount of the token */
+  amount: bigint; // Converted from numeric string
+  /** Indicates whether the cell has been consumed (spent) */
   is_consumed: boolean;
-  /**
-   * The type ID of the cell.
-   */
-  type_id: string;
-  /**
-   * Information about the address associated with the type ID.
-   */
-  addressByTypeId: {
-    /**
-     * The token information, if available.
-     */
-    token_info: TokenInfo | null;
-    /**
-     * An array of inscription information for the token.
-     */
-    inscription_infos: InscriptionInfo[];
-    /**
-     * The script arguments associated with the address.
-     */
-    script_args: string;
-    /**
-     * The script code hash associated with the address.
-     */
-    script_code_hash: string;
-    /**
-     * The script hash type.
-     */
-    script_hash_type: number;
-  };
+  /** Lock script address string (CKB format, e.g., ckt...) */
+  lock_address_id: string;
+  /** Type script address string (CKB format, e.g., ckt...) */
+  type_address_id: string;
+  /** Detailed information about the token type, if available */
+  token_info: TokenInfo | null;
+  /** Type script details (code_hash, hash_type, args), if available */
+  type_script: ScriptInfo | null;
+  /** Consumption details (tx and input index), if consumed */
+  consumed_by: {
+    tx_hash: string; // '0x...' format
+    input_index: number;
+  } | null;
 }
 
 /**
- * Represents information about a cluster.
+ * Represents a raw Spore action record fetched directly from GraphQL (based on `v1` schema).
+ * Internal type used before processing. Matches fields in ASSET_DETAILS_QUERY.
  */
-export interface ClusterInfo {
-  /**
-   * The description of the cluster.
-   */
-  cluster_description: string;
-  /**
-   * The name of the cluster.
-   */
-  cluster_name: string;
-  /**
-   * The creation timestamp of the cluster.
-   */
-  created_at: string;
-  /**
-   * The unique identifier of the cluster.
-   */
-  id: string;
-  /**
-   * Indicates whether the cluster has been burned.
-   */
-  is_burned: boolean;
-  /**
-   * The mutant identifier of the cluster.
-   */
-  mutant_id: string;
-  /**
-   * The owner address of the cluster.
-   */
-  owner_address: string;
-  /**
-   * The last updated timestamp of the cluster.
-   */
-  updated_at: string;
-  /**
-   * Information about the address associated with the type ID.
-   */
-  addressByTypeId: {
-    /**
-     * The script arguments associated with the address.
-     */
-    script_args: string;
-    /**
-     * The script code hash associated with the address.
-     */
-    script_code_hash: string;
-    /**
-     * The script hash type.
-     */
-    script_hash_type: number;
-  };
+interface RawSporeAction {
+  tx_hash: string; // bytea -> \x...
+  action_type: string; // spore_action_type -> string
+  spore_id: string | null; // bytea -> \x...
+  cluster_id: string | null; // bytea -> \x...
+  from_address_id: string | null; // String
+  to_address_id: string | null; // String
+  tx_timestamp: string; // timestamp -> string
 }
 
 /**
- * Represents information about a spore.
+ * Represents a processed Spore action returned by the SDK.
  */
-export interface SporeInfo {
-  /**
-   * The cluster identifier the spore belongs to.
-   */
-  cluster_id: string;
-  /**
-   * The content of the spore.
-   */
-  content: string;
-  /**
-   * The content type of the spore.
-   */
-  content_type: string;
-  /**
-   * The creation timestamp of the spore.
-   */
-  created_at: string;
-  /**
-   * The unique identifier of the spore.
-   */
-  id: string;
-  /**
-   * Indicates whether the spore has been burned.
-   */
-  is_burned: boolean;
-  /**
-   * The owner address of the spore.
-   */
-  owner_address: string;
-  /**
-   * The last updated timestamp of the spore.
-   */
-  updated_at: string;
-  /**
-   * Information about the address associated with the type ID.
-   */
-  addressByTypeId: {
-    /**
-     * The script arguments associated with the address.
-     */
-    script_args: string;
-    /**
-     * The script code hash associated with the address.
-     */
-    script_code_hash: string;
-    /**
-     * The script hash type.
-     */
-    script_hash_type: number;
-  };
+export interface ProcessedSporeAction {
+  /** Transaction hash where action occurred, '0x...' format */
+  tx_hash: string;
+  action_type: string; // Matches spore_action_type enum values
+  /** Spore ID involved (hash), '0x...' format or null */
+  spore_id: string | null;
+  /** Cluster ID involved (hash), '0x...' format or null */
+  cluster_id: string | null;
+  /** Sender CKB address string or null */
+  from_address_id: string | null;
+  /** Receiver CKB address string or null */
+  to_address_id: string | null;
+  /** Timestamp of the block containing the transaction */
+  tx_timestamp: string; // ISO timestamp string
 }
 
 /**
- * Represents an action related to a spore, including cluster and spore information.
+ * Represents the BTC balance information returned by the service. (Matches BtcApiBalance)
  */
-export interface SporeAction {
-  /**
-   * The cluster information.
-   */
-  cluster: ClusterInfo;
-  /**
-   * The spore information.
-   */
-  spore: SporeInfo;
-}
+export type Balance = BtcApiBalance;
 
 /**
- * Represents the balance information of an address.
- */
-export interface Balance {
-  /**
-   * The address.
-   */
-  address: string;
-  /**
-   * The total satoshi amount.
-   */
-  total_satoshi: number;
-  /**
-   * The pending satoshi amount.
-   */
-  pending_satoshi: number;
-  /**
-   * The satoshi amount.
-   */
-  satoshi: number;
-  /**
-   * The available satoshi amount.
-   */
-  available_satoshi: number;
-  /**
-   * The dust satoshi amount.
-   */
-  dust_satoshi: number;
-  /**
-   * The RGBPP satoshi amount.
-   */
-  rgbpp_satoshi: number;
-  /**
-   * The count of UTXOs.
-   */
-  utxo_count: number;
-}
-
-/**
- * Represents the details of assets, including XUDT cells and spore actions.
+ * Represents the combined details of CKB assets associated with a BTC address.
  */
 export interface AssetDetails {
-  /**
-   * An array of processed XUDT cells.
-   */
   xudtCells: ProcessedXudtCell[];
-  /**
-   * An array of spore actions.
-   */
-  sporeActions: SporeAction[];
+  sporeActions: ProcessedSporeAction[]; // Actions found in the same txns as the UTXOs
 }
 
 /**
- * Represents the result of a query, including balance and asset details.
+ * Represents the overall result including BTC balance and CKB asset details.
  */
 export interface QueryResult {
-  /**
-   * The balance information.
-   */
   balance: Balance;
-  /**
-   * The asset details.
-   */
   assets: AssetDetails;
 }
 
 /**
- * Represents the response from a GraphQL query, including XUDT cell and spore actions.
+ * Type for the expected GraphQL response structure for a single asset query (v1 schema).
  */
-interface GraphQLResponse {
-  /**
-   * The XUDT cell information, if available.
-   */
-  xudtCell: XudtCell | null;
-  /**
-   * The spore actions information, if available.
-   */
-  sporeActions: SporeAction | null;
+interface GraphQLAssetQueryResponse {
+  // Query is xudt_cells(where: {PK}, limit: 1), returns array
+  xudt_cells: RawXudtCell[];
+  // Query is spore_actions(where: {tx_hash}), returns array
+  spore_actions: RawSporeAction[];
 }
 
-// GraphQL query constants
+// --- GraphQL Query (Targeting v1 Schema Structure) ---
+
+// !! MOST IMPORTANT !!
+// VERIFY THE RELATIONSHIP NAMES BELOW AGAINST YOUR LIVE 'v1/graphql' SCHEMA!
+// Replace 'address', 'token_info', 'transaction_outputs_status' with the actual
+// relationship field names exposed by Hasura on the `xudt_cells` type if they differ.
+// Use GraphiQL on https://mainnet.unistate.io/v1/graphql to check.
 const ASSET_DETAILS_QUERY = gql`
-  query AssetDetails($txHash: bytea!, $txIndex: Int!) {
-    xudtCell: xudt_cell_by_pk(
-      transaction_hash: $txHash
-      transaction_index: $txIndex
+  query AssetDetails($txHash: bytea!, $outputIndex: Int!) {
+    # Query the xudt_cells table using primary key components in the where clause
+    xudt_cells(
+      where: { tx_hash: { _eq: $txHash }, output_index: { _eq: $outputIndex } }
+      limit: 1
     ) {
-      amount
-      is_consumed
-      type_id
-      addressByTypeId {
-        script_args
+      # Core fields from xudt_cells
+      tx_hash
+      output_index
+      amount # numeric
+      lock_address_id
+      type_address_id
+
+      # Assumed Relationship to addresses table (via type_address_id)
+      # VERIFY NAME: 'address'
+      address {
         script_code_hash
         script_hash_type
-        token_info {
-          decimal
-          name
-          symbol
-        }
-        token_infos {
-          decimal
-          name
-          symbol
-          expected_supply
-          mint_limit
-          mint_status
-          udt_hash
-        }
+        script_args
       }
-    }
-    sporeActions: spore_actions_by_pk(tx: $txHash) {
-      cluster {
-        cluster_description
-        cluster_name
-        created_at
-        id
-        is_burned
-        mutant_id
-        owner_address
-        updated_at
-        addressByTypeId {
-          script_args
-          script_code_hash
-          script_hash_type
-        }
-      }
-      spore {
-        cluster_id
-        content
-        content_type
-        created_at
-        id
-        is_burned
-        owner_address
-        updated_at
-        addressByTypeId {
-          script_args
-          script_code_hash
-          script_hash_type
-        }
-      }
-    }
-  }
-`;
 
-const RAW_INSCRIPTION_INFO_QUERY = gql`
-  query RawInscriptionInfo($udtHash: String!) {
-    token_info(where: { udt_hash: { _eq: $udtHash } }) {
-      decimal
-      name
-      symbol
-      expected_supply
-      mint_limit
-      mint_status
-      udt_hash
+      # Assumed Relationship to token_info table (via type_address_id)
+      # VERIFY NAME: 'token_info'
+      token_info {
+        decimal
+        name
+        symbol
+        expected_supply # numeric
+        mint_limit # numeric
+        mint_status # smallint
+        udt_hash # bytea
+      }
+
+      # Assumed Relationship to transaction_outputs_status table (via PK)
+      # VERIFY NAME: 'transaction_outputs_status'
+      transaction_outputs_status {
+        consumed_by_tx_hash # bytea
+        consumed_by_input_index # Int
+      }
+    }
+
+    # Fetch any spore actions that occurred in the same transaction
+    # Uses the same tx_hash variable
+    spore_actions(where: { tx_hash: { _eq: $txHash } }) {
+      tx_hash # bytea
+      action_type # spore_action_type
+      spore_id # bytea
+      cluster_id # bytea
+      from_address_id # String
+      to_address_id # String
+      tx_timestamp # timestamp
     }
   }
 `;
 
 /**
- * RgbppSDK class for interacting with RGBPP services and GraphQL endpoints.
+ * RgbppSDK class for interacting with RGBPP services and the CKB Indexer GraphQL endpoint (v1 schema).
  */
 export class RgbppSDK {
-  /**
-   * The BTC assets service used for fetching BTC-related data.
-   */
   private service: BtcAssetsApi;
-
-  /**
-   * ApolloClient instance for making GraphQL queries.
-   */
   private client: ApolloClient<NormalizedCacheObject>;
 
   /**
-   * Indicates whether the SDK is operating on the mainnet.
-   */
-  private isMainnet: boolean;
-
-  /**
    * Constructs an instance of RgbppSDK.
-   * @param {boolean} isMainnet - Whether the network is mainnet.
-   * @param {BTCTestnetType} [btcTestnetType] - The type of BTC testnet.
+   * @param graphqlEndpoint - The URL of your Hasura GraphQL endpoint (e.g., https://mainnet.unistate.io/v1/graphql). REQUIRED.
+   * @param btcTestnetType - Optional: Specify the BTC testnet type for the service if not mainnet.
    */
-  constructor(isMainnet: boolean, btcTestnetType?: BTCTestnetType) {
-    this.isMainnet = isMainnet;
+  constructor(graphqlEndpoint: string, btcTestnetType?: BTCTestnetType) {
+    if (
+      !graphqlEndpoint ||
+      typeof graphqlEndpoint !== "string" ||
+      !graphqlEndpoint.startsWith("http")
+    ) {
+      throw new Error(
+        "A valid Hasura GraphQL endpoint URL (starting with http/https) is required.",
+      );
+    }
+    console.log(
+      `[RgbppSDK] Initializing for ${
+        btcTestnetType ? "testnet" : "mainnet"
+      } with GraphQL endpoint: ${graphqlEndpoint}`,
+    );
+
     this.service = createBtcService(btcTestnetType);
-    const graphqlEndpoint = isMainnet
-      ? "https://mainnet.unistate.io/v1/graphql"
-      : "https://testnet.unistate.io/v1/graphql";
 
     this.client = new ApolloClient({
       cache: new InMemoryCache(),
       link: new BatchHttpLink({
         uri: graphqlEndpoint,
-        batchMax: 5,
-        batchInterval: 20,
+        batchMax: 10,
+        batchInterval: 50,
       }),
       defaultOptions: {
-        watchQuery: { fetchPolicy: "cache-and-network" },
+        watchQuery: { fetchPolicy: "no-cache" },
+        query: { fetchPolicy: "no-cache" },
       },
     });
   }
 
   /**
-   * Fetches transaction details.
-   * @param {string} btcAddress - The BTC address.
-   * @param {string} [afterTxId] - Optional, used for pagination.
-   * @returns {Promise<BtcApiTransaction[]>} An array of transaction details.
+   * Fetches transaction details for a BTC address from the external BTC service.
    */
   public async fetchTxsDetails(
     btcAddress: string,
     afterTxId?: string,
   ): Promise<BtcApiTransaction[]> {
     try {
-      return await this.service.getBtcTransactions(btcAddress, {
+      console.log(
+        `[RgbppSDK] Fetching BTC transactions for address: ${btcAddress} ${
+          afterTxId ? `after ${afterTxId}` : ""
+        }`,
+      );
+      const transactions = await this.service.getBtcTransactions(btcAddress, {
         after_txid: afterTxId,
       });
+      console.log(
+        `[RgbppSDK] Fetched ${transactions.length} BTC transactions for ${btcAddress}.`,
+      );
+      return transactions;
     } catch (error) {
-      console.error("Error fetching transactions:", error);
+      console.error(
+        `[RgbppSDK] Error fetching BTC transactions for ${btcAddress}:`,
+        error,
+      );
       throw error;
     }
   }
 
   /**
-   * Fetches assets and query details.
-   * @param {string} btcAddress - The BTC address.
-   * @returns {Promise<QueryResult>} The query result, including balance and asset details.
+   * Fetches BTC balance and associated CKB assets (XUDT cells, Spore actions)
+   * for a given BTC address using the v1 GraphQL endpoint.
    */
   public async fetchAssetsAndQueryDetails(
     btcAddress: string,
   ): Promise<QueryResult> {
-    try {
-      const [balance, assets] = await Promise.all([
-        this.service.getBtcBalance(btcAddress),
-        this.service.getRgbppAssetsByBtcAddress(btcAddress),
-      ]);
+    let balance: Balance = {
+      address: btcAddress,
+      total_satoshi: 0,
+      pending_satoshi: 0,
+      satoshi: 0,
+      available_satoshi: 0,
+      dust_satoshi: 0,
+      rgbpp_satoshi: 0,
+      utxo_count: 0,
+    };
+    let rgbppCells: RgbppCell[] = [];
 
-      const validAssets = assets.filter(
-        (asset): asset is typeof asset & { outPoint: OutPoint } =>
-          !!asset.outPoint,
+    console.log(
+      `[RgbppSDK] Fetching assets and details for BTC address: ${btcAddress}`,
+    );
+
+    try {
+      // 1. Fetch BTC balance and the list of associated CKB UTXOs (OutPoints)
+      [balance, rgbppCells] = await Promise.all([
+        this.service.getBtcBalance(btcAddress).catch((err) => {
+          console.error(
+            `[RgbppSDK] Failed to fetch BTC balance for ${btcAddress}:`,
+            err,
+          );
+          return {
+            // Default balance structure
+            address: btcAddress,
+            total_satoshi: 0,
+            pending_satoshi: 0,
+            satoshi: 0,
+            available_satoshi: 0,
+            dust_satoshi: 0,
+            rgbpp_satoshi: 0,
+            utxo_count: 0,
+          };
+        }),
+        this.service.getRgbppAssetsByBtcAddress(btcAddress).catch((err) => {
+          console.error(
+            `[RgbppSDK] Failed to fetch RGBPP assets for ${btcAddress}:`,
+            err,
+          );
+          return [];
+        }),
+      ]);
+      console.log(
+        `[RgbppSDK] Fetched balance and ${rgbppCells.length} RGBPP asset entries for ${btcAddress}.`,
       );
 
-      if (validAssets.length === 0) {
+      // 2. Filter and deduplicate valid CKB OutPoints
+      const validOutPoints = this.extractAndDeduplicateOutPoints(rgbppCells);
+
+      if (validOutPoints.length === 0) {
+        console.log(
+          `[RgbppSDK] No unique CKB UTXOs found associated with ${btcAddress}.`,
+        );
         return { balance, assets: { xudtCells: [], sporeActions: [] } };
       }
-
-      const assetDetails = await Promise.all(
-        validAssets.map((asset) => this.queryAssetDetails(asset.outPoint)),
+      console.log(
+        `[RgbppSDK] Found ${validOutPoints.length} unique CKB UTXOs to query.`,
       );
 
-      const processedXudtCells = await Promise.all(
-        assetDetails
-          .filter(
-            (
-              result,
-            ): result is {
-              xudtCell: XudtCell;
-              sporeActions: null | SporeAction;
-            } => !!result.xudtCell,
-          )
-          .map((result) => this.processXudtCell(result.xudtCell)),
+      // 3. Query GraphQL for details of each unique CKB UTXO concurrently
+      const graphqlResponses = await this.queryDetailsForAllOutPoints(
+        validOutPoints,
       );
 
-      const assetsResult: AssetDetails = {
-        xudtCells: processedXudtCells,
-        sporeActions: assetDetails.flatMap((result) =>
-          result.sporeActions ? [result.sporeActions] : [],
-        ),
-      };
+      // 4. Process the successful GraphQL responses
+      const processedAssets = this.processGraphQLResponses(graphqlResponses);
 
-      return { balance, assets: assetsResult };
+      console.log(
+        `[RgbppSDK] Finished processing for ${btcAddress}. Found ${processedAssets.xudtCells.length} XUDT cells and ${processedAssets.sporeActions.length} unique Spore actions.`,
+      );
+      return { balance, assets: processedAssets };
     } catch (error) {
-      console.error("Error fetching assets and details:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Gets the XUDT hash.
-   * @param {string} script_args - The script arguments.
-   * @returns {string} The XUDT hash.
-   */
-  private xudtHash(script_args: string): string {
-    return this.removeHexPrefix(
-      scriptToHash({
-        ...getXudtTypeScript(this.isMainnet),
-        args: this.formatHexPrefix(script_args),
-      }),
-    );
-  }
-
-  /**
-   * Formats the hexadecimal prefix.
-   * @param {string} hexString - The hexadecimal string.
-   * @returns {string} The formatted string.
-   */
-  private formatHexPrefix(hexString: string): string {
-    return `\\x${hexString.replace(/^0x/, "")}`;
-  }
-
-  /**
-   * Removes the hexadecimal prefix.
-   * @param {string} prefixedHexString - The prefixed hexadecimal string.
-   * @returns {string} The string without the prefix.
-   */
-  private removeHexPrefix(prefixedHexString: string): string {
-    return `0x${prefixedHexString.replace(/^\\x/, "")}`;
-  }
-
-  /**
-   * Queries the raw inscription information.
-   * @param {string} udtHash - The UDT hash.
-   * @returns {Promise<RawInscriptionInfo[]>} An array of raw inscription information.
-   */
-  private async queryRawInscriptionInfo(
-    udtHash: string,
-  ): Promise<RawInscriptionInfo[]> {
-    const { data } = await this.client.query({
-      query: RAW_INSCRIPTION_INFO_QUERY,
-      variables: { udtHash },
-    });
-
-    return data.token_info as RawInscriptionInfo[];
-  }
-
-  /**
-   * Queries the asset details.
-   * @param {OutPoint} outPoint - The outpoint.
-   * @returns {Promise<GraphQLResponse>} The GraphQL response.
-   */
-  private async queryAssetDetails(
-    outPoint: OutPoint,
-  ): Promise<GraphQLResponse> {
-    const { data } = await this.client.query({
-      query: ASSET_DETAILS_QUERY,
-      variables: {
-        txHash: this.formatHexPrefix(outPoint.txHash),
-        txIndex: Number(outPoint.index),
-      },
-    });
-
-    return data as GraphQLResponse;
-  }
-
-  /**
-   * Processes the XUDT cell.
-   * @param {XudtCell} cell - The XUDT cell.
-   * @returns {Promise<ProcessedXudtCell>} The processed XUDT cell.
-   */
-  private async processXudtCell(cell: XudtCell): Promise<ProcessedXudtCell> {
-    if (
-      !cell.addressByTypeId.token_info &&
-      cell.addressByTypeId.token_infos.length === 0
-    ) {
-      const rawInfo = await this.queryRawInscriptionInfo(
-        this.xudtHash(cell.addressByTypeId.script_args),
+      console.error(
+        `[RgbppSDK] Critical error in fetchAssetsAndQueryDetails for ${btcAddress}:`,
+        error,
       );
-      cell.addressByTypeId.token_infos = rawInfo;
+      const fallbackBalance: Balance = balance || {
+        // Return balance if fetched, else default
+        address: btcAddress,
+        total_satoshi: 0,
+        pending_satoshi: 0,
+        satoshi: 0,
+        available_satoshi: 0,
+        dust_satoshi: 0,
+        rgbpp_satoshi: 0,
+        utxo_count: 0,
+      };
+      return {
+        balance: fallbackBalance,
+        assets: { xudtCells: [], sporeActions: [] },
+      };
     }
+  }
+
+  /** Extracts valid OutPoints from RGBPP assets and removes duplicates. */
+  private extractAndDeduplicateOutPoints(RgbppCells: RgbppCell[]): OutPoint[] {
+    const outPointsMap = new Map<string, OutPoint>();
+    for (const asset of RgbppCells) {
+      if (
+        asset.outPoint &&
+        typeof asset.outPoint.txHash === "string" &&
+        asset.outPoint.txHash.startsWith("0x") &&
+        asset.outPoint.txHash.length === 66 &&
+        asset.outPoint.index !== null &&
+        asset.outPoint.index !== undefined &&
+        !isNaN(Number(asset.outPoint.index))
+      ) {
+        const key = `${asset.outPoint.txHash}:${asset.outPoint.index}`;
+        if (!outPointsMap.has(key)) {
+          outPointsMap.set(key, {
+            txHash: asset.outPoint.txHash,
+            index: String(asset.outPoint.index), // Ensure index is string
+          });
+        }
+      } else {
+        console.warn(
+          "[RgbppSDK] Skipping invalid OutPoint from RGBPP service:",
+          JSON.stringify(asset.outPoint),
+        );
+      }
+    }
+    return Array.from(outPointsMap.values());
+  }
+
+  /** Queries GraphQL for details of multiple OutPoints, handling errors individually. */
+  private async queryDetailsForAllOutPoints(
+    outPoints: OutPoint[],
+  ): Promise<(GraphQLAssetQueryResponse | null)[]> {
+    console.log(`[RgbppSDK] Querying GraphQL for ${outPoints.length} UTXOs...`);
+    const promises = outPoints.map((outPoint) =>
+      this.querySingleAssetDetails(outPoint).catch((error) => {
+        console.error(
+          `[RgbppSDK] Failed GraphQL query for UTXO ${outPoint.txHash}:${outPoint.index}. Error: ${error.message}`,
+        );
+        return null; // Indicate failure for this specific query
+      })
+    );
+    return Promise.all(promises); // Wait for all to settle
+  }
+
+  /** Processes an array of GraphQL responses (or nulls) into final AssetDetails. */
+  private processGraphQLResponses(
+    responses: (GraphQLAssetQueryResponse | null)[],
+  ): AssetDetails {
+    let processedXudtCells: ProcessedXudtCell[] = [];
+    const processedSporeActionsMap = new Map<string, ProcessedSporeAction>();
+
+    let successfulQueries = 0;
+    let failedQueries = 0;
+    let processedCellsCount = 0;
+    let processedActionsCount = 0;
+
+    for (const response of responses) {
+      if (response === null) {
+        failedQueries++;
+        continue; // Skip failed queries
+      }
+      successfulQueries++;
+
+      // Process XUDT cells (expecting 0 or 1 from the query by PK)
+      for (const rawCell of response.xudt_cells) {
+        try {
+          const processedCell = this.processRawXudtCell(rawCell);
+          processedXudtCells.push(processedCell);
+          processedCellsCount++;
+        } catch (processingError) {
+          console.error(
+            `[RgbppSDK] Error processing XUDT Cell ${
+              parseHexFromGraphQL(rawCell.tx_hash)
+            }:${rawCell.output_index}:`,
+            processingError,
+          );
+        }
+      }
+
+      // Process Spore actions (potentially multiple per tx)
+      for (const rawAction of response.spore_actions) {
+        const actionTxHash = parseHexFromGraphQL(rawAction.tx_hash);
+        if (!processedSporeActionsMap.has(actionTxHash)) {
+          try {
+            const processedAction = this.processRawSporeAction(rawAction);
+            processedSporeActionsMap.set(actionTxHash, processedAction);
+            processedActionsCount++;
+          } catch (processingError) {
+            console.error(
+              `[RgbppSDK] Error processing Spore Action from tx ${actionTxHash}:`,
+              processingError,
+            );
+          }
+        }
+      }
+    }
+    console.log(
+      `[RgbppSDK] Processing complete. Successful queries: ${successfulQueries}, Failed queries: ${failedQueries}. Processed Cells: ${processedCellsCount}, Unique Actions: ${processedActionsCount}.`,
+    );
 
     return {
-      amount: cell.amount,
-      is_consumed: cell.is_consumed,
-      type_id: cell.type_id,
-      addressByTypeId: {
-        token_info: cell.addressByTypeId.token_info,
-        inscription_infos: cell.addressByTypeId.token_infos.map((info) => ({
-          ...info,
-          mint_status: this.validateMintStatus(info.mint_status),
-        })),
-        script_args: cell.addressByTypeId.script_args,
-        script_code_hash: cell.addressByTypeId.script_code_hash,
-        script_hash_type: cell.addressByTypeId.script_hash_type,
-      },
+      xudtCells: processedXudtCells,
+      sporeActions: Array.from(processedSporeActionsMap.values()),
     };
   }
 
-  /**
-   * Validates the mint status.
-   * @param {number} status - The status value.
-   * @returns {MintStatus} The validated MintStatus.
-   */
+  /** Executes the GraphQL query for a single CKB UTXO using ASSET_DETAILS_QUERY. */
+  private async querySingleAssetDetails(
+    outPoint: OutPoint,
+  ): Promise<GraphQLAssetQueryResponse> {
+    const txHashForQuery = formatHexForGraphQL(outPoint.txHash);
+    const outputIndex = Number(outPoint.index);
+
+    if (isNaN(outputIndex) || outputIndex < 0) {
+      throw new Error(
+        `Invalid output index provided for query: "${outPoint.index}"`,
+      );
+    }
+    // console.log(`[RgbppSDK] Executing GraphQL query for txHash: ${txHashForQuery}, index: ${outputIndex}`);
+
+    const result: ApolloQueryResult<GraphQLAssetQueryResponse> = await this
+      .client.query<GraphQLAssetQueryResponse>({
+        query: ASSET_DETAILS_QUERY,
+        variables: {
+          txHash: txHashForQuery,
+          outputIndex: outputIndex,
+        },
+      });
+
+    if (result.errors) {
+      const errorMessages = result.errors.map((e) => e.message).join("; ");
+      // Note: Don't log full error object here in production if it might contain sensitive info
+      console.error(
+        `[RgbppSDK] GraphQL query errors for ${outPoint.txHash}:${outputIndex}: ${errorMessages}`,
+      );
+      throw new Error(
+        `GraphQL query failed for ${outPoint.txHash}:${outputIndex}: ${errorMessages}`,
+      );
+    }
+
+    // Ensure data structure is consistent, even if arrays are empty
+    const data = result.data || { xudt_cells: [], spore_actions: [] };
+    data.xudt_cells = data.xudt_cells || [];
+    data.spore_actions = data.spore_actions || [];
+
+    // If query was by PK, we expect at most one cell
+    if (data.xudt_cells.length > 1) {
+      console.warn(
+        `[RgbppSDK] Expected 0 or 1 XUDT cell for ${outPoint.txHash}:${outputIndex}, but received ${data.xudt_cells.length}. Using the first one.`,
+      );
+    }
+
+    // console.log(`[RgbppSDK] GraphQL data received for ${outPoint.txHash}:${outputIndex}:`, JSON.stringify(data));
+    return data;
+  }
+
+  /** Processes a RawXudtCell from GraphQL into a ProcessedXudtCell. */
+  private processRawXudtCell(rawCell: RawXudtCell): ProcessedXudtCell {
+    const cellIdentifier = `${
+      parseHexFromGraphQL(rawCell.tx_hash)
+    }:${rawCell.output_index}`;
+    // console.log(`[RgbppSDK] Processing raw cell: ${cellIdentifier}`);
+    try {
+      // Consumption Status
+      // Use the relationship name verified against your schema ('transaction_outputs_status')
+      const statusInfo = rawCell.transaction_outputs_status;
+      const is_consumed = statusInfo?.consumed_by_tx_hash != null;
+      let consumed_by: ProcessedXudtCell["consumed_by"] = null;
+      if (
+        is_consumed &&
+        statusInfo?.consumed_by_tx_hash &&
+        statusInfo?.consumed_by_input_index !== null &&
+        statusInfo?.consumed_by_input_index !== undefined
+      ) {
+        consumed_by = {
+          tx_hash: parseHexFromGraphQL(statusInfo.consumed_by_tx_hash),
+          input_index: statusInfo.consumed_by_input_index,
+        };
+      } else if (is_consumed) {
+        console.warn(
+          `[RgbppSDK] Cell ${cellIdentifier} consumed, but consumption details missing in 'transaction_outputs_status' relationship data.`,
+        );
+      }
+
+      // Token Info
+      // Use the relationship name verified against your schema ('token_info')
+      let tokenInfo: TokenInfo | null = null;
+      if (rawCell.token_info) {
+        const rawToken = rawCell.token_info;
+        const mintStatusRaw = rawToken.mint_status;
+        let mintStatus: MintStatus | null = null;
+        if (mintStatusRaw !== null && mintStatusRaw !== undefined) {
+          try {
+            mintStatus = this.validateMintStatus(mintStatusRaw);
+          } catch (validationError) {
+            console.error(
+              `[RgbppSDK] Error validating MintStatus (${mintStatusRaw}) for cell ${cellIdentifier}: ${
+                validationError instanceof Error
+                  ? validationError.message
+                  : String(validationError)
+              }. Setting to null.`,
+            );
+          }
+        }
+        tokenInfo = {
+          type_address_id: rawCell.type_address_id, // Use address from cell
+          decimal: rawToken.decimal,
+          name: rawToken.name,
+          symbol: rawToken.symbol,
+          udt_hash: parseHexFromGraphQL(rawToken.udt_hash),
+          expected_supply: safeStringToBigInt(rawToken.expected_supply),
+          mint_limit: safeStringToBigInt(rawToken.mint_limit),
+          mint_status: mintStatus,
+        };
+      } else {
+        // This is normal if the type script doesn't represent a registered token
+        // console.log(`[RgbppSDK] No 'token_info' relationship data for XUDT cell ${cellIdentifier}.`);
+      }
+
+      // Type Script Info
+      // Use the relationship name verified against your schema ('address')
+      let typeScript: ScriptInfo | null = null;
+      if (rawCell.address) {
+        const rawAddress = rawCell.address;
+        typeScript = {
+          code_hash: parseHexFromGraphQL(rawAddress.script_code_hash),
+          hash_type: rawAddress.script_hash_type, // Assume valid smallint
+          args: parseHexFromGraphQL(rawAddress.script_args),
+        };
+      } else {
+        console.warn(
+          `[RgbppSDK] No 'address' relationship data for XUDT cell ${cellIdentifier} (Type Address: ${rawCell.type_address_id}). Cannot get type script details.`,
+        );
+      }
+
+      // Amount Conversion
+      const amount = safeStringToBigInt(rawCell.amount);
+      if (amount === null) {
+        // Throw error if amount conversion fails, as it's critical
+        throw new Error(
+          `Failed to convert amount "${rawCell.amount}" to BigInt.`,
+        );
+      }
+
+      // Final Assembly
+      return {
+        tx_hash: parseHexFromGraphQL(rawCell.tx_hash),
+        output_index: rawCell.output_index,
+        amount: amount,
+        is_consumed,
+        lock_address_id: rawCell.lock_address_id,
+        type_address_id: rawCell.type_address_id,
+        token_info: tokenInfo,
+        type_script: typeScript,
+        consumed_by: consumed_by,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error
+        ? error.message
+        : "Unknown error occurred";
+      console.error(
+        `[RgbppSDK] Critical error processing RawXudtCell ${cellIdentifier}:`,
+        error,
+      );
+      throw new Error(
+        `Failed to process RawXudtCell ${cellIdentifier}: ${errorMessage}`,
+      );
+    }
+  }
+
+  /** Processes a RawSporeAction from GraphQL into a ProcessedSporeAction. */
+  private processRawSporeAction(
+    rawAction: RawSporeAction,
+  ): ProcessedSporeAction {
+    const actionTxHash = parseHexFromGraphQL(rawAction.tx_hash);
+    try {
+      return {
+        tx_hash: actionTxHash,
+        action_type: rawAction.action_type,
+        spore_id: parseHexFromGraphQL(rawAction.spore_id),
+        cluster_id: parseHexFromGraphQL(rawAction.cluster_id),
+        from_address_id: rawAction.from_address_id,
+        to_address_id: rawAction.to_address_id,
+        tx_timestamp: rawAction.tx_timestamp, // Keep as ISO string
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error
+        ? error.message
+        : String(error);
+      console.error(
+        `[RgbppSDK] Error processing RawSporeAction from tx ${actionTxHash}:`,
+        error,
+      );
+      throw new Error(
+        `Failed to process RawSporeAction from tx ${actionTxHash}: ${errorMessage}`,
+      );
+    }
+  }
+
+  /** Validates the mint status number against the MintStatus enum. */
   private validateMintStatus(status: number): MintStatus {
     const validStatus = MintStatusMap[status];
     if (validStatus === undefined) {
-      throw new Error(`Invalid MintStatus: ${status}`);
+      console.warn(
+        `[RgbppSDK] Invalid MintStatus value received: ${status}. Valid values: ${
+          Object.keys(MintStatusMap).join(", ")
+        }.`,
+      );
+      throw new Error(`Invalid MintStatus value received from API: ${status}`);
     }
     return validStatus;
   }
 }
+
+// --- Conceptual Example Usage ---
+/*
+async function runSdkExample() {
+    const IS_MAINNET = false; // Or true for mainnet
+    // !!! REPLACE WITH YOUR ACTUAL HASURA V1 ENDPOINT !!!
+    const GRAPHQL_ENDPOINT = IS_MAINNET
+        ? "https://mainnet.unistate.io/v1/graphql" // Replace if different
+        : "YOUR_TESTNET_V1_GRAPHQL_ENDPOINT"; // e.g., "https://testnet.unistate.io/v1/graphql"
+    const BTC_ADDRESS = "YOUR_BTC_ADDRESS_HERE"; // Replace with address to test
+
+    if (GRAPHQL_ENDPOINT.includes("YOUR_")) {
+        console.error("Error: Please replace placeholder GRAPHQL_ENDPOINT URL in the example code.");
+        return;
+    }
+     if (BTC_ADDRESS.includes("YOUR_")) {
+        console.error("Error: Please replace placeholder BTC_ADDRESS in the example code.");
+        return;
+    }
+
+
+    console.log(`Running SDK example for ${BTC_ADDRESS} on ${IS_MAINNET ? 'mainnet' : 'testnet'}...`);
+    const sdk = new RgbppSDK(IS_MAINNET, GRAPHQL_ENDPOINT);
+
+    try {
+        const result: QueryResult = await sdk.fetchAssetsAndQueryDetails(BTC_ADDRESS);
+
+        console.log("\n✅ SDK Query Completed Successfully!");
+
+        console.log("\n--- BTC Balance ---");
+        console.log(JSON.stringify(result.balance, null, 2));
+
+        console.log("\n--- CKB Assets ---");
+        console.log(`Processed ${result.assets.xudtCells.length} XUDT Cells:`);
+        if (result.assets.xudtCells.length === 0) {
+             console.log("  (No XUDT cells found for this address)");
+        }
+        result.assets.xudtCells.forEach((cell, index) => {
+            console.log(`\n  [Cell #${index + 1}]`);
+            console.log(`    UTXO: ${cell.tx_hash}:${cell.output_index}`);
+            console.log(`    Amount: ${cell.amount.toString()}`);
+            console.log(`    Consumed: ${cell.is_consumed}`);
+            if (cell.consumed_by) {
+                console.log(`    -> Consumed By: Tx ${cell.consumed_by.tx_hash}, Input ${cell.consumed_by.input_index}`);
+            }
+            console.log(`    Owner Lock Addr: ${cell.lock_address_id}`);
+            console.log(`    Token Type Addr: ${cell.type_address_id}`);
+            if (cell.type_script) {
+                console.log(`    Type Script Details:`);
+                console.log(`      CodeHash: ${cell.type_script.code_hash}`);
+                console.log(`      HashType: ${cell.type_script.hash_type}`);
+                console.log(`      Args: ${cell.type_script.args}`);
+            } else {
+                 console.log(`    Type Script Details: (Not Available)`);
+            }
+            if (cell.token_info) {
+                console.log(`    Token Info:`);
+                console.log(`      Symbol: ${cell.token_info.symbol}`);
+                console.log(`      Name: ${cell.token_info.name}`);
+                console.log(`      Decimals: ${cell.token_info.decimal}`);
+                console.log(`      UDT Hash: ${cell.token_info.udt_hash || '(none)'}`);
+                console.log(`      Expected Supply: ${cell.token_info.expected_supply?.toString() ?? '(N/A)'}`);
+                console.log(`      Mint Limit: ${cell.token_info.mint_limit?.toString() ?? '(N/A)'}`);
+                const statusNum = cell.token_info.mint_status;
+                const statusStr = statusNum !== null ? MintStatus[statusNum] ?? `Unknown(${statusNum})` : '(N/A)';
+                console.log(`      Mint Status: ${statusStr}`);
+            } else {
+                console.log(`    Token Info: (Not Available - Not a registered token type?)`);
+            }
+        });
+
+        console.log(`\nProcessed ${result.assets.sporeActions.length} unique Spore Actions from related transactions:`);
+         if (result.assets.sporeActions.length === 0) {
+             console.log("  (No spore actions found in the transactions of these UTXOs)");
+        }
+        result.assets.sporeActions.forEach((action, index) => {
+            console.log(`\n  [Action #${index + 1}]`);
+            console.log(`    TX Hash: ${action.tx_hash}`);
+            console.log(`    Timestamp: ${action.tx_timestamp}`);
+            console.log(`    Type: ${action.action_type}`);
+            console.log(`    Spore ID: ${action.spore_id || '(none)'}`);
+            console.log(`    Cluster ID: ${action.cluster_id || '(none)'}`);
+            console.log(`    From Addr: ${action.from_address_id || '(N/A)'}`);
+            console.log(`    To Addr: ${action.to_address_id || '(N/A)'}`);
+        });
+
+    } catch (error) {
+        console.error("\n❌ SDK Example Failed:", error);
+    }
+}
+
+// runSdkExample(); // Uncomment to run
+*/

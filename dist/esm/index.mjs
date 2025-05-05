@@ -104,205 +104,362 @@ async function getCellDeps(isMainnet, xudtArgs) {
         xudt: true
     });
 }
+function formatHexForGraphQL(hexString) {
+    if ("string" != typeof hexString || 0 === hexString.length) return "\\x";
+    const cleaned = hexString.startsWith("0x") ? hexString.substring(2) : hexString;
+    return 0 === cleaned.length ? "\\x" : `\\x${cleaned}`;
+}
+function parseHexFromGraphQL(prefixedHexString) {
+    if (!prefixedHexString || "string" != typeof prefixedHexString || !prefixedHexString.startsWith("\\x")) return "0x";
+    const hex = prefixedHexString.substring(2);
+    return `0x${hex}`;
+}
+function safeStringToBigInt(numericStr) {
+    if (null == numericStr || "string" != typeof numericStr || "" === numericStr.trim()) return null;
+    try {
+        const integerPart = numericStr.split(".")[0];
+        return BigInt(integerPart);
+    } catch (error) {
+        console.warn(`Failed to convert string "${numericStr}" to BigInt:`, error);
+        return null;
+    }
+}
 const MintStatusMap = {
     [0]: 0,
     [1]: 1,
     [2]: 2
 };
 const ASSET_DETAILS_QUERY = (0, __WEBPACK_EXTERNAL_MODULE__apollo_client_core_1f4aac3e__.gql)`
-  query AssetDetails($txHash: bytea!, $txIndex: Int!) {
-    xudtCell: xudt_cell_by_pk(
-      transaction_hash: $txHash
-      transaction_index: $txIndex
+  query AssetDetails($txHash: bytea!, $outputIndex: Int!) {
+    # Query the xudt_cells table using primary key components in the where clause
+    xudt_cells(
+      where: { tx_hash: { _eq: $txHash }, output_index: { _eq: $outputIndex } }
+      limit: 1
     ) {
-      amount
-      is_consumed
-      type_id
-      addressByTypeId {
-        script_args
+      # Core fields from xudt_cells
+      tx_hash
+      output_index
+      amount # numeric
+      lock_address_id
+      type_address_id
+
+      # Assumed Relationship to addresses table (via type_address_id)
+      # VERIFY NAME: 'address'
+      address {
         script_code_hash
         script_hash_type
-        token_info {
-          decimal
-          name
-          symbol
-        }
-        token_infos {
-          decimal
-          name
-          symbol
-          expected_supply
-          mint_limit
-          mint_status
-          udt_hash
-        }
+        script_args
+      }
+
+      # Assumed Relationship to token_info table (via type_address_id)
+      # VERIFY NAME: 'token_info'
+      token_info {
+        decimal
+        name
+        symbol
+        expected_supply # numeric
+        mint_limit # numeric
+        mint_status # smallint
+        udt_hash # bytea
+      }
+
+      # Assumed Relationship to transaction_outputs_status table (via PK)
+      # VERIFY NAME: 'transaction_outputs_status'
+      transaction_outputs_status {
+        consumed_by_tx_hash # bytea
+        consumed_by_input_index # Int
       }
     }
-    sporeActions: spore_actions_by_pk(tx: $txHash) {
-      cluster {
-        cluster_description
-        cluster_name
-        created_at
-        id
-        is_burned
-        mutant_id
-        owner_address
-        updated_at
-        addressByTypeId {
-          script_args
-          script_code_hash
-          script_hash_type
-        }
-      }
-      spore {
-        cluster_id
-        content
-        content_type
-        created_at
-        id
-        is_burned
-        owner_address
-        updated_at
-        addressByTypeId {
-          script_args
-          script_code_hash
-          script_hash_type
-        }
-      }
-    }
-  }
-`;
-const RAW_INSCRIPTION_INFO_QUERY = (0, __WEBPACK_EXTERNAL_MODULE__apollo_client_core_1f4aac3e__.gql)`
-  query RawInscriptionInfo($udtHash: String!) {
-    token_info(where: { udt_hash: { _eq: $udtHash } }) {
-      decimal
-      name
-      symbol
-      expected_supply
-      mint_limit
-      mint_status
-      udt_hash
+
+    # Fetch any spore actions that occurred in the same transaction
+    # Uses the same tx_hash variable
+    spore_actions(where: { tx_hash: { _eq: $txHash } }) {
+      tx_hash # bytea
+      action_type # spore_action_type
+      spore_id # bytea
+      cluster_id # bytea
+      from_address_id # String
+      to_address_id # String
+      tx_timestamp # timestamp
     }
   }
 `;
 class RgbppSDK {
     service;
     client;
-    isMainnet;
-    constructor(isMainnet, btcTestnetType){
-        this.isMainnet = isMainnet;
+    constructor(graphqlEndpoint, btcTestnetType){
+        if (!graphqlEndpoint || "string" != typeof graphqlEndpoint || !graphqlEndpoint.startsWith("http")) throw new Error("A valid Hasura GraphQL endpoint URL (starting with http/https) is required.");
+        console.log(`[RgbppSDK] Initializing for ${btcTestnetType ? "testnet" : "mainnet"} with GraphQL endpoint: ${graphqlEndpoint}`);
         this.service = createBtcService(btcTestnetType);
-        const graphqlEndpoint = isMainnet ? "https://mainnet.unistate.io/v1/graphql" : "https://testnet.unistate.io/v1/graphql";
         this.client = new __WEBPACK_EXTERNAL_MODULE__apollo_client_core_1f4aac3e__.ApolloClient({
             cache: new __WEBPACK_EXTERNAL_MODULE__apollo_client_cache_99886c3b__.InMemoryCache(),
             link: new __WEBPACK_EXTERNAL_MODULE__apollo_client_link_batch_http_5da59ebe__.BatchHttpLink({
                 uri: graphqlEndpoint,
-                batchMax: 5,
-                batchInterval: 20
+                batchMax: 10,
+                batchInterval: 50
             }),
             defaultOptions: {
                 watchQuery: {
-                    fetchPolicy: "cache-and-network"
+                    fetchPolicy: "no-cache"
+                },
+                query: {
+                    fetchPolicy: "no-cache"
                 }
             }
         });
     }
     async fetchTxsDetails(btcAddress, afterTxId) {
         try {
-            return await this.service.getBtcTransactions(btcAddress, {
+            console.log(`[RgbppSDK] Fetching BTC transactions for address: ${btcAddress} ${afterTxId ? `after ${afterTxId}` : ""}`);
+            const transactions = await this.service.getBtcTransactions(btcAddress, {
                 after_txid: afterTxId
             });
+            console.log(`[RgbppSDK] Fetched ${transactions.length} BTC transactions for ${btcAddress}.`);
+            return transactions;
         } catch (error) {
-            console.error("Error fetching transactions:", error);
+            console.error(`[RgbppSDK] Error fetching BTC transactions for ${btcAddress}:`, error);
             throw error;
         }
     }
     async fetchAssetsAndQueryDetails(btcAddress) {
+        let balance = {
+            address: btcAddress,
+            total_satoshi: 0,
+            pending_satoshi: 0,
+            satoshi: 0,
+            available_satoshi: 0,
+            dust_satoshi: 0,
+            rgbpp_satoshi: 0,
+            utxo_count: 0
+        };
+        let rgbppCells = [];
+        console.log(`[RgbppSDK] Fetching assets and details for BTC address: ${btcAddress}`);
         try {
-            const [balance, assets] = await Promise.all([
-                this.service.getBtcBalance(btcAddress),
-                this.service.getRgbppAssetsByBtcAddress(btcAddress)
+            [balance, rgbppCells] = await Promise.all([
+                this.service.getBtcBalance(btcAddress).catch((err)=>{
+                    console.error(`[RgbppSDK] Failed to fetch BTC balance for ${btcAddress}:`, err);
+                    return {
+                        address: btcAddress,
+                        total_satoshi: 0,
+                        pending_satoshi: 0,
+                        satoshi: 0,
+                        available_satoshi: 0,
+                        dust_satoshi: 0,
+                        rgbpp_satoshi: 0,
+                        utxo_count: 0
+                    };
+                }),
+                this.service.getRgbppAssetsByBtcAddress(btcAddress).catch((err)=>{
+                    console.error(`[RgbppSDK] Failed to fetch RGBPP assets for ${btcAddress}:`, err);
+                    return [];
+                })
             ]);
-            const validAssets = assets.filter((asset)=>!!asset.outPoint);
-            if (0 === validAssets.length) return {
+            console.log(`[RgbppSDK] Fetched balance and ${rgbppCells.length} RGBPP asset entries for ${btcAddress}.`);
+            const validOutPoints = this.extractAndDeduplicateOutPoints(rgbppCells);
+            if (0 === validOutPoints.length) {
+                console.log(`[RgbppSDK] No unique CKB UTXOs found associated with ${btcAddress}.`);
+                return {
+                    balance,
+                    assets: {
+                        xudtCells: [],
+                        sporeActions: []
+                    }
+                };
+            }
+            console.log(`[RgbppSDK] Found ${validOutPoints.length} unique CKB UTXOs to query.`);
+            const graphqlResponses = await this.queryDetailsForAllOutPoints(validOutPoints);
+            const processedAssets = this.processGraphQLResponses(graphqlResponses);
+            console.log(`[RgbppSDK] Finished processing for ${btcAddress}. Found ${processedAssets.xudtCells.length} XUDT cells and ${processedAssets.sporeActions.length} unique Spore actions.`);
+            return {
                 balance,
+                assets: processedAssets
+            };
+        } catch (error) {
+            console.error(`[RgbppSDK] Critical error in fetchAssetsAndQueryDetails for ${btcAddress}:`, error);
+            const fallbackBalance = balance || {
+                address: btcAddress,
+                total_satoshi: 0,
+                pending_satoshi: 0,
+                satoshi: 0,
+                available_satoshi: 0,
+                dust_satoshi: 0,
+                rgbpp_satoshi: 0,
+                utxo_count: 0
+            };
+            return {
+                balance: fallbackBalance,
                 assets: {
                     xudtCells: [],
                     sporeActions: []
                 }
             };
-            const assetDetails = await Promise.all(validAssets.map((asset)=>this.queryAssetDetails(asset.outPoint)));
-            const processedXudtCells = await Promise.all(assetDetails.filter((result)=>!!result.xudtCell).map((result)=>this.processXudtCell(result.xudtCell)));
-            const assetsResult = {
-                xudtCells: processedXudtCells,
-                sporeActions: assetDetails.flatMap((result)=>result.sporeActions ? [
-                        result.sporeActions
-                    ] : [])
-            };
-            return {
-                balance,
-                assets: assetsResult
-            };
-        } catch (error) {
-            console.error("Error fetching assets and details:", error);
-            throw error;
         }
     }
-    xudtHash(script_args) {
-        return this.removeHexPrefix((0, __WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__.scriptToHash)({
-            ...(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.getXudtTypeScript)(this.isMainnet),
-            args: this.formatHexPrefix(script_args)
-        }));
+    extractAndDeduplicateOutPoints(RgbppCells) {
+        const outPointsMap = new Map();
+        for (const asset of RgbppCells)if (asset.outPoint && "string" == typeof asset.outPoint.txHash && asset.outPoint.txHash.startsWith("0x") && 66 === asset.outPoint.txHash.length && null !== asset.outPoint.index && void 0 !== asset.outPoint.index && !isNaN(Number(asset.outPoint.index))) {
+            const key = `${asset.outPoint.txHash}:${asset.outPoint.index}`;
+            if (!outPointsMap.has(key)) outPointsMap.set(key, {
+                txHash: asset.outPoint.txHash,
+                index: String(asset.outPoint.index)
+            });
+        } else console.warn("[RgbppSDK] Skipping invalid OutPoint from RGBPP service:", JSON.stringify(asset.outPoint));
+        return Array.from(outPointsMap.values());
     }
-    formatHexPrefix(hexString) {
-        return `\\x${hexString.replace(/^0x/, "")}`;
+    async queryDetailsForAllOutPoints(outPoints) {
+        console.log(`[RgbppSDK] Querying GraphQL for ${outPoints.length} UTXOs...`);
+        const promises = outPoints.map((outPoint)=>this.querySingleAssetDetails(outPoint).catch((error)=>{
+                console.error(`[RgbppSDK] Failed GraphQL query for UTXO ${outPoint.txHash}:${outPoint.index}. Error: ${error.message}`);
+                return null;
+            }));
+        return Promise.all(promises);
     }
-    removeHexPrefix(prefixedHexString) {
-        return `0x${prefixedHexString.replace(/^\\x/, "")}`;
-    }
-    async queryRawInscriptionInfo(udtHash) {
-        const { data } = await this.client.query({
-            query: RAW_INSCRIPTION_INFO_QUERY,
-            variables: {
-                udtHash
+    processGraphQLResponses(responses) {
+        let processedXudtCells = [];
+        const processedSporeActionsMap = new Map();
+        let successfulQueries = 0;
+        let failedQueries = 0;
+        let processedCellsCount = 0;
+        let processedActionsCount = 0;
+        for (const response of responses){
+            if (null === response) {
+                failedQueries++;
+                continue;
             }
-        });
-        return data.token_info;
+            successfulQueries++;
+            for (const rawCell of response.xudt_cells)try {
+                const processedCell = this.processRawXudtCell(rawCell);
+                processedXudtCells.push(processedCell);
+                processedCellsCount++;
+            } catch (processingError) {
+                console.error(`[RgbppSDK] Error processing XUDT Cell ${parseHexFromGraphQL(rawCell.tx_hash)}:${rawCell.output_index}:`, processingError);
+            }
+            for (const rawAction of response.spore_actions){
+                const actionTxHash = parseHexFromGraphQL(rawAction.tx_hash);
+                if (!processedSporeActionsMap.has(actionTxHash)) try {
+                    const processedAction = this.processRawSporeAction(rawAction);
+                    processedSporeActionsMap.set(actionTxHash, processedAction);
+                    processedActionsCount++;
+                } catch (processingError) {
+                    console.error(`[RgbppSDK] Error processing Spore Action from tx ${actionTxHash}:`, processingError);
+                }
+            }
+        }
+        console.log(`[RgbppSDK] Processing complete. Successful queries: ${successfulQueries}, Failed queries: ${failedQueries}. Processed Cells: ${processedCellsCount}, Unique Actions: ${processedActionsCount}.`);
+        return {
+            xudtCells: processedXudtCells,
+            sporeActions: Array.from(processedSporeActionsMap.values())
+        };
     }
-    async queryAssetDetails(outPoint) {
-        const { data } = await this.client.query({
+    async querySingleAssetDetails(outPoint) {
+        const txHashForQuery = formatHexForGraphQL(outPoint.txHash);
+        const outputIndex = Number(outPoint.index);
+        if (isNaN(outputIndex) || outputIndex < 0) throw new Error(`Invalid output index provided for query: "${outPoint.index}"`);
+        const result = await this.client.query({
             query: ASSET_DETAILS_QUERY,
             variables: {
-                txHash: this.formatHexPrefix(outPoint.txHash),
-                txIndex: Number(outPoint.index)
+                txHash: txHashForQuery,
+                outputIndex: outputIndex
             }
         });
+        if (result.errors) {
+            const errorMessages = result.errors.map((e)=>e.message).join("; ");
+            console.error(`[RgbppSDK] GraphQL query errors for ${outPoint.txHash}:${outputIndex}: ${errorMessages}`);
+            throw new Error(`GraphQL query failed for ${outPoint.txHash}:${outputIndex}: ${errorMessages}`);
+        }
+        const data = result.data || {
+            xudt_cells: [],
+            spore_actions: []
+        };
+        data.xudt_cells = data.xudt_cells || [];
+        data.spore_actions = data.spore_actions || [];
+        if (data.xudt_cells.length > 1) console.warn(`[RgbppSDK] Expected 0 or 1 XUDT cell for ${outPoint.txHash}:${outputIndex}, but received ${data.xudt_cells.length}. Using the first one.`);
         return data;
     }
-    async processXudtCell(cell) {
-        if (!cell.addressByTypeId.token_info && 0 === cell.addressByTypeId.token_infos.length) {
-            const rawInfo = await this.queryRawInscriptionInfo(this.xudtHash(cell.addressByTypeId.script_args));
-            cell.addressByTypeId.token_infos = rawInfo;
-        }
-        return {
-            amount: cell.amount,
-            is_consumed: cell.is_consumed,
-            type_id: cell.type_id,
-            addressByTypeId: {
-                token_info: cell.addressByTypeId.token_info,
-                inscription_infos: cell.addressByTypeId.token_infos.map((info)=>({
-                        ...info,
-                        mint_status: this.validateMintStatus(info.mint_status)
-                    })),
-                script_args: cell.addressByTypeId.script_args,
-                script_code_hash: cell.addressByTypeId.script_code_hash,
-                script_hash_type: cell.addressByTypeId.script_hash_type
+    processRawXudtCell(rawCell) {
+        const cellIdentifier = `${parseHexFromGraphQL(rawCell.tx_hash)}:${rawCell.output_index}`;
+        try {
+            const statusInfo = rawCell.transaction_outputs_status;
+            const is_consumed = statusInfo?.consumed_by_tx_hash != null;
+            let consumed_by = null;
+            if (is_consumed && statusInfo?.consumed_by_tx_hash && statusInfo?.consumed_by_input_index !== null && statusInfo?.consumed_by_input_index !== void 0) consumed_by = {
+                tx_hash: parseHexFromGraphQL(statusInfo.consumed_by_tx_hash),
+                input_index: statusInfo.consumed_by_input_index
+            };
+            else if (is_consumed) console.warn(`[RgbppSDK] Cell ${cellIdentifier} consumed, but consumption details missing in 'transaction_outputs_status' relationship data.`);
+            let tokenInfo = null;
+            if (rawCell.token_info) {
+                const rawToken = rawCell.token_info;
+                const mintStatusRaw = rawToken.mint_status;
+                let mintStatus = null;
+                if (null != mintStatusRaw) try {
+                    mintStatus = this.validateMintStatus(mintStatusRaw);
+                } catch (validationError) {
+                    console.error(`[RgbppSDK] Error validating MintStatus (${mintStatusRaw}) for cell ${cellIdentifier}: ${validationError instanceof Error ? validationError.message : String(validationError)}. Setting to null.`);
+                }
+                tokenInfo = {
+                    type_address_id: rawCell.type_address_id,
+                    decimal: rawToken.decimal,
+                    name: rawToken.name,
+                    symbol: rawToken.symbol,
+                    udt_hash: parseHexFromGraphQL(rawToken.udt_hash),
+                    expected_supply: safeStringToBigInt(rawToken.expected_supply),
+                    mint_limit: safeStringToBigInt(rawToken.mint_limit),
+                    mint_status: mintStatus
+                };
             }
-        };
+            let typeScript = null;
+            if (rawCell.address) {
+                const rawAddress = rawCell.address;
+                typeScript = {
+                    code_hash: parseHexFromGraphQL(rawAddress.script_code_hash),
+                    hash_type: rawAddress.script_hash_type,
+                    args: parseHexFromGraphQL(rawAddress.script_args)
+                };
+            } else console.warn(`[RgbppSDK] No 'address' relationship data for XUDT cell ${cellIdentifier} (Type Address: ${rawCell.type_address_id}). Cannot get type script details.`);
+            const amount = safeStringToBigInt(rawCell.amount);
+            if (null === amount) throw new Error(`Failed to convert amount "${rawCell.amount}" to BigInt.`);
+            return {
+                tx_hash: parseHexFromGraphQL(rawCell.tx_hash),
+                output_index: rawCell.output_index,
+                amount: amount,
+                is_consumed,
+                lock_address_id: rawCell.lock_address_id,
+                type_address_id: rawCell.type_address_id,
+                token_info: tokenInfo,
+                type_script: typeScript,
+                consumed_by: consumed_by
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+            console.error(`[RgbppSDK] Critical error processing RawXudtCell ${cellIdentifier}:`, error);
+            throw new Error(`Failed to process RawXudtCell ${cellIdentifier}: ${errorMessage}`);
+        }
+    }
+    processRawSporeAction(rawAction) {
+        const actionTxHash = parseHexFromGraphQL(rawAction.tx_hash);
+        try {
+            return {
+                tx_hash: actionTxHash,
+                action_type: rawAction.action_type,
+                spore_id: parseHexFromGraphQL(rawAction.spore_id),
+                cluster_id: parseHexFromGraphQL(rawAction.cluster_id),
+                from_address_id: rawAction.from_address_id,
+                to_address_id: rawAction.to_address_id,
+                tx_timestamp: rawAction.tx_timestamp
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error(`[RgbppSDK] Error processing RawSporeAction from tx ${actionTxHash}:`, error);
+            throw new Error(`Failed to process RawSporeAction from tx ${actionTxHash}: ${errorMessage}`);
+        }
     }
     validateMintStatus(status) {
         const validStatus = MintStatusMap[status];
-        if (void 0 === validStatus) throw new Error(`Invalid MintStatus: ${status}`);
+        if (void 0 === validStatus) {
+            console.warn(`[RgbppSDK] Invalid MintStatus value received: ${status}. Valid values: ${Object.keys(MintStatusMap).join(", ")}.`);
+            throw new Error(`Invalid MintStatus value received from API: ${status}`);
+        }
         return validStatus;
     }
 }
