@@ -5,7 +5,17 @@ import {
   createBtcService,
   TxResult,
 } from "./helper";
-import { QueryResult, RgbppSDK } from "./sdk";
+import {
+  AssetDetails,
+  Balance,
+  MintStatus,
+  ProcessedSporeAction,
+  ProcessedXudtCell,
+  QueryResult,
+  RgbppSDK,
+  ScriptInfo,
+  TokenInfo,
+} from "./sdk";
 
 import {
   createBurnXudtTransaction,
@@ -127,6 +137,8 @@ export {
 
 export type {
   AbstractWallet,
+  AssetDetails,
+  Balance,
   CreateBurnXudtTransactionParams,
   createClusterCombinedParams,
   CreateIssueXudtTransactionParams,
@@ -134,6 +146,7 @@ export type {
   CreateTransferXudtTransactionParams,
   LeapSporeToBtcTransactionParams,
   LeapToBtcTransactionParams,
+  MintStatus,
   PrepareClusterCellTransactionParams,
   PrepareCreateClusterUnsignedPsbtParams,
   PrepareCreateSporeUnsignedPsbtParams,
@@ -145,13 +158,17 @@ export type {
   PrepareLeapUnsignedPsbtParams,
   PrepareTransferSporeUnsignedPsbtParams,
   PrepareTransferUnsignedPsbtParams,
+  ProcessedSporeAction,
+  ProcessedXudtCell,
   QueryResult,
   RgbppDistributeCombinedParams,
   RgbppLauncerCombinedParams,
   RgbppLeapFromBtcToCkbCombinedParams,
   RgbppTransferCombinedParams,
+  ScriptInfo,
   SporeCreateCombinedParams,
   SporeLeapCombinedParams,
   SporeTransferCombinedParams,
+  TokenInfo,
   TxResult,
 };
