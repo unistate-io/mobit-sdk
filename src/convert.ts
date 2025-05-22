@@ -99,10 +99,10 @@ function ConvertToTransactionLike(
       },
       type: output.type
         ? {
-          args: hexFrom(output.type.args),
-          codeHash: hexFrom(output.type.codeHash),
-          hashType: output.type.hashType,
-        }
+            args: hexFrom(output.type.args),
+            codeHash: hexFrom(output.type.codeHash),
+            hashType: output.type.hashType,
+          }
         : null,
     })),
     outputsData: rawTransaction.outputsData.map(hexFrom),

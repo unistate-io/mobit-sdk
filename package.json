@@ -1,6 +1,6 @@
 {
   "name": "mobit-sdk",
-  "version": "2.2.1",
+  "version": "2.2.4",
   "description": "",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.mjs",

@@ -64,6 +64,7 @@ export async function createTransferXudtTransaction(
     ckbAddresses,
     type: xudtType,
     collector,
+    isMainnet,
   });
 
   console.debug("Fetched xudt cells:", xudtCells);
@@ -80,7 +81,7 @@ export async function createTransferXudtTransaction(
 
   let sumXudtOutputCapacity = receivers
     .map(({ toAddress }) =>
-      calculateUdtCellCapacity(addressToScript(toAddress))
+      calculateUdtCellCapacity(addressToScript(toAddress)),
     )
     .reduce((prev, current) => prev + current, BigInt(0));
 
@@ -109,7 +110,7 @@ export async function createTransferXudtTransaction(
   );
 
   const outputsData = receivers.map(({ transferAmount }) =>
-    append0x(u128ToLe(transferAmount))
+    append0x(u128ToLe(transferAmount)),
   );
 
   console.debug("Outputs:", outputs);

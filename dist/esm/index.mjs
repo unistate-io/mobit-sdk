@@ -1,24 +1,70 @@
 import * as __WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__ from "@nervosnetwork/ckb-sdk-utils";
 import * as __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__ from "@rgbpp-sdk/ckb";
 import * as __WEBPACK_EXTERNAL_MODULE_rgbpp__ from "rgbpp";
+import * as __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__ from "@ckb-ccc/core";
+import * as __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_advanced_40fe4af8__ from "@ckb-ccc/core/advanced";
 import * as __WEBPACK_EXTERNAL_MODULE__apollo_client_core_1f4aac3e__ from "@apollo/client/core";
 import * as __WEBPACK_EXTERNAL_MODULE__apollo_client_cache_99886c3b__ from "@apollo/client/cache";
 import * as __WEBPACK_EXTERNAL_MODULE__apollo_client_link_batch_http_5da59ebe__ from "@apollo/client/link/batch-http";
-import * as __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__ from "@ckb-ccc/core";
 import * as __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_btc_ad1ee031__ from "@rgbpp-sdk/btc";
+const TESTNET_USDI_CONTRACT_TYPE_ID_SCRIPT_ARGS = "0xf0bad0541211603bf14946e09ceac920dd7ed4f862f0ffd53d0d477d6e1d0f0b";
+const TESTNET_USDI_CONTRACT_TYPE_ID_SCRIPT = {
+    codeHash: "0x00000000000000000000000000000000000000000000000000545950455f4944",
+    hashType: "type",
+    args: TESTNET_USDI_CONTRACT_TYPE_ID_SCRIPT_ARGS
+};
+const TESTNET_PAUSABLE_UDT_CODE_HASH = __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.Script.from(TESTNET_USDI_CONTRACT_TYPE_ID_SCRIPT).hash();
+const TESTNET_USDI_TOKEN_ARGS = "0x71fd1985b2971a9903e4d8ed0d59e6710166985217ca0681437883837b86162f";
+const KNOWN_USDI_TYPES_TESTNET = {
+    codeHash: TESTNET_PAUSABLE_UDT_CODE_HASH,
+    hashType: "type",
+    args: TESTNET_USDI_TOKEN_ARGS
+};
+const MAINNET_XUDT_CODE_HASH = "0xbfa35a9c38a676682b65ade8f02be164d48632281477e36f8dc2f41f79e56bfc";
+const MAINNET_USDI_TOKEN_ARGS = "0xd591ebdc69626647e056e13345fd830c8b876bb06aa07ba610479eb77153ea9f";
+const KNOWN_USDI_TYPES_MAINNET = {
+    codeHash: MAINNET_XUDT_CODE_HASH,
+    hashType: "type",
+    args: MAINNET_USDI_TOKEN_ARGS
+};
+function areScriptsEqual(s1, s2) {
+    if (!s1 || !s2) return s1 === s2;
+    return s1.codeHash === s2.codeHash && s1.hashType === s2.hashType && s1.args === s2.args;
+}
+function cccScriptToCkbComponentsScript(script) {
+    if (!script) return;
+    return {
+        codeHash: script.codeHash,
+        hashType: script.hashType,
+        args: script.args
+    };
+}
+function cccOutPointToCkbComponentsOutPoint(outPoint) {
+    return {
+        txHash: outPoint.txHash,
+        index: __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.numToHex(outPoint.index)
+    };
+}
+function cccCellOutputToCkbComponentsCellOutput(cellOutput) {
+    return {
+        capacity: __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.numToHex(cellOutput.capacity),
+        lock: cccScriptToCkbComponentsScript(cellOutput.lock),
+        type: cccScriptToCkbComponentsScript(cellOutput.type)
+    };
+}
 class CkbHelper {
     collector;
     isMainnet;
-    constructor(isMainnet){
+    cccClient;
+    constructor(isMainnet, ckbClient){
         this.isMainnet = isMainnet;
-        if (isMainnet) this.collector = new __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.Collector({
-            ckbNodeUrl: "https://mainnet.ckbapp.dev",
-            ckbIndexerUrl: "https://mainnet.ckbapp.dev/indexer"
+        const primaryApiUrl = isMainnet ? "https://mainnet.ckbapp.dev" : "https://testnet.ckbapp.dev";
+        const indexerApiUrl = isMainnet ? "https://mainnet.ckbapp.dev/indexer" : "https://testnet.ckb.dev";
+        this.collector = new __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.Collector({
+            ckbNodeUrl: primaryApiUrl,
+            ckbIndexerUrl: indexerApiUrl
         });
-        else this.collector = new __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.Collector({
-            ckbNodeUrl: "https://testnet.ckbapp.dev",
-            ckbIndexerUrl: "https://testnet.ckb.dev"
-        });
+        this.cccClient = ckbClient ?? (isMainnet ? new __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.ClientPublicMainnet() : new __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.ClientPublicTestnet());
     }
 }
 const createBtcService = (btcTestnetType)=>{
@@ -51,27 +97,66 @@ class BtcHelper {
         this.wallet = wallet;
     }
 }
-async function getIndexerCells({ ckbAddresses, type, collector }) {
-    const fromLocks = ckbAddresses.map(__WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__.addressToScript);
-    let indexerCells = [];
-    console.debug("Starting to fetch indexer cells for addresses:", ckbAddresses);
-    console.debug("Converted addresses to locks:", fromLocks);
-    for (const lock of fromLocks){
-        console.debug("Fetching cells for lock:", lock);
-        try {
+async function getIndexerCells({ ckbAddresses, type, collector, isMainnet = true }) {
+    console.debug(`[MobitSDK] Network type: ${isMainnet ? "mainnet" : "testnet"}`);
+    const targetUsdiType = isMainnet ? KNOWN_USDI_TYPES_MAINNET : KNOWN_USDI_TYPES_TESTNET;
+    const isUsdiQuery = type && areScriptsEqual(type, targetUsdiType);
+    if (isUsdiQuery) {
+        console.debug("[MobitSDK] Using ccc.Client direct RPC call for USDI query");
+        const cccClient = isMainnet ? new __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.ClientPublicMainnet() : new __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.ClientPublicTestnet();
+        let allCells = [];
+        for (const address of ckbAddresses){
+            const lockScript = (0, __WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__.addressToScript)(address);
+            const searchKey = {
+                script: __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.Script.from(lockScript),
+                scriptType: "lock",
+                scriptSearchMode: "exact",
+                filter: {
+                    script: __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.Script.from(type)
+                },
+                withData: true
+            };
+            let lastCursor;
+            const limit = 100;
+            while(true){
+                const rpcResponse = await cccClient.requestor.request("get_cells", [
+                    __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_advanced_40fe4af8__.JsonRpcTransformers.indexerSearchKeyFrom(searchKey),
+                    "asc",
+                    __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.numToHex(limit),
+                    lastCursor
+                ]);
+                const rawCells = rpcResponse.objects;
+                const cellsPage = rawCells.map((rawCell)=>({
+                        blockNumber: __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.hexFrom(rawCell.block_number),
+                        outPoint: cccOutPointToCkbComponentsOutPoint(__WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_advanced_40fe4af8__.JsonRpcTransformers.outPointTo(rawCell.out_point)),
+                        output: cccCellOutputToCkbComponentsCellOutput(__WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_advanced_40fe4af8__.JsonRpcTransformers.cellOutputTo(rawCell.output)),
+                        outputData: __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.hexFrom(rawCell.output_data),
+                        txIndex: __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.hexFrom(rawCell.tx_index)
+                    }));
+                allCells = allCells.concat(cellsPage);
+                lastCursor = rpcResponse.last_cursor;
+                if (cellsPage.length < limit) break;
+            }
+        }
+        console.debug(`[MobitSDK] Fetched ${allCells.length} USDI cells via ccc.Client.`);
+        return allCells;
+    }
+    {
+        console.debug("[MobitSDK] Using Collector for generic cell query.");
+        const fromLocks = ckbAddresses.map(__WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__.addressToScript);
+        let indexerCells = [];
+        for (const lock of fromLocks)try {
             const cells = await collector.getCells({
                 lock,
                 type
             });
-            console.debug("Fetched cells for lock:", lock, "Cells:", cells);
-            indexerCells = indexerCells.concat(cells);
+            indexerCells = indexerCells.concat(cells ?? []);
         } catch (error) {
-            console.error("Error fetching cells for lock:", lock, "Error:", error);
-            throw error;
+            console.error("[MobitSDK] Error fetching cells for lock via Collector:", lock, "Error:", error);
         }
+        console.debug(`[MobitSDK] Fetched ${indexerCells.length} cells via Collector.`);
+        return indexerCells;
     }
-    console.debug("Total indexer cells fetched:", indexerCells);
-    return indexerCells;
 }
 const ICKB_ARGS = "0xb73b6ab39d79390c6de90a09c96b290c331baf1798ed6f97aed02590929734e800000080";
 function isICKB(xudtArgs) {
@@ -96,57 +181,40 @@ const ICKB_CELL_DEP = {
 function getICKBCellDep(isMainnet) {
     return isMainnet ? ICKB_CELL_DEP.mainnet : ICKB_CELL_DEP.testnet;
 }
-const USDI_MAINNET_ARGS = "0x50bd8d6680b2612a403ac970e926605c2600d95a91a88c8a0b8709be6e78a1b95";
-const USDI_TESTNET_V1_ARGS = "0x28a734e118e005993d8265474298375722c2b4862783668694ac9d84dcc94d8";
-const USDI_TESTNET_V2_ARGS = "0x50bd8d6680b2612a403ac970e926605c2600d95a91a88c8a0b8709be6e78a1b95";
-const USDI_CELL_DEPS = {
-    mainnet: {
-        outPoint: {
-            txHash: "0xf6a5eef65101899db9709c8de1cc28f23c1bee90d857ebe176f6647ef109e20d",
-            index: "0x0"
-        },
-        depType: "code"
-    },
-    testnetV1: {
+function getUSDICellDep(xudtArgs, isMainnet) {
+    if (isMainnet) {
+        if (xudtArgs === MAINNET_USDI_TOKEN_ARGS) return {
+            outPoint: {
+                txHash: "0xf6a5eef65101899db9709c8de1cc28f23c1bee90d857ebe176f6647ef109e20d",
+                index: "0x0"
+            },
+            depType: "code"
+        };
+    } else if (xudtArgs === TESTNET_USDI_TOKEN_ARGS) return {
         outPoint: {
             txHash: "0xaec423c2af7fe844b476333190096b10fc5726e6d9ac58a9b71f71ffac204fee",
             index: "0x0"
         },
         depType: "code"
-    },
-    testnetV2: {
-        outPoint: {
-            txHash: "0x03d029480417b7307c567c898178381db7c06b9cf0a22b2109d2d3dd5e674e61",
-            index: "0x0"
-        },
-        depType: "code"
-    }
-};
-function getUSDICellDep(xudtArgs, isMainnet) {
-    if (isMainnet) {
-        if (xudtArgs === USDI_MAINNET_ARGS) return USDI_CELL_DEPS.mainnet;
-    } else {
-        if (xudtArgs === USDI_TESTNET_V1_ARGS) return USDI_CELL_DEPS.testnetV1;
-        if (xudtArgs === USDI_TESTNET_V2_ARGS) return USDI_CELL_DEPS.testnetV2;
-    }
+    };
     return null;
 }
 async function getCellDeps(isMainnet, xudtArgs) {
     const normalizedXudtArgs = xudtArgs.startsWith("0x") ? xudtArgs : `0x${xudtArgs}`;
     if (isICKB(normalizedXudtArgs)) {
-        console.debug("Using iCKB specific cell dep");
+        console.debug("[MobitSDK] Using iCKB specific cell dep");
         return [
             getICKBCellDep(isMainnet)
         ];
     }
     const usdiCellDep = getUSDICellDep(normalizedXudtArgs, isMainnet);
     if (usdiCellDep) {
-        console.debug(`Using USDI specific cell dep for args: ${normalizedXudtArgs} on ${isMainnet ? "mainnet" : "testnet"}`);
+        console.debug(`[MobitSDK] Using USDI specific cell dep for args: ${normalizedXudtArgs} on ${isMainnet ? "mainnet" : "testnet"}`);
         return [
             usdiCellDep
         ];
     }
-    console.debug("Using generic xUDT (Type ID) cell dep");
+    console.debug("[MobitSDK] Using generic xUDT (Type ID) cell dep");
     return await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.fetchTypeIdCellDeps)(isMainnet, {
         xudt: true
     });
@@ -664,7 +732,8 @@ async function createMergeXudtTransaction({ xudtType, ckbAddresses, collector, i
     const xudtCells = await getIndexerCells({
         ckbAddresses,
         type: xudtType,
-        collector
+        collector,
+        isMainnet
     });
     console.debug("Fetched xudt cells:", xudtCells);
     if (!xudtCells || 0 === xudtCells.length) throw new __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.NoXudtLiveCellError("The addresses have no xudt cells");
@@ -726,7 +795,8 @@ async function createTransferXudtTransaction({ xudtType, receivers, ckbAddresses
     const xudtCells = await getIndexerCells({
         ckbAddresses,
         type: xudtType,
-        collector
+        collector,
+        isMainnet
     });
     console.debug("Fetched xudt cells:", xudtCells);
     if (!xudtCells || 0 === xudtCells.length) throw new __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.NoXudtLiveCellError("The addresses have no xudt cells");

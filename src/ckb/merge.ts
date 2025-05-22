@@ -59,6 +59,7 @@ export async function createMergeXudtTransaction(
     ckbAddresses,
     type: xudtType,
     collector,
+    isMainnet,
   });
 
   console.debug("Fetched xudt cells:", xudtCells);
