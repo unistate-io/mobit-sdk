@@ -122,6 +122,15 @@ export declare function getIndexerCells({ ckbAddresses, type, collector, }: {
     collector: Collector;
     type?: CKBComponents.Script;
 }): Promise<IndexerCell[]>;
+/**
+ * Retrieves the cell dependencies required for a transaction involving a specific XUDT.
+ * It checks for known XUDTs like iCKB and USDI to provide their specific cell dependencies.
+ * If the XUDT is not a known special case, it falls back to fetching generic Type ID cell dependencies.
+ *
+ * @param isMainnet A boolean indicating whether the operation is on the mainnet.
+ * @param xudtArgs The arguments of the XUDT's type script.
+ * @returns A promise that resolves to an array of CKBComponents.CellDep.
+ */
 export declare function getCellDeps(isMainnet: boolean, xudtArgs: string): Promise<CKBComponents.CellDep[]>;
 export {};
 //# sourceMappingURL=helper.d.ts.map

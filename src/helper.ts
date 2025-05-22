@@ -219,6 +219,7 @@ export async function getIndexerCells({
   return indexerCells;
 }
 
+// iCKB specific constants and functions
 const ICKB_ARGS =
   "0xb73b6ab39d79390c6de90a09c96b290c331baf1798ed6f97aed02590929734e800000080";
 
@@ -249,10 +250,105 @@ function getICKBCellDep(isMainnet: boolean): CKBComponents.CellDep {
   return isMainnet ? ICKB_CELL_DEP.mainnet : ICKB_CELL_DEP.testnet;
 }
 
-export async function getCellDeps(isMainnet: boolean, xudtArgs: string) {
-  if (isICKB(xudtArgs)) {
-    return [getICKBCellDep(isMainnet)];
+// USDI specific constants and functions
+// Args from HTML Data Hash fields
+const USDI_MAINNET_ARGS =
+  "0x50bd8d6680b2612a403ac970e926605c2600d95a91a88c8a0b8709be6e78a1b95";
+const USDI_TESTNET_V1_ARGS =
+  "0x28a734e118e005993d8265474298375722c2b4862783668694ac9d84dcc94d8";
+const USDI_TESTNET_V2_ARGS =
+  "0x50bd8d6680b2612a403ac970e926605c2600d95a91a88c8a0b8709be6e78a1b95"; // Same as Mainnet
+
+function isUSDIMainnet(xudtArgs: string): boolean {
+  return xudtArgs === USDI_MAINNET_ARGS;
+}
+function isUSDITestnetV1(xudtArgs: string): boolean {
+  return xudtArgs === USDI_TESTNET_V1_ARGS;
+}
+function isUSDITestnetV2(xudtArgs: string): boolean {
+  return xudtArgs === USDI_TESTNET_V2_ARGS;
+}
+
+const USDI_CELL_DEPS = {
+  mainnet: {
+    // From Mainnet HTML Card
+    outPoint: {
+      txHash:
+        "0xf6a5eef65101899db9709c8de1cc28f23c1bee90d857ebe176f6647ef109e20d",
+      index: "0x0",
+    },
+    depType: "code",
+  },
+  testnetV1: {
+    // From Testnet HTML Card 1 (CodeHash) + README (CellDep for that CodeHash)
+    outPoint: {
+      txHash:
+        "0xaec423c2af7fe844b476333190096b10fc5726e6d9ac58a9b71f71ffac204fee",
+      index: "0x0",
+    },
+    depType: "code",
+  },
+  testnetV2: {
+    // From Testnet HTML Card 2
+    outPoint: {
+      txHash:
+        "0x03d029480417b7307c567c898178381db7c06b9cf0a22b2109d2d3dd5e674e61",
+      index: "0x0",
+    },
+    depType: "code",
+  },
+} as const;
+
+function getUSDICellDep(
+  xudtArgs: string,
+  isMainnet: boolean,
+): CKBComponents.CellDep | null {
+  if (isMainnet) {
+    if (xudtArgs === USDI_MAINNET_ARGS) {
+      return USDI_CELL_DEPS.mainnet;
+    }
   } else {
-    return await fetchTypeIdCellDeps(isMainnet, { xudt: true });
+    if (xudtArgs === USDI_TESTNET_V1_ARGS) {
+      return USDI_CELL_DEPS.testnetV1;
+    }
+    if (xudtArgs === USDI_TESTNET_V2_ARGS) {
+      return USDI_CELL_DEPS.testnetV2;
+    }
   }
+  return null; // Should not happen if isUSDI checks pass
+}
+
+/**
+ * Retrieves the cell dependencies required for a transaction involving a specific XUDT.
+ * It checks for known XUDTs like iCKB and USDI to provide their specific cell dependencies.
+ * If the XUDT is not a known special case, it falls back to fetching generic Type ID cell dependencies.
+ *
+ * @param isMainnet A boolean indicating whether the operation is on the mainnet.
+ * @param xudtArgs The arguments of the XUDT's type script.
+ * @returns A promise that resolves to an array of CKBComponents.CellDep.
+ */
+export async function getCellDeps(
+  isMainnet: boolean,
+  xudtArgs: string,
+): Promise<CKBComponents.CellDep[]> {
+  // Ensure xudtArgs is 0x prefixed for consistent comparison
+  const normalizedXudtArgs = xudtArgs.startsWith("0x")
+    ? xudtArgs
+    : `0x${xudtArgs}`;
+
+  if (isICKB(normalizedXudtArgs)) {
+    console.debug("Using iCKB specific cell dep");
+    return [getICKBCellDep(isMainnet)];
+  }
+
+  const usdiCellDep = getUSDICellDep(normalizedXudtArgs, isMainnet);
+  if (usdiCellDep) {
+    console.debug(
+      `Using USDI specific cell dep for args: ${normalizedXudtArgs} on ${isMainnet ? "mainnet" : "testnet"}`,
+    );
+    return [usdiCellDep];
+  }
+
+  console.debug("Using generic xUDT (Type ID) cell dep");
+  return await fetchTypeIdCellDeps(isMainnet, { xudt: true });
 }
