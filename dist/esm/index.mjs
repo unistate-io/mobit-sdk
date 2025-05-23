@@ -754,9 +754,7 @@ async function createMergeXudtTransaction({ xudtType, ckbAddresses, collector, i
         (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.append0x)((0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.u128ToLe)(sumAmount))
     ];
     const cellDeps = [
-        ...await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.fetchTypeIdCellDeps)(isMainnet, {
-            xudt: true
-        })
+        ...await getCellDeps(isMainnet, xudtType.args)
     ];
     const unsignedTx = {
         version: "0x0",

@@ -812,9 +812,7 @@ async function createMergeXudtTransaction({ xudtType, ckbAddresses, collector, i
         (0, ckb_namespaceObject.append0x)((0, ckb_namespaceObject.u128ToLe)(sumAmount))
     ];
     const cellDeps = [
-        ...await (0, ckb_namespaceObject.fetchTypeIdCellDeps)(isMainnet, {
-            xudt: true
-        })
+        ...await getCellDeps(isMainnet, xudtType.args)
     ];
     const unsignedTx = {
         version: "0x0",
