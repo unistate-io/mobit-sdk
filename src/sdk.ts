@@ -703,7 +703,7 @@ export class RgbppSDK {
         );
       }
 
-      const amount = safeStringToBigInt(rawCell.amount);
+      const amount = safeStringToBigInt(rawCell.amount?.toString());
       if (amount === null) {
         throw new Error(
           `Failed to convert amount "${rawCell.amount}" to BigInt.`,
