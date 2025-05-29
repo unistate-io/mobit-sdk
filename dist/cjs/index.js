@@ -580,7 +580,8 @@ class RgbppSDK {
                     args: parseHexFromGraphQL(rawAddress.script_args)
                 };
             } else console.warn(`[RgbppSDK] No 'address_by_type_address_id' relationship data for XUDT cell ${cellIdentifier} (Type Address: ${rawCell.type_address_id}). Cannot get type script details.`);
-            const amount = safeStringToBigInt(rawCell.amount);
+            console.log('rawCell.amount info:', rawCell.amount, typeof rawCell.amount, rawCell.amount?.toString());
+            const amount = safeStringToBigInt(rawCell.amount?.toString());
             if (null === amount) throw new Error(`Failed to convert amount "${rawCell.amount}" to BigInt.`);
             return {
                 tx_hash: parseHexFromGraphQL(rawCell.tx_hash),
