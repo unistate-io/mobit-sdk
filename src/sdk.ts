@@ -206,6 +206,13 @@ interface RawSporeAction {
   from_address_id: string | null; // String
   to_address_id: string | null; // String
   tx_timestamp: string; // timestamp -> string
+  spore: {
+    address_by_type_address_id?: {
+      script_args: string; // bytea -> \x...
+      script_code_hash: string; // bytea -> \x...
+      script_hash_type: number; // smallint
+    };
+  }
 }
 
 /**
@@ -225,6 +232,11 @@ export interface ProcessedSporeAction {
   to_address_id: string | null;
   /** Timestamp of the block containing the transaction */
   tx_timestamp: string; // ISO timestamp string
+  address_by_type_address_id?: {
+    script_args: string;
+    script_code_hash: string;
+    script_hash_type: number;
+  }
 }
 
 /**
@@ -302,6 +314,13 @@ const ASSET_DETAILS_QUERY = gql`
       from_address_id
       to_address_id
       tx_timestamp
+      spore {
+        address_by_type_address_id {
+          script_args
+          script_code_hash
+          script_hash_type
+        }
+    }
     }
   }
 `;
@@ -749,6 +768,7 @@ export class RgbppSDK {
         from_address_id: rawAction.from_address_id,
         to_address_id: rawAction.to_address_id,
         tx_timestamp: rawAction.tx_timestamp,
+        address_by_type_address_id: rawAction.spore.address_by_type_address_id
       };
     } catch (error) {
       const errorMessage =

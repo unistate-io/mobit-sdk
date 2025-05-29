@@ -81,6 +81,11 @@ export interface ProcessedSporeAction {
     to_address_id: string | null;
     /** Timestamp of the block containing the transaction */
     tx_timestamp: string;
+    address_by_type_address_id?: {
+        script_args: string;
+        script_code_hash: string;
+        script_hash_type: number;
+    };
 }
 /**
  * Represents the BTC balance information returned by the service. (Matches BtcApiBalance)

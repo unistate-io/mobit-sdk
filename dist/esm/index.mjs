@@ -286,6 +286,13 @@ const ASSET_DETAILS_QUERY = (0, __WEBPACK_EXTERNAL_MODULE__apollo_client_core_1f
       from_address_id
       to_address_id
       tx_timestamp
+      spore {
+        address_by_type_address_id {
+          script_args
+          script_code_hash
+          script_hash_type
+        }
+    }
     }
   }
 `;
@@ -552,7 +559,8 @@ class RgbppSDK {
                 cluster_id: parseHexFromGraphQL(rawAction.cluster_id),
                 from_address_id: rawAction.from_address_id,
                 to_address_id: rawAction.to_address_id,
-                tx_timestamp: rawAction.tx_timestamp
+                tx_timestamp: rawAction.tx_timestamp,
+                address_by_type_address_id: rawAction.spore.address_by_type_address_id
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
