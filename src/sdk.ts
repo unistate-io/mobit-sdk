@@ -703,6 +703,7 @@ export class RgbppSDK {
         );
       }
 
+      console.log('rawCell.amount info:', rawCell.amount, typeof rawCell.amount, rawCell.amount?.toString());
       const amount = safeStringToBigInt(rawCell.amount?.toString());
       if (amount === null) {
         throw new Error(
