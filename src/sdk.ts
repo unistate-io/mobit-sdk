@@ -763,12 +763,12 @@ export class RgbppSDK {
       return {
         tx_hash: actionTxHash,
         action_type: rawAction.action_type,
-        spore_id: parseHexFromGraphQL(rawAction.spore_id),
+        spore_id: rawAction.spore_id ? parseHexFromGraphQL(rawAction.spore_id) : rawAction.spore_id,
         cluster_id: parseHexFromGraphQL(rawAction.cluster_id),
         from_address_id: rawAction.from_address_id,
         to_address_id: rawAction.to_address_id,
         tx_timestamp: rawAction.tx_timestamp,
-        address_by_type_address_id: rawAction.spore.address_by_type_address_id
+        address_by_type_address_id: rawAction.spore?.address_by_type_address_id
       };
     } catch (error) {
       const errorMessage =
