@@ -24,38 +24,38 @@ var __webpack_require__ = {};
 var __webpack_exports__ = {};
 __webpack_require__.r(__webpack_exports__);
 __webpack_require__.d(__webpack_exports__, {
-    prepareLauncherUnsignedPsbt: ()=>prepareLauncherUnsignedPsbt,
-    distributeCombined: ()=>distributeCombined,
-    BtcHelper: ()=>BtcHelper,
-    createTransferXudtTransaction: ()=>createTransferXudtTransaction,
-    transferSporeCombined: ()=>transferSporeCombined,
-    prepareClusterCellTransaction: ()=>prepareClusterCellTransaction,
-    createMergeXudtTransaction: ()=>createMergeXudtTransaction,
-    launchCombined: ()=>launchCombined,
-    prepareCreateSporeUnsignedPsbt: ()=>prepareCreateSporeUnsignedPsbt,
-    leapFromBtcToCkbCombined: ()=>leapFromBtcToCkbCombined,
-    prepareCreateClusterUnsignedPsbt: ()=>prepareCreateClusterUnsignedPsbt,
-    RgbppSDK: ()=>RgbppSDK,
-    fetchAndFilterUtxos: ()=>fetchAndFilterUtxos,
-    transferCombined: ()=>transferCombined,
-    createIssueXudtTransaction: ()=>createIssueXudtTransaction,
-    createSporesCombined: ()=>createSporesCombined,
-    leapFromCkbToBtcTransaction: ()=>leapFromCkbToBtcTransaction,
-    createBtcService: ()=>createBtcService,
-    createClusterCombined: ()=>createClusterCombined,
-    prepareCreateSporeUnsignedTransaction: ()=>prepareCreateSporeUnsignedTransaction,
-    prepareDistributeUnsignedPsbt: ()=>prepareDistributeUnsignedPsbt,
-    leapSporeFromCkbToBtcTransaction: ()=>leapSporeFromCkbToBtcTransaction,
-    prepareTransferUnsignedPsbt: ()=>prepareTransferUnsignedPsbt,
-    prepareLeapUnsignedPsbt: ()=>prepareLeapUnsignedPsbt,
-    convertToTransaction: ()=>convertToTransaction,
-    prepareTransferSporeUnsignedPsbt: ()=>prepareTransferSporeUnsignedPsbt,
-    fetchAndValidateAssets: ()=>fetchAndValidateAssets,
-    prepareLeapSporeUnsignedPsbt: ()=>prepareLeapSporeUnsignedPsbt,
     prepareLaunchCellTransaction: ()=>prepareLaunchCellTransaction,
+    fetchAndValidateAssets: ()=>fetchAndValidateAssets,
+    launchCombined: ()=>launchCombined,
+    createBtcService: ()=>createBtcService,
+    leapFromCkbToBtcTransaction: ()=>leapFromCkbToBtcTransaction,
+    fetchAndFilterUtxos: ()=>fetchAndFilterUtxos,
+    BtcHelper: ()=>BtcHelper,
+    createIssueXudtTransaction: ()=>createIssueXudtTransaction,
+    leapSporeFromCkbToBtcTransaction: ()=>leapSporeFromCkbToBtcTransaction,
+    leapFromBtcToCkbCombined: ()=>leapFromBtcToCkbCombined,
+    createTransferXudtTransaction: ()=>createTransferXudtTransaction,
+    prepareLauncherUnsignedPsbt: ()=>prepareLauncherUnsignedPsbt,
+    createMergeXudtTransaction: ()=>createMergeXudtTransaction,
+    prepareDistributeUnsignedPsbt: ()=>prepareDistributeUnsignedPsbt,
+    transferSporeCombined: ()=>transferSporeCombined,
+    transferCombined: ()=>transferCombined,
+    prepareClusterCellTransaction: ()=>prepareClusterCellTransaction,
+    prepareTransferSporeUnsignedPsbt: ()=>prepareTransferSporeUnsignedPsbt,
+    prepareCreateSporeUnsignedTransaction: ()=>prepareCreateSporeUnsignedTransaction,
+    createClusterCombined: ()=>createClusterCombined,
+    RgbppSDK: ()=>RgbppSDK,
+    createSporesCombined: ()=>createSporesCombined,
+    distributeCombined: ()=>distributeCombined,
+    leapSporeFromBtcToCkbCombined: ()=>leapSporeFromBtcToCkbCombined,
+    prepareLeapSporeUnsignedPsbt: ()=>prepareLeapSporeUnsignedPsbt,
     createBurnXudtTransaction: ()=>createBurnXudtTransaction,
+    convertToTransaction: ()=>convertToTransaction,
+    prepareCreateClusterUnsignedPsbt: ()=>prepareCreateClusterUnsignedPsbt,
+    prepareCreateSporeUnsignedPsbt: ()=>prepareCreateSporeUnsignedPsbt,
     CkbHelper: ()=>CkbHelper,
-    leapSporeFromBtcToCkbCombined: ()=>leapSporeFromBtcToCkbCombined
+    prepareTransferUnsignedPsbt: ()=>prepareTransferUnsignedPsbt,
+    prepareLeapUnsignedPsbt: ()=>prepareLeapUnsignedPsbt
 });
 const ckb_sdk_utils_namespaceObject = require("@nervosnetwork/ckb-sdk-utils");
 const ckb_namespaceObject = require("@rgbpp-sdk/ckb");
@@ -297,6 +297,16 @@ function safeStringToBigInt(numericStr) {
         return null;
     }
 }
+function safeStringToIndex(indexStr) {
+    if (null == indexStr || "string" != typeof indexStr || "" === indexStr.trim()) return null;
+    try {
+        if (indexStr.startsWith("0x")) return parseInt(indexStr, 16);
+        return Number(indexStr);
+    } catch (error) {
+        console.warn(`Failed to convert index string "${indexStr}" to number:`, error);
+        return null;
+    }
+}
 const MintStatusMap = {
     [0]: 0,
     [1]: 1,
@@ -467,7 +477,7 @@ class RgbppSDK {
     }
     extractAndDeduplicateOutPoints(RgbppCells) {
         const outPointsMap = new Map();
-        for (const asset of RgbppCells)if (asset.outPoint && "string" == typeof asset.outPoint.txHash && asset.outPoint.txHash.startsWith("0x") && 66 === asset.outPoint.txHash.length && null !== asset.outPoint.index && void 0 !== asset.outPoint.index && !isNaN(Number(asset.outPoint.index))) {
+        for (const asset of RgbppCells)if (asset.outPoint && "string" == typeof asset.outPoint.txHash && asset.outPoint.txHash.startsWith("0x") && 66 === asset.outPoint.txHash.length && null !== asset.outPoint.index && void 0 !== asset.outPoint.index && null !== safeStringToIndex(asset.outPoint.index)) {
             const key = `${asset.outPoint.txHash}:${asset.outPoint.index}`;
             if (!outPointsMap.has(key)) outPointsMap.set(key, {
                 txHash: asset.outPoint.txHash,
@@ -504,15 +514,19 @@ class RgbppSDK {
             } catch (processingError) {
                 console.error(`[RgbppSDK] Error processing XUDT Cell ${parseHexFromGraphQL(rawCell.tx_hash)}:${rawCell.output_index}:`, processingError);
             }
-            for (const rawAction of response.spore_actions){
-                const actionTxHash = parseHexFromGraphQL(rawAction.tx_hash);
-                if (!processedSporeActionsMap.has(actionTxHash)) try {
-                    const processedAction = this.processRawSporeAction(rawAction);
-                    processedSporeActionsMap.set(actionTxHash, processedAction);
+            for (const rawAction of response.spore_actions)try {
+                const processedAction = this.processRawSporeAction(rawAction);
+                const sporeId = parseHexFromGraphQL(rawAction.spore_id);
+                const clusterId = parseHexFromGraphQL(rawAction.cluster_id);
+                const actionType = rawAction.action_type;
+                const uniqueKey = `${processedAction.tx_hash}:${actionType}:${sporeId || "null"}:${clusterId || "null"}`;
+                if (!processedSporeActionsMap.has(uniqueKey)) {
+                    processedSporeActionsMap.set(uniqueKey, processedAction);
                     processedActionsCount++;
-                } catch (processingError) {
-                    console.error(`[RgbppSDK] Error processing Spore Action from tx ${actionTxHash}:`, processingError);
                 }
+            } catch (processingError) {
+                const actionTxHash = parseHexFromGraphQL(rawAction.tx_hash);
+                console.error(`[RgbppSDK] Error processing Spore Action from tx ${actionTxHash}:`, processingError);
             }
         }
         console.log(`[RgbppSDK] Processing complete. Successful queries: ${successfulQueries}, Failed queries: ${failedQueries}. Processed Cells: ${processedCellsCount}, Unique Actions: ${processedActionsCount}.`);
@@ -523,8 +537,8 @@ class RgbppSDK {
     }
     async querySingleAssetDetails(outPoint) {
         const txHashForQuery = formatHexForGraphQL(outPoint.txHash);
-        const outputIndex = Number(outPoint.index);
-        if (isNaN(outputIndex) || outputIndex < 0) throw new Error(`Invalid output index provided for query: "${outPoint.index}"`);
+        const outputIndex = safeStringToIndex(outPoint.index);
+        if (null === outputIndex || outputIndex < 0) throw new Error(`Invalid output index provided for query: "${outPoint.index}"`);
         const result = await this.client.query({
             query: ASSET_DETAILS_QUERY,
             variables: {

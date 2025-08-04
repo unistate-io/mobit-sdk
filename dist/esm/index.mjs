@@ -1,19 +1,19 @@
-import * as __WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__ from "@nervosnetwork/ckb-sdk-utils";
-import * as __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__ from "@rgbpp-sdk/ckb";
-import * as __WEBPACK_EXTERNAL_MODULE_rgbpp__ from "rgbpp";
-import * as __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__ from "@ckb-ccc/core";
-import * as __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_advanced_40fe4af8__ from "@ckb-ccc/core/advanced";
-import * as __WEBPACK_EXTERNAL_MODULE__apollo_client_core_1f4aac3e__ from "@apollo/client/core";
-import * as __WEBPACK_EXTERNAL_MODULE__apollo_client_cache_99886c3b__ from "@apollo/client/cache";
-import * as __WEBPACK_EXTERNAL_MODULE__apollo_client_link_batch_http_5da59ebe__ from "@apollo/client/link/batch-http";
-import * as __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_btc_ad1ee031__ from "@rgbpp-sdk/btc";
+import { addressToScript, scriptToHash } from "@nervosnetwork/ckb-sdk-utils";
+import { Collector, MIN_CAPACITY, NoLiveCellError, NoXudtLiveCellError, append0x, appendCkbTxWitnesses, buildAppendingIssuerCellToSporesCreateTx, buildRgbppLockArgs, calculateRgbppCellCapacity, calculateRgbppClusterCellCapacity, calculateRgbppTokenInfoCellCapacity, calculateUdtCellCapacity, encodeRgbppTokenInfo, fetchTypeIdCellDeps, genBtcBatchTransferCkbVirtualTx, genBtcJumpCkbVirtualTx, genCkbJumpBtcVirtualTx, genCreateClusterCkbVirtualTx, genCreateSporeCkbVirtualTx, genLeapSporeFromBtcToCkbVirtualTx, genLeapSporeFromCkbToBtcRawTx, genRgbppLaunchCkbVirtualTx, genRgbppLockScript, genTransferSporeCkbVirtualTx, generateClusterCreateCoBuild, generateSporeCreateCoBuild, generateUniqueTypeArgs, getUniqueTypeScript, getXudtTypeScript, leToU128, remove0x, sendCkbTx, serializeScript, u128ToLe, updateCkbTxWithRealBtcTxId } from "@rgbpp-sdk/ckb";
+import { BtcAssetsApi, DataSource, buildRgbppTransferTx, sendRgbppUtxos } from "rgbpp";
+import { ccc, hexFrom } from "@ckb-ccc/core";
+import { JsonRpcTransformers } from "@ckb-ccc/core/advanced";
+import { ApolloClient, gql } from "@apollo/client/core";
+import { InMemoryCache } from "@apollo/client/cache";
+import { BatchHttpLink } from "@apollo/client/link/batch-http";
+import { bitcoin, sendRgbppUtxos as btc_sendRgbppUtxos, transactionToHex } from "@rgbpp-sdk/btc";
 const TESTNET_USDI_CONTRACT_TYPE_ID_SCRIPT_ARGS = "0xf0bad0541211603bf14946e09ceac920dd7ed4f862f0ffd53d0d477d6e1d0f0b";
 const TESTNET_USDI_CONTRACT_TYPE_ID_SCRIPT = {
     codeHash: "0x00000000000000000000000000000000000000000000000000545950455f4944",
     hashType: "type",
     args: TESTNET_USDI_CONTRACT_TYPE_ID_SCRIPT_ARGS
 };
-const TESTNET_PAUSABLE_UDT_CODE_HASH = __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.Script.from(TESTNET_USDI_CONTRACT_TYPE_ID_SCRIPT).hash();
+const TESTNET_PAUSABLE_UDT_CODE_HASH = ccc.Script.from(TESTNET_USDI_CONTRACT_TYPE_ID_SCRIPT).hash();
 const TESTNET_USDI_TOKEN_ARGS = "0x71fd1985b2971a9903e4d8ed0d59e6710166985217ca0681437883837b86162f";
 const KNOWN_USDI_TYPES_TESTNET = {
     codeHash: TESTNET_PAUSABLE_UDT_CODE_HASH,
@@ -42,12 +42,12 @@ function cccScriptToCkbComponentsScript(script) {
 function cccOutPointToCkbComponentsOutPoint(outPoint) {
     return {
         txHash: outPoint.txHash,
-        index: __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.numToHex(outPoint.index)
+        index: ccc.numToHex(outPoint.index)
     };
 }
 function cccCellOutputToCkbComponentsCellOutput(cellOutput) {
     return {
-        capacity: __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.numToHex(cellOutput.capacity),
+        capacity: ccc.numToHex(cellOutput.capacity),
         lock: cccScriptToCkbComponentsScript(cellOutput.lock),
         type: cccScriptToCkbComponentsScript(cellOutput.type)
     };
@@ -60,11 +60,11 @@ class CkbHelper {
         this.isMainnet = isMainnet;
         const primaryApiUrl = isMainnet ? "https://mainnet.ckbapp.dev" : "https://testnet.ckbapp.dev";
         const indexerApiUrl = isMainnet ? "https://mainnet.ckbapp.dev/indexer" : "https://testnet.ckb.dev";
-        this.collector = new __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.Collector({
+        this.collector = new Collector({
             ckbNodeUrl: primaryApiUrl,
             ckbIndexerUrl: indexerApiUrl
         });
-        this.cccClient = ckbClient ?? (isMainnet ? new __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.ClientPublicMainnet() : new __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.ClientPublicTestnet());
+        this.cccClient = ckbClient ?? (isMainnet ? new ccc.ClientPublicMainnet() : new ccc.ClientPublicTestnet());
     }
 }
 const createBtcService = (btcTestnetType)=>{
@@ -81,7 +81,7 @@ const createBtcService = (btcTestnetType)=>{
         btcServiceToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2JpdCIsImF1ZCI6Im1vYml0LmFwcCIsImp0aSI6ImY1NDZjZDBkLTUzNzQtNGI4YS1iMGRlLWY4NTRjMDY1Y2ZkOCIsImlhdCI6MTcyMjMyODc3Mn0.NmtM_Y7jkTjNKgTwatyAP0YoUDtwwci6LUe13R1L9SM";
     }
     const btcServiceOrigin = "https://mobit.app";
-    return __WEBPACK_EXTERNAL_MODULE_rgbpp__.BtcAssetsApi.fromToken(btcServiceUrl, btcServiceToken, btcServiceOrigin);
+    return BtcAssetsApi.fromToken(btcServiceUrl, btcServiceToken, btcServiceOrigin);
 };
 class BtcHelper {
     btcDataSource;
@@ -93,7 +93,7 @@ class BtcHelper {
         this.btcTestnetType = btcTestnetType;
         this.networkType = networkType;
         this.btcService = createBtcService(btcTestnetType);
-        this.btcDataSource = new __WEBPACK_EXTERNAL_MODULE_rgbpp__.DataSource(this.btcService, networkType);
+        this.btcDataSource = new DataSource(this.btcService, networkType);
         this.wallet = wallet;
     }
 }
@@ -103,16 +103,16 @@ async function getIndexerCells({ ckbAddresses, type, collector, isMainnet = true
     const isUsdiQuery = type && areScriptsEqual(type, targetUsdiType);
     if (isUsdiQuery) {
         console.debug("[MobitSDK] Using ccc.Client direct RPC call for USDI query");
-        const cccClient = isMainnet ? new __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.ClientPublicMainnet() : new __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.ClientPublicTestnet();
+        const cccClient = isMainnet ? new ccc.ClientPublicMainnet() : new ccc.ClientPublicTestnet();
         let allCells = [];
         for (const address of ckbAddresses){
-            const lockScript = (0, __WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__.addressToScript)(address);
+            const lockScript = addressToScript(address);
             const searchKey = {
-                script: __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.Script.from(lockScript),
+                script: ccc.Script.from(lockScript),
                 scriptType: "lock",
                 scriptSearchMode: "exact",
                 filter: {
-                    script: __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.Script.from(type)
+                    script: ccc.Script.from(type)
                 },
                 withData: true
             };
@@ -120,18 +120,18 @@ async function getIndexerCells({ ckbAddresses, type, collector, isMainnet = true
             const limit = 100;
             while(true){
                 const rpcResponse = await cccClient.requestor.request("get_cells", [
-                    __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_advanced_40fe4af8__.JsonRpcTransformers.indexerSearchKeyFrom(searchKey),
+                    JsonRpcTransformers.indexerSearchKeyFrom(searchKey),
                     "asc",
-                    __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.numToHex(limit),
+                    ccc.numToHex(limit),
                     lastCursor
                 ]);
                 const rawCells = rpcResponse.objects;
                 const cellsPage = rawCells.map((rawCell)=>({
-                        blockNumber: __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.hexFrom(rawCell.block_number),
-                        outPoint: cccOutPointToCkbComponentsOutPoint(__WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_advanced_40fe4af8__.JsonRpcTransformers.outPointTo(rawCell.out_point)),
-                        output: cccCellOutputToCkbComponentsCellOutput(__WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_advanced_40fe4af8__.JsonRpcTransformers.cellOutputTo(rawCell.output)),
-                        outputData: __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.hexFrom(rawCell.output_data),
-                        txIndex: __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.hexFrom(rawCell.tx_index)
+                        blockNumber: ccc.hexFrom(rawCell.block_number),
+                        outPoint: cccOutPointToCkbComponentsOutPoint(JsonRpcTransformers.outPointTo(rawCell.out_point)),
+                        output: cccCellOutputToCkbComponentsCellOutput(JsonRpcTransformers.cellOutputTo(rawCell.output)),
+                        outputData: ccc.hexFrom(rawCell.output_data),
+                        txIndex: ccc.hexFrom(rawCell.tx_index)
                     }));
                 allCells = allCells.concat(cellsPage);
                 lastCursor = rpcResponse.last_cursor;
@@ -143,7 +143,7 @@ async function getIndexerCells({ ckbAddresses, type, collector, isMainnet = true
     }
     {
         console.debug("[MobitSDK] Using Collector for generic cell query.");
-        const fromLocks = ckbAddresses.map(__WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__.addressToScript);
+        const fromLocks = ckbAddresses.map(addressToScript);
         let indexerCells = [];
         for (const lock of fromLocks)try {
             const cells = await collector.getCells({
@@ -215,7 +215,7 @@ async function getCellDeps(isMainnet, xudtArgs) {
         ];
     }
     console.debug("[MobitSDK] Using generic xUDT (Type ID) cell dep");
-    return await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.fetchTypeIdCellDeps)(isMainnet, {
+    return await fetchTypeIdCellDeps(isMainnet, {
         xudt: true
     });
 }
@@ -239,12 +239,22 @@ function safeStringToBigInt(numericStr) {
         return null;
     }
 }
+function safeStringToIndex(indexStr) {
+    if (null == indexStr || "string" != typeof indexStr || "" === indexStr.trim()) return null;
+    try {
+        if (indexStr.startsWith("0x")) return parseInt(indexStr, 16);
+        return Number(indexStr);
+    } catch (error) {
+        console.warn(`Failed to convert index string "${indexStr}" to number:`, error);
+        return null;
+    }
+}
 const MintStatusMap = {
     [0]: 0,
     [1]: 1,
     [2]: 2
 };
-const ASSET_DETAILS_QUERY = (0, __WEBPACK_EXTERNAL_MODULE__apollo_client_core_1f4aac3e__.gql)`
+const ASSET_DETAILS_QUERY = gql`
   query AssetDetails($txHash: bytea!, $outputIndex: Int!) {
     xudt_cells(
       where: { tx_hash: { _eq: $txHash }, output_index: { _eq: $outputIndex } }
@@ -303,9 +313,9 @@ class RgbppSDK {
         if (!graphqlEndpoint || "string" != typeof graphqlEndpoint || !graphqlEndpoint.startsWith("http")) throw new Error("A valid Hasura GraphQL endpoint URL (starting with http/https) is required.");
         console.log(`[RgbppSDK] Initializing for ${btcTestnetType ? "testnet" : "mainnet"} with GraphQL endpoint: ${graphqlEndpoint}`);
         this.service = createBtcService(btcTestnetType);
-        this.client = new __WEBPACK_EXTERNAL_MODULE__apollo_client_core_1f4aac3e__.ApolloClient({
-            cache: new __WEBPACK_EXTERNAL_MODULE__apollo_client_cache_99886c3b__.InMemoryCache(),
-            link: new __WEBPACK_EXTERNAL_MODULE__apollo_client_link_batch_http_5da59ebe__.BatchHttpLink({
+        this.client = new ApolloClient({
+            cache: new InMemoryCache(),
+            link: new BatchHttpLink({
                 uri: graphqlEndpoint,
                 batchMax: 10,
                 batchInterval: 50
@@ -409,7 +419,7 @@ class RgbppSDK {
     }
     extractAndDeduplicateOutPoints(RgbppCells) {
         const outPointsMap = new Map();
-        for (const asset of RgbppCells)if (asset.outPoint && "string" == typeof asset.outPoint.txHash && asset.outPoint.txHash.startsWith("0x") && 66 === asset.outPoint.txHash.length && null !== asset.outPoint.index && void 0 !== asset.outPoint.index && !isNaN(Number(asset.outPoint.index))) {
+        for (const asset of RgbppCells)if (asset.outPoint && "string" == typeof asset.outPoint.txHash && asset.outPoint.txHash.startsWith("0x") && 66 === asset.outPoint.txHash.length && null !== asset.outPoint.index && void 0 !== asset.outPoint.index && null !== safeStringToIndex(asset.outPoint.index)) {
             const key = `${asset.outPoint.txHash}:${asset.outPoint.index}`;
             if (!outPointsMap.has(key)) outPointsMap.set(key, {
                 txHash: asset.outPoint.txHash,
@@ -446,15 +456,19 @@ class RgbppSDK {
             } catch (processingError) {
                 console.error(`[RgbppSDK] Error processing XUDT Cell ${parseHexFromGraphQL(rawCell.tx_hash)}:${rawCell.output_index}:`, processingError);
             }
-            for (const rawAction of response.spore_actions){
-                const actionTxHash = parseHexFromGraphQL(rawAction.tx_hash);
-                if (!processedSporeActionsMap.has(actionTxHash)) try {
-                    const processedAction = this.processRawSporeAction(rawAction);
-                    processedSporeActionsMap.set(actionTxHash, processedAction);
+            for (const rawAction of response.spore_actions)try {
+                const processedAction = this.processRawSporeAction(rawAction);
+                const sporeId = parseHexFromGraphQL(rawAction.spore_id);
+                const clusterId = parseHexFromGraphQL(rawAction.cluster_id);
+                const actionType = rawAction.action_type;
+                const uniqueKey = `${processedAction.tx_hash}:${actionType}:${sporeId || "null"}:${clusterId || "null"}`;
+                if (!processedSporeActionsMap.has(uniqueKey)) {
+                    processedSporeActionsMap.set(uniqueKey, processedAction);
                     processedActionsCount++;
-                } catch (processingError) {
-                    console.error(`[RgbppSDK] Error processing Spore Action from tx ${actionTxHash}:`, processingError);
                 }
+            } catch (processingError) {
+                const actionTxHash = parseHexFromGraphQL(rawAction.tx_hash);
+                console.error(`[RgbppSDK] Error processing Spore Action from tx ${actionTxHash}:`, processingError);
             }
         }
         console.log(`[RgbppSDK] Processing complete. Successful queries: ${successfulQueries}, Failed queries: ${failedQueries}. Processed Cells: ${processedCellsCount}, Unique Actions: ${processedActionsCount}.`);
@@ -465,8 +479,8 @@ class RgbppSDK {
     }
     async querySingleAssetDetails(outPoint) {
         const txHashForQuery = formatHexForGraphQL(outPoint.txHash);
-        const outputIndex = Number(outPoint.index);
-        if (isNaN(outputIndex) || outputIndex < 0) throw new Error(`Invalid output index provided for query: "${outPoint.index}"`);
+        const outputIndex = safeStringToIndex(outPoint.index);
+        if (null === outputIndex || outputIndex < 0) throw new Error(`Invalid output index provided for query: "${outPoint.index}"`);
         const result = await this.client.query({
             query: ASSET_DETAILS_QUERY,
             variables: {
@@ -578,13 +592,13 @@ class RgbppSDK {
     }
 }
 async function createBurnXudtTransaction({ xudtType, burnAmount, ckbAddress, collector, isMainnet }) {
-    const fromLock = (0, __WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__.addressToScript)(ckbAddress);
+    const fromLock = addressToScript(ckbAddress);
     const xudtCells = await collector.getCells({
         lock: fromLock,
         type: xudtType
     });
     console.debug("Fetched xudt cells:", xudtCells);
-    if (!xudtCells || 0 === xudtCells.length) throw new __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.NoXudtLiveCellError("The address has no xudt cells");
+    if (!xudtCells || 0 === xudtCells.length) throw new NoXudtLiveCellError("The address has no xudt cells");
     const { inputs: udtInputs, sumAmount } = collector.collectUdtInputs({
         liveCells: xudtCells,
         needAmount: burnAmount
@@ -601,7 +615,7 @@ async function createBurnXudtTransaction({ xudtType, burnAmount, ckbAddress, col
             type: xudtType,
             capacity: "0x0"
         });
-        outputsData.push((0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.append0x)((0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.u128ToLe)(sumAmount - burnAmount)));
+        outputsData.push(append0x(u128ToLe(sumAmount - burnAmount)));
         console.debug("Updated outputs:", outputs);
         console.debug("Updated outputs data:", outputsData);
     }
@@ -621,21 +635,21 @@ async function createBurnXudtTransaction({ xudtType, burnAmount, ckbAddress, col
     return unsignedTx;
 }
 async function createIssueXudtTransaction({ xudtTotalAmount, tokenInfo, ckbAddress, collector, isMainnet }) {
-    const issueLock = (0, __WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__.addressToScript)(ckbAddress);
+    const issueLock = addressToScript(ckbAddress);
     let emptyCells = await collector.getCells({
         lock: issueLock
     });
     console.debug("Fetched empty cells:", emptyCells);
-    if (!emptyCells || 0 === emptyCells.length) throw new __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.NoLiveCellError("The address has no empty cells");
+    if (!emptyCells || 0 === emptyCells.length) throw new NoLiveCellError("The address has no empty cells");
     emptyCells = emptyCells.filter((cell)=>!cell.output.type);
     console.debug("Filtered empty cells without a type:", emptyCells);
     const { inputs } = collector.collectInputs(emptyCells, BigInt(0), BigInt(0), {
-        minCapacity: __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.MIN_CAPACITY
+        minCapacity: MIN_CAPACITY
     });
     console.debug("Collected inputs:", inputs);
     const xudtType = {
-        ...(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.getXudtTypeScript)(isMainnet),
-        args: (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.append0x)((0, __WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__.scriptToHash)(issueLock))
+        ...getXudtTypeScript(isMainnet),
+        args: append0x(scriptToHash(issueLock))
     };
     console.debug("Defined xUDT type script:", xudtType);
     console.log("xUDT type script", xudtType);
@@ -648,8 +662,8 @@ async function createIssueXudtTransaction({ xudtTotalAmount, tokenInfo, ckbAddre
         {
             lock: issueLock,
             type: {
-                ...(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.getUniqueTypeScript)(isMainnet),
-                args: (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.generateUniqueTypeArgs)(inputs[0], 1)
+                ...getUniqueTypeScript(isMainnet),
+                args: generateUniqueTypeArgs(inputs[0], 1)
             },
             capacity: "0x0"
         },
@@ -662,13 +676,13 @@ async function createIssueXudtTransaction({ xudtTotalAmount, tokenInfo, ckbAddre
     const totalAmount = xudtTotalAmount * BigInt(10 ** tokenInfo.decimal);
     console.debug("Calculated total amount:", totalAmount);
     const outputsData = [
-        (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.append0x)((0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.u128ToLe)(totalAmount)),
-        (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.encodeRgbppTokenInfo)(tokenInfo),
+        append0x(u128ToLe(totalAmount)),
+        encodeRgbppTokenInfo(tokenInfo),
         "0x"
     ];
     console.debug("Defined outputs data:", outputsData);
     const cellDeps = [
-        ...await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.fetchTypeIdCellDeps)(isMainnet, {
+        ...await fetchTypeIdCellDeps(isMainnet, {
             xudt: true,
             unique: true
         })
@@ -687,12 +701,12 @@ async function createIssueXudtTransaction({ xudtTotalAmount, tokenInfo, ckbAddre
     return unsignedTx;
 }
 const leapFromCkbToBtcTransaction = async ({ outIndex, btcTxId, xudtType, transferAmount, collector, ckbAddress, btcTestnetType })=>{
-    const toRgbppLockArgs = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.buildRgbppLockArgs)(outIndex, btcTxId);
-    const ckbRawTx = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genCkbJumpBtcVirtualTx)({
+    const toRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
+    const ckbRawTx = await genCkbJumpBtcVirtualTx({
         collector,
         fromCkbAddress: ckbAddress,
         toRgbppLockArgs,
-        xudtTypeBytes: (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.serializeScript)(xudtType),
+        xudtTypeBytes: serializeScript(xudtType),
         transferAmount,
         btcTestnetType,
         ckbFeeRate: BigInt(0),
@@ -712,12 +726,12 @@ const leapFromCkbToBtcTransaction = async ({ outIndex, btcTxId, xudtType, transf
     return unsignedTx;
 };
 const leapSporeFromCkbToBtcTransaction = async ({ outIndex, btcTxId, sporeType, isMainnet, collector, ckbAddress, btcTestnetType })=>{
-    const toRgbppLockArgs = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.buildRgbppLockArgs)(outIndex, btcTxId);
-    const ckbRawTx = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genLeapSporeFromCkbToBtcRawTx)({
+    const toRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
+    const ckbRawTx = await genLeapSporeFromCkbToBtcRawTx({
         collector,
         fromCkbAddress: ckbAddress,
         toRgbppLockArgs,
-        sporeTypeBytes: (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.serializeScript)(sporeType),
+        sporeTypeBytes: serializeScript(sporeType),
         isMainnet,
         btcTestnetType,
         ckbFeeRate: BigInt(0),
@@ -737,7 +751,7 @@ const leapSporeFromCkbToBtcTransaction = async ({ outIndex, btcTxId, sporeType, 
     return unsignedTx;
 };
 async function createMergeXudtTransaction({ xudtType, ckbAddresses, collector, isMainnet }, ckbAddress = ckbAddresses[0]) {
-    const fromLock = (0, __WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__.addressToScript)(ckbAddress);
+    const fromLock = addressToScript(ckbAddress);
     const xudtCells = await getIndexerCells({
         ckbAddresses,
         type: xudtType,
@@ -745,7 +759,7 @@ async function createMergeXudtTransaction({ xudtType, ckbAddresses, collector, i
         isMainnet
     });
     console.debug("Fetched xudt cells:", xudtCells);
-    if (!xudtCells || 0 === xudtCells.length) throw new __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.NoXudtLiveCellError("The addresses have no xudt cells");
+    if (!xudtCells || 0 === xudtCells.length) throw new NoXudtLiveCellError("The addresses have no xudt cells");
     if (1 === xudtCells.length) throw new Error("Only one xudt cell found, no need to merge");
     const { inputs: udtInputs, sumInputsCapacity, sumAmount } = collectAllUdtInputs(xudtCells);
     const inputs = udtInputs;
@@ -760,7 +774,7 @@ async function createMergeXudtTransaction({ xudtType, ckbAddresses, collector, i
         }
     ];
     const outputsData = [
-        (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.append0x)((0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.u128ToLe)(sumAmount))
+        append0x(u128ToLe(sumAmount))
     ];
     const cellDeps = [
         ...await getCellDeps(isMainnet, xudtType.args)
@@ -790,7 +804,7 @@ function collectAllUdtInputs(liveCells) {
             since: "0x0"
         });
         sumInputsCapacity += BigInt(cell.output.capacity);
-        sumAmount += (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.leToU128)((0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.remove0x)(cell.outputData).slice(0, 32));
+        sumAmount += leToU128(remove0x(cell.outputData).slice(0, 32));
     }
     return {
         inputs,
@@ -806,10 +820,10 @@ async function createTransferXudtTransaction({ xudtType, receivers, ckbAddresses
         isMainnet
     });
     console.debug("Fetched xudt cells:", xudtCells);
-    if (!xudtCells || 0 === xudtCells.length) throw new __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.NoXudtLiveCellError("The addresses have no xudt cells");
+    if (!xudtCells || 0 === xudtCells.length) throw new NoXudtLiveCellError("The addresses have no xudt cells");
     const sumTransferAmount = receivers.map((receiver)=>receiver.transferAmount).reduce((prev, current)=>prev + current, BigInt(0));
     console.debug("Sum Transfer Amount:", sumTransferAmount);
-    let sumXudtOutputCapacity = receivers.map(({ toAddress })=>(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.calculateUdtCellCapacity)((0, __WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__.addressToScript)(toAddress))).reduce((prev, current)=>prev + current, BigInt(0));
+    let sumXudtOutputCapacity = receivers.map(({ toAddress })=>calculateUdtCellCapacity(addressToScript(toAddress))).reduce((prev, current)=>prev + current, BigInt(0));
     console.debug("Sum XUDT Output Capacity:", sumXudtOutputCapacity);
     const { inputs: udtInputs, sumInputsCapacity: sumXudtInputsCapacity, sumAmount } = collector.collectUdtInputs({
         liveCells: xudtCells,
@@ -819,20 +833,20 @@ async function createTransferXudtTransaction({ xudtType, receivers, ckbAddresses
     console.debug("Sum Amount:", sumAmount);
     let inputs = udtInputs;
     const outputs = receivers.map(({ toAddress })=>({
-            lock: (0, __WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__.addressToScript)(toAddress),
+            lock: addressToScript(toAddress),
             type: xudtType,
             capacity: "0x0"
         }));
-    const outputsData = receivers.map(({ transferAmount })=>(0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.append0x)((0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.u128ToLe)(transferAmount)));
+    const outputsData = receivers.map(({ transferAmount })=>append0x(u128ToLe(transferAmount)));
     console.debug("Outputs:", outputs);
     console.debug("Outputs Data:", outputsData);
     if (sumAmount > sumTransferAmount) {
         outputs.push({
-            lock: (0, __WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__.addressToScript)(ckbAddress),
+            lock: addressToScript(ckbAddress),
             type: xudtType,
             capacity: "0x0"
         });
-        outputsData.push((0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.append0x)((0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.u128ToLe)(sumAmount - sumTransferAmount)));
+        outputsData.push(append0x(u128ToLe(sumAmount - sumTransferAmount)));
         console.debug("Updated Outputs:", outputs);
         console.debug("Updated Outputs Data:", outputsData);
     }
@@ -868,13 +882,13 @@ function convertToRawTransaction(rawTransactionToSign) {
     };
 }
 function convertToWitness(witnessArgs) {
-    const bytes = __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.WitnessArgs.from(witnessArgs).toBytes();
+    const bytes = ccc.WitnessArgs.from(witnessArgs).toBytes();
     return Buffer.from(bytes).toString("hex");
 }
 function convertToOutPointLike(outPoint) {
     return {
-        txHash: (0, __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.hexFrom)(outPoint.txHash),
-        index: (0, __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.hexFrom)(outPoint.index)
+        txHash: hexFrom(outPoint.txHash),
+        index: hexFrom(outPoint.index)
     };
 }
 function convertToCellDepLike(cellDep) {
@@ -888,36 +902,36 @@ function convertToCellInputLike(cellInput) {
     if (!cellInput.previousOutput) throw new Error("CellInput is missing required field: previousOutput");
     return {
         previousOutput: convertToOutPointLike(cellInput.previousOutput),
-        since: cellInput.since ? (0, __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.hexFrom)(cellInput.since) : void 0
+        since: cellInput.since ? hexFrom(cellInput.since) : void 0
     };
 }
 function ConvertToTransactionLike(rawTransaction) {
     return {
         version: rawTransaction.version,
         cellDeps: rawTransaction.cellDeps.map(convertToCellDepLike),
-        headerDeps: rawTransaction.headerDeps.map(__WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.hexFrom),
+        headerDeps: rawTransaction.headerDeps.map(hexFrom),
         inputs: rawTransaction.inputs.map(convertToCellInputLike),
         outputs: rawTransaction.outputs.map((output)=>({
                 capacity: output.capacity,
                 lock: {
-                    args: (0, __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.hexFrom)(output.lock.args),
-                    codeHash: (0, __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.hexFrom)(output.lock.codeHash),
+                    args: hexFrom(output.lock.args),
+                    codeHash: hexFrom(output.lock.codeHash),
                     hashType: output.lock.hashType
                 },
                 type: output.type ? {
-                    args: (0, __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.hexFrom)(output.type.args),
-                    codeHash: (0, __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.hexFrom)(output.type.codeHash),
+                    args: hexFrom(output.type.args),
+                    codeHash: hexFrom(output.type.codeHash),
                     hashType: output.type.hashType
                 } : null
             })),
-        outputsData: rawTransaction.outputsData.map(__WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.hexFrom),
-        witnesses: rawTransaction.witnesses.map(__WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.hexFrom)
+        outputsData: rawTransaction.outputsData.map(hexFrom),
+        witnesses: rawTransaction.witnesses.map(hexFrom)
     };
 }
 function convertToTransaction(rawTransactionToSign) {
     const rawTransaction = convertToRawTransaction(rawTransactionToSign);
     const transactionLike = ConvertToTransactionLike(rawTransaction);
-    const tx = __WEBPACK_EXTERNAL_MODULE__ckb_ccc_core_29c1d0e0__.ccc.Transaction.from(transactionLike);
+    const tx = ccc.Transaction.from(transactionLike);
     return tx;
 }
 async function signAndSendPsbt(psbt, wallet, service) {
@@ -925,7 +939,7 @@ async function signAndSendPsbt(psbt, wallet, service) {
     console.debug("PSBT before signing:", psbt.toHex());
     try {
         console.debug("test");
-        const signPbst = __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_btc_ad1ee031__.bitcoin.Psbt.fromHex(await wallet.signPsbt(psbt.toHex()));
+        const signPbst = bitcoin.Psbt.fromHex(await wallet.signPsbt(psbt.toHex()));
         console.debug("PSBT after signing:", signPbst.toBase64());
         const tx = signPbst.extractTransaction();
         const txHex = tx.toHex();
@@ -933,7 +947,7 @@ async function signAndSendPsbt(psbt, wallet, service) {
         console.debug("Sending transaction to service...");
         const { txid } = await service.sendBtcTransaction(txHex);
         console.debug("Transaction sent successfully. TXID:", txid);
-        const rawTxHex = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_btc_ad1ee031__.transactionToHex)(tx, false);
+        const rawTxHex = transactionToHex(tx, false);
         console.debug("Raw transaction hex (excluding witness):", rawTxHex);
         return {
             txHex,
@@ -946,19 +960,19 @@ async function signAndSendPsbt(psbt, wallet, service) {
     }
 }
 const prepareLaunchCell = async ({ outIndex, btcTxId, rgbppTokenInfo, ckbAddress, collector, isMainnet, btcTestnetType })=>{
-    const masterLock = (0, __WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__.addressToScript)(ckbAddress);
+    const masterLock = addressToScript(ckbAddress);
     console.log("ckb address: ", ckbAddress);
-    const launchCellCapacity = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.calculateRgbppCellCapacity)() + (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.calculateRgbppTokenInfoCellCapacity)(rgbppTokenInfo, isMainnet);
+    const launchCellCapacity = calculateRgbppCellCapacity() + calculateRgbppTokenInfoCellCapacity(rgbppTokenInfo, isMainnet);
     let emptyCells = await collector.getCells({
         lock: masterLock
     });
-    if (!emptyCells || 0 === emptyCells.length) throw new __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.NoLiveCellError("The address has no empty cells");
+    if (!emptyCells || 0 === emptyCells.length) throw new NoLiveCellError("The address has no empty cells");
     emptyCells = emptyCells.filter((cell)=>!cell.output.type);
     const { inputs } = collector.collectInputs(emptyCells, launchCellCapacity, BigInt(0));
     const outputs = [
         {
-            lock: (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genRgbppLockScript)((0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.buildRgbppLockArgs)(outIndex, btcTxId), isMainnet, btcTestnetType),
-            capacity: (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.append0x)(launchCellCapacity.toString(16))
+            lock: genRgbppLockScript(buildRgbppLockArgs(outIndex, btcTxId), isMainnet, btcTestnetType),
+            capacity: append0x(launchCellCapacity.toString(16))
         }
     ];
     const outputsData = [
@@ -977,7 +991,7 @@ const prepareLaunchCell = async ({ outIndex, btcTxId, rgbppTokenInfo, ckbAddress
     return unsignedTx;
 };
 const launchRgbppAsset = async ({ ownerRgbppLockArgs, rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, btcService, wallet }, btcFeeRate)=>{
-    const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genRgbppLaunchCkbVirtualTx)({
+    const ckbVirtualTxResult = await genRgbppLaunchCkbVirtualTx({
         collector: collector,
         ownerRgbppLockArgs,
         rgbppTokenInfo,
@@ -987,7 +1001,7 @@ const launchRgbppAsset = async ({ ownerRgbppLockArgs, rgbppTokenInfo, collector,
     });
     const { commitment, ckbRawTx, needPaymasterCell } = ckbVirtualTxResult;
     console.log("RGB++ Asset type script args: ", ckbRawTx.outputs[0].type?.args);
-    const psbt = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_btc_ad1ee031__.sendRgbppUtxos)({
+    const psbt = await btc_sendRgbppUtxos({
         ckbVirtualTx: ckbRawTx,
         commitment,
         tos: [
@@ -1007,17 +1021,17 @@ const launchRgbppAsset = async ({ ownerRgbppLockArgs, rgbppTokenInfo, collector,
             console.log("Waiting for BTC tx and proof to be ready");
             const rgbppApiSpvProof = await btcService.getRgbppSpvProof(btcTxId, 0);
             clearInterval(interval);
-            const newCkbRawTx = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.updateCkbTxWithRealBtcTxId)({
+            const newCkbRawTx = updateCkbTxWithRealBtcTxId({
                 ckbRawTx,
                 btcTxId,
                 isMainnet
             });
-            const ckbTx = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.appendCkbTxWitnesses)({
+            const ckbTx = await appendCkbTxWitnesses({
                 ckbRawTx: newCkbRawTx,
                 btcTxBytes,
                 rgbppApiSpvProof
             });
-            const txHash = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.sendCkbTx)({
+            const txHash = await sendCkbTx({
                 collector,
                 signedTx: ckbTx
             });
@@ -1045,7 +1059,7 @@ const launchCombined = async ({ rgbppTokenInfo, collector, isMainnet, btcTestnet
     await prepareLaunchCellTx.completeFeeBy(cccSigner, ckbFeeRate);
     const txHash = await cccSigner.sendTransaction(prepareLaunchCellTx);
     console.info(`Launch cell has been created and the CKB tx hash ${txHash}`);
-    const ownerRgbppLockArgs = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.buildRgbppLockArgs)(outIndex, btcTxId);
+    const ownerRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
     const { btcTxId: TxId } = await launchRgbppAsset({
         ownerRgbppLockArgs,
         rgbppTokenInfo,
@@ -1077,8 +1091,8 @@ const prepareLaunchCellTransaction = async ({ ckbAddress, rgbppTokenInfo, collec
     return prepareLaunchCellTx;
 };
 const prepareLauncherUnsignedPsbt = async ({ rgbppTokenInfo, collector, isMainnet, btcTestnetType, btcAccount, btcDataSource, btcAccountPubkey, launchAmount, outIndex, btcTxId }, btcFeeRate)=>{
-    const ownerRgbppLockArgs = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.buildRgbppLockArgs)(outIndex, btcTxId);
-    const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genRgbppLaunchCkbVirtualTx)({
+    const ownerRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
+    const ckbVirtualTxResult = await genRgbppLaunchCkbVirtualTx({
         collector: collector,
         ownerRgbppLockArgs,
         rgbppTokenInfo,
@@ -1088,7 +1102,7 @@ const prepareLauncherUnsignedPsbt = async ({ rgbppTokenInfo, collector, isMainne
     });
     const { commitment, ckbRawTx, needPaymasterCell } = ckbVirtualTxResult;
     console.log("RGB++ Asset type script args: ", ckbRawTx.outputs[0].type?.args);
-    const psbt = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_btc_ad1ee031__.sendRgbppUtxos)({
+    const psbt = await btc_sendRgbppUtxos({
         ckbVirtualTx: ckbRawTx,
         commitment,
         tos: [
@@ -1116,19 +1130,19 @@ const fetchAndFilterUtxos = async (btcAccount, filterUtxo, btcService)=>{
     };
 };
 const prepareClusterCell = async ({ outIndex, btcTxId, ckbAddress, clusterData, collector, isMainnet, btcTestnetType })=>{
-    const masterLock = (0, __WEBPACK_EXTERNAL_MODULE__nervosnetwork_ckb_sdk_utils_375d3b61__.addressToScript)(ckbAddress);
+    const masterLock = addressToScript(ckbAddress);
     console.log("ckb address: ", ckbAddress);
-    const clusterCellCapacity = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.calculateRgbppClusterCellCapacity)(clusterData);
+    const clusterCellCapacity = calculateRgbppClusterCellCapacity(clusterData);
     let emptyCells = await collector.getCells({
         lock: masterLock
     });
-    if (!emptyCells || 0 === emptyCells.length) throw new __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.NoLiveCellError("The address has no empty cells");
+    if (!emptyCells || 0 === emptyCells.length) throw new NoLiveCellError("The address has no empty cells");
     emptyCells = emptyCells.filter((cell)=>!cell.output.type);
     const { inputs } = collector.collectInputs(emptyCells, clusterCellCapacity, BigInt(0));
     const outputs = [
         {
-            lock: (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genRgbppLockScript)((0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.buildRgbppLockArgs)(outIndex, btcTxId), isMainnet, btcTestnetType),
-            capacity: (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.append0x)(clusterCellCapacity.toString(16))
+            lock: genRgbppLockScript(buildRgbppLockArgs(outIndex, btcTxId), isMainnet, btcTestnetType),
+            capacity: append0x(clusterCellCapacity.toString(16))
         }
     ];
     const outputsData = [
@@ -1146,7 +1160,7 @@ const prepareClusterCell = async ({ outIndex, btcTxId, ckbAddress, clusterData, 
     return unsignedTx;
 };
 const createCluster = async ({ ownerRgbppLockArgs, collector, clusterData, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcService, wallet }, btcFeeRate = 30)=>{
-    const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genCreateClusterCkbVirtualTx)({
+    const ckbVirtualTxResult = await genCreateClusterCkbVirtualTx({
         collector,
         rgbppLockArgs: ownerRgbppLockArgs,
         clusterData,
@@ -1156,7 +1170,7 @@ const createCluster = async ({ ownerRgbppLockArgs, collector, clusterData, isMai
     });
     const { commitment, ckbRawTx, clusterId, needPaymasterCell } = ckbVirtualTxResult;
     console.log("clusterId: ", clusterId);
-    const psbt = await (0, __WEBPACK_EXTERNAL_MODULE_rgbpp__.sendRgbppUtxos)({
+    const psbt = await sendRgbppUtxos({
         ckbVirtualTx: ckbRawTx,
         commitment,
         tos: [
@@ -1176,20 +1190,20 @@ const createCluster = async ({ ownerRgbppLockArgs, collector, clusterData, isMai
             console.log("Waiting for BTC tx and proof to be ready");
             const rgbppApiSpvProof = await btcService.getRgbppSpvProof(btcTxId, 0);
             clearInterval(interval);
-            const newCkbRawTx = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.updateCkbTxWithRealBtcTxId)({
+            const newCkbRawTx = updateCkbTxWithRealBtcTxId({
                 ckbRawTx,
                 btcTxId,
                 isMainnet
             });
             console.log("The cluster rgbpp lock args: ", newCkbRawTx.outputs[0].lock.args);
-            const ckbTx = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.appendCkbTxWitnesses)({
+            const ckbTx = await appendCkbTxWitnesses({
                 ckbRawTx: newCkbRawTx,
                 btcTxBytes,
                 rgbppApiSpvProof
             });
-            ckbTx.witnesses[ckbTx.witnesses.length - 1] = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.generateClusterCreateCoBuild)(ckbTx.outputs[0], ckbTx.outputsData[0]);
+            ckbTx.witnesses[ckbTx.witnesses.length - 1] = generateClusterCreateCoBuild(ckbTx.outputs[0], ckbTx.outputsData[0]);
             console.log(JSON.stringify(ckbTx));
-            const txHash = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.sendCkbTx)({
+            const txHash = await sendCkbTx({
                 collector,
                 signedTx: ckbTx
             });
@@ -1217,7 +1231,7 @@ const createClusterCombined = async ({ ckbAddress, clusterData, collector, isMai
     await prepareClusterCellTx.completeFeeBy(cccSigner, ckbFeeRate);
     const txHash = await cccSigner.sendTransaction(prepareClusterCellTx);
     console.info(`Create Cluster cell has been created and the CKB tx hash ${txHash}`);
-    const ownerRgbppLockArgs = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.buildRgbppLockArgs)(outIndex, btcTxId);
+    const ownerRgbppLockArgs = buildRgbppLockArgs(outIndex, btcTxId);
     const { btcTxId: TxId } = await createCluster({
         ownerRgbppLockArgs,
         clusterData,
@@ -1248,16 +1262,16 @@ const prepareClusterCellTransaction = async ({ ckbAddress, clusterData, collecto
     return prepareClusterCellTx;
 };
 const prepareCreateClusterUnsignedPsbt = async ({ collector, clusterData, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, outIndex, btcTxId, btcFeeRate = 30 })=>{
-    const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genCreateClusterCkbVirtualTx)({
+    const ckbVirtualTxResult = await genCreateClusterCkbVirtualTx({
         collector,
-        rgbppLockArgs: (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.buildRgbppLockArgs)(outIndex, btcTxId),
+        rgbppLockArgs: buildRgbppLockArgs(outIndex, btcTxId),
         clusterData,
         isMainnet,
         ckbFeeRate: BigInt(2000),
         btcTestnetType
     });
     const { commitment, ckbRawTx, needPaymasterCell } = ckbVirtualTxResult;
-    const psbt = await (0, __WEBPACK_EXTERNAL_MODULE_rgbpp__.sendRgbppUtxos)({
+    const psbt = await sendRgbppUtxos({
         ckbVirtualTx: ckbRawTx,
         commitment,
         tos: [
@@ -1273,7 +1287,7 @@ const prepareCreateClusterUnsignedPsbt = async ({ collector, clusterData, isMain
     return psbt;
 };
 const createSpores = async ({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, wallet, btcService, ckbAddress, cccSigner }, btcFeeRate = 120, ckbFeeRate)=>{
-    const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genCreateSporeCkbVirtualTx)({
+    const ckbVirtualTxResult = await genCreateSporeCkbVirtualTx({
         collector,
         sporeDataList: receivers.map((receiver)=>receiver.sporeData),
         clusterRgbppLockArgs,
@@ -1286,7 +1300,7 @@ const createSpores = async ({ clusterRgbppLockArgs, receivers, collector, isMain
         fromBtcAccount,
         ...receivers.map((receiver)=>receiver.toBtcAddress)
     ];
-    const psbt = await (0, __WEBPACK_EXTERNAL_MODULE_rgbpp__.sendRgbppUtxos)({
+    const psbt = await sendRgbppUtxos({
         ckbVirtualTx: ckbRawTx,
         commitment,
         tos: btcTos,
@@ -1308,25 +1322,25 @@ const createSpores = async ({ clusterRgbppLockArgs, receivers, collector, isMain
             console.log("Waiting for BTC tx and proof to be ready");
             const rgbppApiSpvProof = await btcService.getRgbppSpvProof(btcTxId, 0);
             clearInterval(interval);
-            const newCkbRawTx = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.updateCkbTxWithRealBtcTxId)({
+            const newCkbRawTx = updateCkbTxWithRealBtcTxId({
                 ckbRawTx,
                 btcTxId,
                 isMainnet
             });
             console.log("The new cluster rgbpp lock args: ", newCkbRawTx.outputs[0].lock.args);
-            const ckbTx = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.appendCkbTxWitnesses)({
+            const ckbTx = await appendCkbTxWitnesses({
                 ckbRawTx: newCkbRawTx,
                 btcTxBytes,
                 rgbppApiSpvProof
             });
             console.log("Spore type scripts: ", JSON.stringify(ckbTx.outputs.slice(1).map((output)=>output.type)));
-            ckbTx.witnesses[ckbTx.witnesses.length - 1] = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.generateSporeCreateCoBuild)({
+            ckbTx.witnesses[ckbTx.witnesses.length - 1] = generateSporeCreateCoBuild({
                 sporeOutputs: ckbTx.outputs.slice(1),
                 sporeOutputsData: ckbTx.outputsData.slice(1),
                 clusterCell,
                 clusterOutputCell: ckbTx.outputs[0]
             });
-            const unsignedTx = convertToTransaction(await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.buildAppendingIssuerCellToSporesCreateTx)({
+            const unsignedTx = convertToTransaction(await buildAppendingIssuerCellToSporesCreateTx({
                 issuerAddress: ckbAddress,
                 ckbRawTx: ckbTx,
                 collector,
@@ -1365,7 +1379,7 @@ const createSporesCombined = async ({ clusterType, receivers, collector, isMainn
     return res;
 };
 const prepareCreateSporeUnsignedTransaction = async ({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, ckbAddress, ckbFeeRate })=>{
-    const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genCreateSporeCkbVirtualTx)({
+    const ckbVirtualTxResult = await genCreateSporeCkbVirtualTx({
         collector,
         sporeDataList: receivers.map((receiver)=>receiver.sporeData),
         clusterRgbppLockArgs,
@@ -1374,7 +1388,7 @@ const prepareCreateSporeUnsignedTransaction = async ({ clusterRgbppLockArgs, rec
         btcTestnetType
     });
     const { ckbRawTx, sumInputsCapacity } = ckbVirtualTxResult;
-    const unsignedTx = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.buildAppendingIssuerCellToSporesCreateTx)({
+    const unsignedTx = await buildAppendingIssuerCellToSporesCreateTx({
         issuerAddress: ckbAddress,
         ckbRawTx,
         collector,
@@ -1384,7 +1398,7 @@ const prepareCreateSporeUnsignedTransaction = async ({ clusterRgbppLockArgs, rec
     return unsignedTx;
 };
 const prepareCreateSporeUnsignedPsbt = async ({ clusterRgbppLockArgs, receivers, collector, isMainnet, btcTestnetType, fromBtcAccount, fromBtcAccountPubkey, btcDataSource, btcFeeRate })=>{
-    const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genCreateSporeCkbVirtualTx)({
+    const ckbVirtualTxResult = await genCreateSporeCkbVirtualTx({
         collector,
         sporeDataList: receivers.map((receiver)=>receiver.sporeData),
         clusterRgbppLockArgs,
@@ -1397,7 +1411,7 @@ const prepareCreateSporeUnsignedPsbt = async ({ clusterRgbppLockArgs, receivers,
         fromBtcAccount,
         ...receivers.map((receiver)=>receiver.toBtcAddress)
     ];
-    const psbt = await (0, __WEBPACK_EXTERNAL_MODULE_rgbpp__.sendRgbppUtxos)({
+    const psbt = await sendRgbppUtxos({
         ckbVirtualTx: ckbRawTx,
         commitment,
         tos: btcTos,
@@ -1435,16 +1449,16 @@ const getRgbppLockArgsList = async ({ xudtType, fromBtcAccount, btcService })=>{
     };
 };
 const distribute = async ({ rgbppLockArgsList, receivers, xudtType, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService }, btcFeeRate)=>{
-    const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genBtcBatchTransferCkbVirtualTx)({
+    const ckbVirtualTxResult = await genBtcBatchTransferCkbVirtualTx({
         collector,
         rgbppLockArgsList,
-        xudtTypeBytes: (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.serializeScript)(xudtType),
+        xudtTypeBytes: serializeScript(xudtType),
         rgbppReceivers: receivers,
         isMainnet,
         btcTestnetType
     });
     const { commitment, ckbRawTx, needPaymasterCell } = ckbVirtualTxResult;
-    const psbt = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_btc_ad1ee031__.sendRgbppUtxos)({
+    const psbt = await btc_sendRgbppUtxos({
         ckbVirtualTx: ckbRawTx,
         commitment,
         tos: receivers.map((receiver)=>receiver.toBtcAddress),
@@ -1510,16 +1524,16 @@ const prepareDistributeUnsignedPsbt = async ({ receivers, xudtType, collector, b
         btcService
     });
     const filteredLockArgsList = await filterRgbppArgslist(lockArgsListResponse.rgbppLockArgsList);
-    const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genBtcBatchTransferCkbVirtualTx)({
+    const ckbVirtualTxResult = await genBtcBatchTransferCkbVirtualTx({
         collector,
         rgbppLockArgsList: filteredLockArgsList,
-        xudtTypeBytes: (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.serializeScript)(xudtType),
+        xudtTypeBytes: serializeScript(xudtType),
         rgbppReceivers: receivers,
         isMainnet,
         btcTestnetType
     });
     const { commitment, ckbRawTx, needPaymasterCell } = ckbVirtualTxResult;
-    const psbt = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_btc_ad1ee031__.sendRgbppUtxos)({
+    const psbt = await btc_sendRgbppUtxos({
         ckbVirtualTx: ckbRawTx,
         commitment,
         tos: receivers.map((receiver)=>receiver.toBtcAddress),
@@ -1533,17 +1547,17 @@ const prepareDistributeUnsignedPsbt = async ({ receivers, xudtType, collector, b
     return psbt;
 };
 const leapFromBtcToCKB = async ({ rgbppLockArgsList, toCkbAddress, xudtType, transferAmount, isMainnet, collector, btcTestnetType, fromBtcAccountPubkey, fromBtcAccount, btcDataSource, btcService, wallet }, btcFeeRate)=>{
-    const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genBtcJumpCkbVirtualTx)({
+    const ckbVirtualTxResult = await genBtcJumpCkbVirtualTx({
         collector,
         rgbppLockArgsList,
-        xudtTypeBytes: (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.serializeScript)(xudtType),
+        xudtTypeBytes: serializeScript(xudtType),
         transferAmount,
         toCkbAddress,
         isMainnet,
         btcTestnetType
     });
     const { commitment, ckbRawTx } = ckbVirtualTxResult;
-    const psbt = await (0, __WEBPACK_EXTERNAL_MODULE_rgbpp__.sendRgbppUtxos)({
+    const psbt = await sendRgbppUtxos({
         ckbVirtualTx: ckbRawTx,
         commitment,
         tos: [
@@ -1609,17 +1623,17 @@ const prepareLeapUnsignedPsbt = async ({ btcService, toCkbAddress, xudtType, tra
         fromBtcAccount,
         btcService
     });
-    const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genBtcJumpCkbVirtualTx)({
+    const ckbVirtualTxResult = await genBtcJumpCkbVirtualTx({
         collector,
         rgbppLockArgsList: lockArgsListResponse.rgbppLockArgsList,
-        xudtTypeBytes: (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.serializeScript)(xudtType),
+        xudtTypeBytes: serializeScript(xudtType),
         transferAmount,
         toCkbAddress,
         isMainnet,
         btcTestnetType
     });
     const { commitment, ckbRawTx } = ckbVirtualTxResult;
-    const psbt = await (0, __WEBPACK_EXTERNAL_MODULE_rgbpp__.sendRgbppUtxos)({
+    const psbt = await sendRgbppUtxos({
         ckbVirtualTx: ckbRawTx,
         commitment,
         tos: [
@@ -1634,8 +1648,8 @@ const prepareLeapUnsignedPsbt = async ({ btcService, toCkbAddress, xudtType, tra
     return psbt;
 };
 const transferSpore = async ({ sporeRgbppLockArgs, toBtcAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, btcService, wallet }, btcFeeRate = 30)=>{
-    const sporeTypeBytes = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.serializeScript)(sporeType);
-    const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genTransferSporeCkbVirtualTx)({
+    const sporeTypeBytes = serializeScript(sporeType);
+    const ckbVirtualTxResult = await genTransferSporeCkbVirtualTx({
         collector,
         sporeRgbppLockArgs,
         sporeTypeBytes,
@@ -1643,7 +1657,7 @@ const transferSpore = async ({ sporeRgbppLockArgs, toBtcAddress, sporeType, coll
         btcTestnetType
     });
     const { commitment, ckbRawTx, needPaymasterCell } = ckbVirtualTxResult;
-    const psbt = await (0, __WEBPACK_EXTERNAL_MODULE_rgbpp__.sendRgbppUtxos)({
+    const psbt = await sendRgbppUtxos({
         ckbVirtualTx: ckbRawTx,
         commitment,
         tos: [
@@ -1733,8 +1747,8 @@ const prepareTransferSporeUnsignedPsbt = async ({ toBtcAddress, sporeType, colle
         isMainnet,
         btcService
     });
-    const sporeTypeBytes = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.serializeScript)(sporeType);
-    const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genTransferSporeCkbVirtualTx)({
+    const sporeTypeBytes = serializeScript(sporeType);
+    const ckbVirtualTxResult = await genTransferSporeCkbVirtualTx({
         collector,
         sporeRgbppLockArgs,
         sporeTypeBytes,
@@ -1742,7 +1756,7 @@ const prepareTransferSporeUnsignedPsbt = async ({ toBtcAddress, sporeType, colle
         btcTestnetType
     });
     const { commitment, ckbRawTx, needPaymasterCell } = ckbVirtualTxResult;
-    const psbt = await (0, __WEBPACK_EXTERNAL_MODULE_rgbpp__.sendRgbppUtxos)({
+    const psbt = await sendRgbppUtxos({
         ckbVirtualTx: ckbRawTx,
         commitment,
         tos: [
@@ -1758,8 +1772,8 @@ const prepareTransferSporeUnsignedPsbt = async ({ toBtcAddress, sporeType, colle
     return psbt;
 };
 const leapSporeFromBtcToCkb = async ({ sporeRgbppLockArgs, toCkbAddress, sporeType, collector, isMainnet, btcTestnetType, fromBtcAddress, fromBtcAddressPubkey, btcDataSource, wallet, btcService }, btcFeeRate = 30)=>{
-    const sporeTypeBytes = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.serializeScript)(sporeType);
-    const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genLeapSporeFromBtcToCkbVirtualTx)({
+    const sporeTypeBytes = serializeScript(sporeType);
+    const ckbVirtualTxResult = await genLeapSporeFromBtcToCkbVirtualTx({
         collector,
         sporeRgbppLockArgs,
         sporeTypeBytes,
@@ -1768,7 +1782,7 @@ const leapSporeFromBtcToCkb = async ({ sporeRgbppLockArgs, toCkbAddress, sporeTy
         btcTestnetType
     });
     const { commitment, ckbRawTx, needPaymasterCell } = ckbVirtualTxResult;
-    const psbt = await (0, __WEBPACK_EXTERNAL_MODULE_rgbpp__.sendRgbppUtxos)({
+    const psbt = await sendRgbppUtxos({
         ckbVirtualTx: ckbRawTx,
         commitment,
         tos: [
@@ -1836,8 +1850,8 @@ const prepareLeapSporeUnsignedPsbt = async ({ toCkbAddress, sporeType, collector
         isMainnet,
         btcService
     });
-    const sporeTypeBytes = (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.serializeScript)(sporeType);
-    const ckbVirtualTxResult = await (0, __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_ckb_022d8c34__.genLeapSporeFromBtcToCkbVirtualTx)({
+    const sporeTypeBytes = serializeScript(sporeType);
+    const ckbVirtualTxResult = await genLeapSporeFromBtcToCkbVirtualTx({
         collector,
         sporeRgbppLockArgs,
         sporeTypeBytes,
@@ -1846,7 +1860,7 @@ const prepareLeapSporeUnsignedPsbt = async ({ toCkbAddress, sporeType, collector
         btcTestnetType
     });
     const { commitment, ckbRawTx, needPaymasterCell } = ckbVirtualTxResult;
-    const psbt = await (0, __WEBPACK_EXTERNAL_MODULE_rgbpp__.sendRgbppUtxos)({
+    const psbt = await sendRgbppUtxos({
         ckbVirtualTx: ckbRawTx,
         commitment,
         tos: [
@@ -1862,7 +1876,7 @@ const prepareLeapSporeUnsignedPsbt = async ({ toCkbAddress, sporeType, collector
     return psbt;
 };
 const transfer = async ({ rgbppLockArgsList, toBtcAddress, xudtType, transferAmount, collector, btcDataSource, btcTestnetType, isMainnet, fromBtcAccount, fromBtcAccountPubkey, wallet, btcService }, btcFeeRate)=>{
-    const { ckbVirtualTxResult, btcPsbtHex } = await (0, __WEBPACK_EXTERNAL_MODULE_rgbpp__.buildRgbppTransferTx)({
+    const { ckbVirtualTxResult, btcPsbtHex } = await buildRgbppTransferTx({
         ckb: {
             collector,
             xudtTypeArgs: xudtType.args,
@@ -1880,7 +1894,7 @@ const transfer = async ({ rgbppLockArgsList, toBtcAddress, xudtType, transferAmo
         isMainnet
     });
     console.log(btcPsbtHex);
-    const psbt = __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_btc_ad1ee031__.bitcoin.Psbt.fromHex(btcPsbtHex);
+    const psbt = bitcoin.Psbt.fromHex(btcPsbtHex);
     const { txId: btcTxId } = await signAndSendPsbt(psbt, wallet, btcService);
     console.log(`BTC ${btcTestnetType} TxId: ${btcTxId}`);
     await btcService.sendRgbppCkbTransaction({
@@ -1935,7 +1949,7 @@ const prepareTransferUnsignedPsbt = async ({ btcService, toBtcAddress, xudtType,
         fromBtcAccount,
         btcService
     });
-    const { btcPsbtHex } = await (0, __WEBPACK_EXTERNAL_MODULE_rgbpp__.buildRgbppTransferTx)({
+    const { btcPsbtHex } = await buildRgbppTransferTx({
         ckb: {
             collector,
             xudtTypeArgs: xudtType.args,
@@ -1952,7 +1966,7 @@ const prepareTransferUnsignedPsbt = async ({ btcService, toBtcAddress, xudtType,
         },
         isMainnet
     });
-    const psbt = __WEBPACK_EXTERNAL_MODULE__rgbpp_sdk_btc_ad1ee031__.bitcoin.Psbt.fromHex(btcPsbtHex);
+    const psbt = bitcoin.Psbt.fromHex(btcPsbtHex);
     return psbt;
 };
 export { BtcHelper, CkbHelper, RgbppSDK, convertToTransaction, createBtcService, createBurnXudtTransaction, createClusterCombined, createIssueXudtTransaction, createMergeXudtTransaction, createSporesCombined, createTransferXudtTransaction, distributeCombined, fetchAndFilterUtxos, fetchAndValidateAssets, launchCombined, leapFromBtcToCkbCombined, leapFromCkbToBtcTransaction, leapSporeFromBtcToCkbCombined, leapSporeFromCkbToBtcTransaction, prepareClusterCellTransaction, prepareCreateClusterUnsignedPsbt, prepareCreateSporeUnsignedPsbt, prepareCreateSporeUnsignedTransaction, prepareDistributeUnsignedPsbt, prepareLaunchCellTransaction, prepareLauncherUnsignedPsbt, prepareLeapSporeUnsignedPsbt, prepareLeapUnsignedPsbt, prepareTransferSporeUnsignedPsbt, prepareTransferUnsignedPsbt, transferCombined, transferSporeCombined };

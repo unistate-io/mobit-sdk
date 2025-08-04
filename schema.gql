@@ -1266,12 +1266,6 @@ type query_root {
     where: spore_actions_bool_exp
   ): spore_actions_aggregate!
 
-  """fetch data from the table: "spore_actions" using primary key columns"""
-  spore_actions_by_pk(
-    """Transaction hash where the action occurred. Primary Key."""
-    tx_hash: bytea!
-  ): spore_actions
-
   """
   fetch data from the table: "spores"
   """
@@ -1892,7 +1886,9 @@ input spore_action_type_comparison_exp {
   _nin: [spore_action_type!]
 }
 
-"""Records transactional events related to Spores and Clusters."""
+"""
+Records transactional events related to Spores and Clusters. Supports multiple actions per transaction.
+"""
 type spore_actions {
   action_data(
     """JSON select path"""
@@ -1918,7 +1914,9 @@ type spore_actions {
   to_address: addresses
   to_address_id: String
 
-  """Transaction hash where the action occurred. Primary Key."""
+  """
+  Transaction hash where the action occurred. Part of composite primary key.
+  """
   tx_hash: bytea!
   tx_timestamp: timestamp!
 }
@@ -2084,7 +2082,9 @@ input spore_actions_stream_cursor_value_input {
   spore_id: bytea
   to_address_id: String
 
-  """Transaction hash where the action occurred. Primary Key."""
+  """
+  Transaction hash where the action occurred. Part of composite primary key.
+  """
   tx_hash: bytea
   tx_timestamp: timestamp
 }
@@ -2763,12 +2763,6 @@ type subscription_root {
     """filter the rows returned"""
     where: spore_actions_bool_exp
   ): spore_actions_aggregate!
-
-  """fetch data from the table: "spore_actions" using primary key columns"""
-  spore_actions_by_pk(
-    """Transaction hash where the action occurred. Primary Key."""
-    tx_hash: bytea!
-  ): spore_actions
 
   """
   fetch data from the table in a streaming manner: "spore_actions"

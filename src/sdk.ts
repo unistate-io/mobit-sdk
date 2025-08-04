@@ -76,6 +76,37 @@ function safeStringToBigInt(
   }
 }
 
+/**
+ * Safely converts a string representation of an index to a number.
+ * If the string starts with "0x", it's parsed as hexadecimal.
+ * Otherwise, it's parsed as decimal.
+ * @param indexStr String representation of the index
+ * @returns number or null if conversion fails
+ */
+function safeStringToIndex(indexStr: string | undefined | null): number | null {
+  if (
+    indexStr === null ||
+    indexStr === undefined ||
+    typeof indexStr !== "string" ||
+    indexStr.trim() === ""
+  ) {
+    return null;
+  }
+  try {
+    if (indexStr.startsWith("0x")) {
+      return parseInt(indexStr, 16);
+    } else {
+      return Number(indexStr);
+    }
+  } catch (error) {
+    console.warn(
+      `Failed to convert index string "${indexStr}" to number:`,
+      error,
+    );
+    return null;
+  }
+}
+
 // --- Core Interfaces ---
 
 /**
@@ -511,7 +542,7 @@ export class RgbppSDK {
         asset.outPoint.txHash.length === 66 &&
         asset.outPoint.index !== null &&
         asset.outPoint.index !== undefined &&
-        !isNaN(Number(asset.outPoint.index))
+        safeStringToIndex(asset.outPoint.index) !== null
       ) {
         const key = `${asset.outPoint.txHash}:${asset.outPoint.index}`;
         if (!outPointsMap.has(key)) {
@@ -583,18 +614,28 @@ export class RgbppSDK {
 
       // Process Spore actions (potentially multiple per tx)
       for (const rawAction of response.spore_actions) {
-        const actionTxHash = parseHexFromGraphQL(rawAction.tx_hash);
-        if (!processedSporeActionsMap.has(actionTxHash)) {
-          try {
-            const processedAction = this.processRawSporeAction(rawAction);
-            processedSporeActionsMap.set(actionTxHash, processedAction);
+        try {
+          const processedAction = this.processRawSporeAction(rawAction);
+
+          // Create a unique key using combination of tx_hash and action-specific identifiers
+          // This allows multiple actions per transaction as documented in the schema
+          const sporeId = parseHexFromGraphQL(rawAction.spore_id);
+          const clusterId = parseHexFromGraphQL(rawAction.cluster_id);
+          const actionType = rawAction.action_type;
+
+          // Use a combination that uniquely identifies each action within a transaction
+          const uniqueKey = `${processedAction.tx_hash}:${actionType}:${sporeId || "null"}:${clusterId || "null"}`;
+
+          if (!processedSporeActionsMap.has(uniqueKey)) {
+            processedSporeActionsMap.set(uniqueKey, processedAction);
             processedActionsCount++;
-          } catch (processingError) {
-            console.error(
-              `[RgbppSDK] Error processing Spore Action from tx ${actionTxHash}:`,
-              processingError,
-            );
           }
+        } catch (processingError) {
+          const actionTxHash = parseHexFromGraphQL(rawAction.tx_hash);
+          console.error(
+            `[RgbppSDK] Error processing Spore Action from tx ${actionTxHash}:`,
+            processingError,
+          );
         }
       }
     }
@@ -613,9 +654,9 @@ export class RgbppSDK {
     outPoint: OutPoint,
   ): Promise<GraphQLAssetQueryResponse> {
     const txHashForQuery = formatHexForGraphQL(outPoint.txHash);
-    const outputIndex = Number(outPoint.index);
+    const outputIndex = safeStringToIndex(outPoint.index);
 
-    if (isNaN(outputIndex) || outputIndex < 0) {
+    if (outputIndex === null || outputIndex < 0) {
       throw new Error(
         `Invalid output index provided for query: "${outPoint.index}"`,
       );
@@ -798,93 +839,112 @@ export class RgbppSDK {
   }
 }
 
-// --- Conceptual Example Usage ---
-/*
-async function runSdkExample() {
-    const IS_MAINNET = false; // Or true for mainnet
-    const GRAPHQL_ENDPOINT = IS_MAINNET
-        ? "https://mainnet.unistate.io/v1/graphql"
-        : "YOUR_TESTNET_V1_GRAPHQL_ENDPOINT";
-    const BTC_ADDRESS = "YOUR_BTC_ADDRESS_HERE";
+// // --- Conceptual Example Usage ---
+// async function runSdkExample() {
+//   const IS_MAINNET = true; // Or true for mainnet
+//   const GRAPHQL_ENDPOINT = IS_MAINNET
+//     ? "https://mainnet.unistate.io/v1/graphql"
+//     : "YOUR_TESTNET_V1_GRAPHQL_ENDPOINT";
+//   const BTC_ADDRESS = "bc1qx9ndsrwep9j6pxc3vqralpm0a9unhhlyzy7zna";
 
-    if (GRAPHQL_ENDPOINT.includes("YOUR_")) {
-        console.error("Error: Please replace placeholder GRAPHQL_ENDPOINT URL in the example code.");
-        return;
-    }
-     if (BTC_ADDRESS.includes("YOUR_")) {
-        console.error("Error: Please replace placeholder BTC_ADDRESS in the example code.");
-        return;
-    }
+//   if (GRAPHQL_ENDPOINT.includes("YOUR_")) {
+//     console.error(
+//       "Error: Please replace placeholder GRAPHQL_ENDPOINT URL in the example code.",
+//     );
+//     return;
+//   }
+//   if (BTC_ADDRESS.includes("YOUR_")) {
+//     console.error(
+//       "Error: Please replace placeholder BTC_ADDRESS in the example code.",
+//     );
+//     return;
+//   }
 
-    console.log(`Running SDK example for ${BTC_ADDRESS} on ${IS_MAINNET ? 'mainnet' : 'testnet'}...`);
-    const sdk = new RgbppSDK(IS_MAINNET, GRAPHQL_ENDPOINT);
+//   console.log(
+//     `Running SDK example for ${BTC_ADDRESS} on ${IS_MAINNET ? "mainnet" : "testnet"}...`,
+//   );
+//   const sdk = new RgbppSDK(GRAPHQL_ENDPOINT);
 
-    try {
-        const result: QueryResult = await sdk.fetchAssetsAndQueryDetails(BTC_ADDRESS);
+//   try {
+//     const result: QueryResult =
+//       await sdk.fetchAssetsAndQueryDetails(BTC_ADDRESS);
 
-        console.log("\n✅ SDK Query Completed Successfully!");
+//     console.log("\n✅ SDK Query Completed Successfully!");
 
-        console.log("\n--- BTC Balance ---");
-        console.log(JSON.stringify(result.balance, null, 2));
+//     console.log("\n--- BTC Balance ---");
+//     console.log(JSON.stringify(result.balance, null, 2));
 
-        console.log("\n--- CKB Assets ---");
-        console.log(`Processed ${result.assets.xudtCells.length} XUDT Cells:`);
-        if (result.assets.xudtCells.length === 0) {
-             console.log("  (No XUDT cells found for this address)");
-        }
-        result.assets.xudtCells.forEach((cell, index) => {
-            console.log(`\n  [Cell #${index + 1}]`);
-            console.log(`    UTXO: ${cell.tx_hash}:${cell.output_index}`);
-            console.log(`    Amount: ${cell.amount.toString()}`);
-            console.log(`    Consumed: ${cell.is_consumed}`);
-            if (cell.consumed_by) {
-                console.log(`    -> Consumed By: Tx ${cell.consumed_by.tx_hash}, Input ${cell.consumed_by.input_index}`);
-            }
-            console.log(`    Owner Lock Addr: ${cell.lock_address_id}`);
-            console.log(`    Token Type Addr: ${cell.type_address_id}`);
-            if (cell.type_script) {
-                console.log(`    Type Script Details:`);
-                console.log(`      CodeHash: ${cell.type_script.code_hash}`);
-                console.log(`      HashType: ${cell.type_script.hash_type}`);
-                console.log(`      Args: ${cell.type_script.args}`);
-            } else {
-                 console.log(`    Type Script Details: (Not Available)`);
-            }
-            if (cell.token_info) {
-                console.log(`    Token Info:`);
-                console.log(`      Symbol: ${cell.token_info.symbol}`);
-                console.log(`      Name: ${cell.token_info.name}`);
-                console.log(`      Decimals: ${cell.token_info.decimal}`);
-                console.log(`      UDT Hash: ${cell.token_info.udt_hash || '(none)'}`);
-                console.log(`      Expected Supply: ${cell.token_info.expected_supply?.toString() ?? '(N/A)'}`);
-                console.log(`      Mint Limit: ${cell.token_info.mint_limit?.toString() ?? '(N/A)'}`);
-                const statusNum = cell.token_info.mint_status;
-                const statusStr = statusNum !== null ? MintStatus[statusNum] ?? `Unknown(${statusNum})` : '(N/A)';
-                console.log(`      Mint Status: ${statusStr}`);
-            } else {
-                console.log(`    Token Info: (Not Available - Not a registered token type?)`);
-            }
-        });
+//     console.log("\n--- CKB Assets ---");
+//     console.log(`Processed ${result.assets.xudtCells.length} XUDT Cells:`);
+//     if (result.assets.xudtCells.length === 0) {
+//       console.log("  (No XUDT cells found for this address)");
+//     }
+//     result.assets.xudtCells.forEach((cell, index) => {
+//       console.log(`\n  [Cell #${index + 1}]`);
+//       console.log(`    UTXO: ${cell.tx_hash}:${cell.output_index}`);
+//       console.log(`    Amount: ${cell.amount.toString()}`);
+//       console.log(`    Consumed: ${cell.is_consumed}`);
+//       if (cell.consumed_by) {
+//         console.log(
+//           `    -> Consumed By: Tx ${cell.consumed_by.tx_hash}, Input ${cell.consumed_by.input_index}`,
+//         );
+//       }
+//       console.log(`    Owner Lock Addr: ${cell.lock_address_id}`);
+//       console.log(`    Token Type Addr: ${cell.type_address_id}`);
+//       if (cell.type_script) {
+//         console.log(`    Type Script Details:`);
+//         console.log(`      CodeHash: ${cell.type_script.code_hash}`);
+//         console.log(`      HashType: ${cell.type_script.hash_type}`);
+//         console.log(`      Args: ${cell.type_script.args}`);
+//       } else {
+//         console.log(`    Type Script Details: (Not Available)`);
+//       }
+//       if (cell.token_info) {
+//         console.log(`    Token Info:`);
+//         console.log(`      Symbol: ${cell.token_info.symbol}`);
+//         console.log(`      Name: ${cell.token_info.name}`);
+//         console.log(`      Decimals: ${cell.token_info.decimal}`);
+//         console.log(`      UDT Hash: ${cell.token_info.udt_hash || "(none)"}`);
+//         console.log(
+//           `      Expected Supply: ${cell.token_info.expected_supply?.toString() ?? "(N/A)"}`,
+//         );
+//         console.log(
+//           `      Mint Limit: ${cell.token_info.mint_limit?.toString() ?? "(N/A)"}`,
+//         );
+//         const statusNum = cell.token_info.mint_status;
+//         const statusStr =
+//           statusNum !== null
+//             ? (MintStatus[statusNum] ?? `Unknown(${statusNum})`)
+//             : "(N/A)";
+//         console.log(`      Mint Status: ${statusStr}`);
+//       } else {
+//         console.log(
+//           `    Token Info: (Not Available - Not a registered token type?)`,
+//         );
+//       }
+//     });
 
-        console.log(`\nProcessed ${result.assets.sporeActions.length} unique Spore Actions from related transactions:`);
-         if (result.assets.sporeActions.length === 0) {
-             console.log("  (No spore actions found in the transactions of these UTXOs)");
-        }
-        result.assets.sporeActions.forEach((action, index) => {
-            console.log(`\n  [Action #${index + 1}]`);
-            console.log(`    TX Hash: ${action.tx_hash}`);
-            console.log(`    Timestamp: ${action.tx_timestamp}`);
-            console.log(`    Type: ${action.action_type}`);
-            console.log(`    Spore ID: ${action.spore_id || '(none)'}`);
-            console.log(`    Cluster ID: ${action.cluster_id || '(none)'}`);
-            console.log(`    From Addr: ${action.from_address_id || '(N/A)'}`);
-            console.log(`    To Addr: ${action.to_address_id || '(N/A)'}`);
-        });
-
-    } catch (error) {
-        console.error("\n❌ SDK Example Failed:", error);
-    }
-}
+//     console.log(
+//       `\nProcessed ${result.assets.sporeActions.length} unique Spore Actions from related transactions:`,
+//     );
+//     if (result.assets.sporeActions.length === 0) {
+//       console.log(
+//         "  (No spore actions found in the transactions of these UTXOs)",
+//       );
+//     }
+//     result.assets.sporeActions.forEach((action, index) => {
+//       console.log(`\n  [Action #${index + 1}]`);
+//       console.log(`    TX Hash: ${action.tx_hash}`);
+//       console.log(`    Timestamp: ${action.tx_timestamp}`);
+//       console.log(`    Type: ${action.action_type}`);
+//       console.log(`    Spore ID: ${action.spore_id || "(none)"}`);
+//       console.log(`    Cluster ID: ${action.cluster_id || "(none)"}`);
+//       console.log(`    From Addr: ${action.from_address_id || "(N/A)"}`);
+//       console.log(`    To Addr: ${action.to_address_id || "(N/A)"}`);
+//     });
+//   } catch (error) {
+//     console.error("\n❌ SDK Example Failed:", error);
+//   }
+// }
 
 // runSdkExample(); // Uncomment to run
-*/
