@@ -1,7 +1,7 @@
 {
   "name": "mobit-sdk",
-  "version": "2.3.0",
-  "description": "",
+  "version": "2.3.2",
+  "description": "A comprehensive SDK for integrating with the Mobit platform, supporting operations on Nervos CKB and Bitcoin for RGBPP assets, including transfers, leaps, and token management.",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.mjs",
   "types": "./dist/types/index.d.ts",

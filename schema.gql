@@ -1266,6 +1266,19 @@ type query_root {
     where: spore_actions_bool_exp
   ): spore_actions_aggregate!
 
+  """fetch data from the table: "spore_actions" using primary key columns"""
+  spore_actions_by_pk(
+    """
+    Index of the output in the transaction where this action occurred. Part of composite primary key.
+    """
+    output_index: Int!
+
+    """
+    Transaction hash where the action occurred. Part of composite primary key with output_index.
+    """
+    tx_hash: bytea!
+  ): spore_actions
+
   """
   fetch data from the table: "spores"
   """
@@ -1887,7 +1900,7 @@ input spore_action_type_comparison_exp {
 }
 
 """
-Records transactional events related to Spores and Clusters. Supports multiple actions per transaction.
+Records transactional events related to Spores and Clusters. Uses output_index as primary key for meaningful queries.
 """
 type spore_actions {
   action_data(
@@ -1904,6 +1917,11 @@ type spore_actions {
   """An object relationship"""
   from_address: addresses
   from_address_id: String
+
+  """
+  Index of the output in the transaction where this action occurred. Part of composite primary key.
+  """
+  output_index: Int!
   proxy_id: bytea
 
   """An object relationship"""
@@ -1915,7 +1933,7 @@ type spore_actions {
   to_address_id: String
 
   """
-  Transaction hash where the action occurred. Part of composite primary key.
+  Transaction hash where the action occurred. Part of composite primary key with output_index.
   """
   tx_hash: bytea!
   tx_timestamp: timestamp!
@@ -1949,6 +1967,11 @@ type spore_actions_aggregate_fields {
 """aggregate avg on columns"""
 type spore_actions_avg_fields {
   block_number: Float
+
+  """
+  Index of the output in the transaction where this action occurred. Part of composite primary key.
+  """
+  output_index: Float
 }
 
 """
@@ -1965,6 +1988,7 @@ input spore_actions_bool_exp {
   cluster_id: bytea_comparison_exp
   from_address: addresses_bool_exp
   from_address_id: String_comparison_exp
+  output_index: Int_comparison_exp
   proxy_id: bytea_comparison_exp
   spore: spores_bool_exp
   spore_id: bytea_comparison_exp
@@ -1979,6 +2003,11 @@ type spore_actions_max_fields {
   action_type: spore_action_type
   block_number: bigint
   from_address_id: String
+
+  """
+  Index of the output in the transaction where this action occurred. Part of composite primary key.
+  """
+  output_index: Int
   to_address_id: String
   tx_timestamp: timestamp
 }
@@ -1988,6 +2017,11 @@ type spore_actions_min_fields {
   action_type: spore_action_type
   block_number: bigint
   from_address_id: String
+
+  """
+  Index of the output in the transaction where this action occurred. Part of composite primary key.
+  """
+  output_index: Int
   to_address_id: String
   tx_timestamp: timestamp
 }
@@ -2001,6 +2035,7 @@ input spore_actions_order_by {
   cluster_id: order_by
   from_address: addresses_order_by
   from_address_id: order_by
+  output_index: order_by
   proxy_id: order_by
   spore: spores_order_by
   spore_id: order_by
@@ -2030,6 +2065,9 @@ enum spore_actions_select_column {
   from_address_id
 
   """column name"""
+  output_index
+
+  """column name"""
   proxy_id
 
   """column name"""
@@ -2048,16 +2086,31 @@ enum spore_actions_select_column {
 """aggregate stddev on columns"""
 type spore_actions_stddev_fields {
   block_number: Float
+
+  """
+  Index of the output in the transaction where this action occurred. Part of composite primary key.
+  """
+  output_index: Float
 }
 
 """aggregate stddev_pop on columns"""
 type spore_actions_stddev_pop_fields {
   block_number: Float
+
+  """
+  Index of the output in the transaction where this action occurred. Part of composite primary key.
+  """
+  output_index: Float
 }
 
 """aggregate stddev_samp on columns"""
 type spore_actions_stddev_samp_fields {
   block_number: Float
+
+  """
+  Index of the output in the transaction where this action occurred. Part of composite primary key.
+  """
+  output_index: Float
 }
 
 """
@@ -2078,12 +2131,17 @@ input spore_actions_stream_cursor_value_input {
   block_number: bigint
   cluster_id: bytea
   from_address_id: String
+
+  """
+  Index of the output in the transaction where this action occurred. Part of composite primary key.
+  """
+  output_index: Int
   proxy_id: bytea
   spore_id: bytea
   to_address_id: String
 
   """
-  Transaction hash where the action occurred. Part of composite primary key.
+  Transaction hash where the action occurred. Part of composite primary key with output_index.
   """
   tx_hash: bytea
   tx_timestamp: timestamp
@@ -2092,21 +2150,41 @@ input spore_actions_stream_cursor_value_input {
 """aggregate sum on columns"""
 type spore_actions_sum_fields {
   block_number: bigint
+
+  """
+  Index of the output in the transaction where this action occurred. Part of composite primary key.
+  """
+  output_index: Int
 }
 
 """aggregate var_pop on columns"""
 type spore_actions_var_pop_fields {
   block_number: Float
+
+  """
+  Index of the output in the transaction where this action occurred. Part of composite primary key.
+  """
+  output_index: Float
 }
 
 """aggregate var_samp on columns"""
 type spore_actions_var_samp_fields {
   block_number: Float
+
+  """
+  Index of the output in the transaction where this action occurred. Part of composite primary key.
+  """
+  output_index: Float
 }
 
 """aggregate variance on columns"""
 type spore_actions_variance_fields {
   block_number: Float
+
+  """
+  Index of the output in the transaction where this action occurred. Part of composite primary key.
+  """
+  output_index: Float
 }
 
 """Stores state information for Spore NFTs."""
@@ -2763,6 +2841,19 @@ type subscription_root {
     """filter the rows returned"""
     where: spore_actions_bool_exp
   ): spore_actions_aggregate!
+
+  """fetch data from the table: "spore_actions" using primary key columns"""
+  spore_actions_by_pk(
+    """
+    Index of the output in the transaction where this action occurred. Part of composite primary key.
+    """
+    output_index: Int!
+
+    """
+    Transaction hash where the action occurred. Part of composite primary key with output_index.
+    """
+    tx_hash: bytea!
+  ): spore_actions
 
   """
   fetch data from the table in a streaming manner: "spore_actions"

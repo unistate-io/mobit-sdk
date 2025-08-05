@@ -243,7 +243,7 @@ interface RawSporeAction {
       script_code_hash: string; // bytea -> \x...
       script_hash_type: number; // smallint
     };
-  }
+  };
 }
 
 /**
@@ -267,7 +267,7 @@ export interface ProcessedSporeAction {
     script_args: string;
     script_code_hash: string;
     script_hash_type: number;
-  }
+  };
 }
 
 /**
@@ -337,7 +337,9 @@ const ASSET_DETAILS_QUERY = gql`
       }
     }
 
-    spore_actions(where: { tx_hash: { _eq: $txHash } }) {
+    spore_actions(
+      where: { tx_hash: { _eq: $txHash }, output_index: { _eq: $outputIndex } }
+    ) {
       tx_hash
       action_type
       spore_id
@@ -351,7 +353,7 @@ const ASSET_DETAILS_QUERY = gql`
           script_code_hash
           script_hash_type
         }
-    }
+      }
     }
   }
 `;
@@ -763,7 +765,12 @@ export class RgbppSDK {
         );
       }
 
-      console.log('rawCell.amount info:', rawCell.amount, typeof rawCell.amount, rawCell.amount?.toString());
+      console.log(
+        "rawCell.amount info:",
+        rawCell.amount,
+        typeof rawCell.amount,
+        rawCell.amount?.toString(),
+      );
       const amount = safeStringToBigInt(rawCell.amount?.toString());
       if (amount === null) {
         throw new Error(
@@ -804,12 +811,14 @@ export class RgbppSDK {
       return {
         tx_hash: actionTxHash,
         action_type: rawAction.action_type,
-        spore_id: rawAction.spore_id ? parseHexFromGraphQL(rawAction.spore_id) : rawAction.spore_id,
+        spore_id: rawAction.spore_id
+          ? parseHexFromGraphQL(rawAction.spore_id)
+          : rawAction.spore_id,
         cluster_id: parseHexFromGraphQL(rawAction.cluster_id),
         from_address_id: rawAction.from_address_id,
         to_address_id: rawAction.to_address_id,
         tx_timestamp: rawAction.tx_timestamp,
-        address_by_type_address_id: rawAction.spore?.address_by_type_address_id
+        address_by_type_address_id: rawAction.spore?.address_by_type_address_id,
       };
     } catch (error) {
       const errorMessage =

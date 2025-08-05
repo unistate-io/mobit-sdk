@@ -346,7 +346,9 @@ const ASSET_DETAILS_QUERY = (0, client_core_namespaceObject.gql)`
       }
     }
 
-    spore_actions(where: { tx_hash: { _eq: $txHash } }) {
+    spore_actions(
+      where: { tx_hash: { _eq: $txHash }, output_index: { _eq: $outputIndex } }
+    ) {
       tx_hash
       action_type
       spore_id
@@ -360,7 +362,7 @@ const ASSET_DETAILS_QUERY = (0, client_core_namespaceObject.gql)`
           script_code_hash
           script_hash_type
         }
-    }
+      }
     }
   }
 `;
@@ -601,7 +603,7 @@ class RgbppSDK {
                     args: parseHexFromGraphQL(rawAddress.script_args)
                 };
             } else console.warn(`[RgbppSDK] No 'address_by_type_address_id' relationship data for XUDT cell ${cellIdentifier} (Type Address: ${rawCell.type_address_id}). Cannot get type script details.`);
-            console.log('rawCell.amount info:', rawCell.amount, typeof rawCell.amount, rawCell.amount?.toString());
+            console.log("rawCell.amount info:", rawCell.amount, typeof rawCell.amount, rawCell.amount?.toString());
             const amount = safeStringToBigInt(rawCell.amount?.toString());
             if (null === amount) throw new Error(`Failed to convert amount "${rawCell.amount}" to BigInt.`);
             return {
